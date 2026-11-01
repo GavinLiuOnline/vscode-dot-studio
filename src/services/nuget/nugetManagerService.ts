@@ -17,6 +17,7 @@ import { SolutionService } from '../solution/solutionService';
 import { UnloadedProjects } from '../solution/unloadedProjects';
 import { LocalNuGetPackage } from '../../webview/nuget-view/shared';
 import { collectTransitivePackages, readPackageGraphs } from './packageGraph';
+import { foldTransitiveIntoInstalled } from './transitiveFold';
 
 const log = logger('NuGetManagerService');
 
@@ -130,8 +131,10 @@ export class NuGetManagerService {
                 };
             }
 
-            const installedPackages = await this.getGroupedInstalledPackages(solutionPath, false, allProjects);
-            const transitivePackages = await this.getTransitivePackages(allProjects);
+            const groupedInstalled = await this.getGroupedInstalledPackages(solutionPath, false, allProjects);
+            // A package some project references itself is listed once, as top-level, with what the others get through packages folded in
+            const { installed: installedPackages, transitive: transitivePackages } =
+                foldTransitiveIntoInstalled(groupedInstalled, await this.getTransitivePackages(allProjects));
 
             // Get outdated packages by filtering installed packages (much faster than dotnet list --outdated)
             const outdatedPackages = await this.getGroupedOutdatedPackages(includePrerelease, solutionPath, false, allProjects);
