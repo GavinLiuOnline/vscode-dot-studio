@@ -171,11 +171,11 @@ export class SolutionService {
     }
 
     /**
-     * Check if a framework is currently supported
+     * Whether a framework is a current .NET (`net5.0` and later): listed before .NET Framework, .NET Standard and .NET Core 3.1 and
+     * older, which the menu marks as legacy
      */
     static isFrameworkSupported(framework: string): boolean {
-        const supportedFrameworks = ['net8.0', 'net9.0'];
-        return supportedFrameworks.includes(framework);
+        return /^net([5-9]|\d{2,})\.\d+(-[a-z0-9.]+)?$/i.test(framework);
     }
 
     /**
