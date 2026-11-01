@@ -52,6 +52,7 @@ Settings > Extensions > Shinobi .NET Studio, grouped as below.
 | Setting | Default | |
 |---|---|---|
 | `shinobi.nuget.includePrerelease` | `false` | Open the NuGet Package Manager with "Include prerelease" checked |
+| `shinobi.nuget.offerV3Migration` | `true` | When a solution's `NuGet.Config` lists nuget.org by its old address (`https://www.nuget.org/api/v2/`, or `.../api/v3/` without `index.json`), offer to change it to `https://api.nuget.org/v3/index.json`; the V2 feed has no vulnerability data ("Don't Ask Again" turns it off for one solution), see [NuGet](nuget.md#vulnerable-and-deprecated-packages) |
 | `shinobi.nuget.packageSources` | `false` | Manage package sources in the NuGet manager like Visual Studio: a Sources tab to add, remove, enable and disable feeds, and Package Source Mapping in the package details and Browse, see [NuGet](nuget.md#package-sources-and-package-source-mapping) |
 
 ## C# extension defaults this extension changes

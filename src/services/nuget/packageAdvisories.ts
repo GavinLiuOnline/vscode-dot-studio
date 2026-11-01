@@ -84,19 +84,30 @@ export function advisorySourceArgs(sources: readonly PackageSource[]): string[] 
     return hasV2 && !hasV3 ? ['--source', NUGET_ORG_V3] : [];
 }
 
-/** Runs the two lists for a project (a restore must have happened; the answer needs the feeds' vulnerability data) */
-export async function readProjectAdvisories(projectPath: string, sourceArgs: readonly string[] = []): Promise<PackageAdvisories> {
+/**
+ * Runs the two lists for a project or a whole solution, from the last restore (`--no-restore`: no restore of its own, which took
+ * long and touched `obj/`; the answer needs the feeds' vulnerability data). `complete` is false when a list failed, so that its
+ * emptiness is not taken for "no vulnerabilities".
+ */
+export async function readTargetAdvisories(target: string, sourceArgs: readonly string[] = [], timeout = 120000): Promise<{ advisories: PackageAdvisories; complete: boolean }> {
+    let complete = true;
     const list = async (flag: string): Promise<string> => {
         try {
             // `--source` only for the vulnerable list: deprecation data comes from the configured feeds as before
             const extra = flag === '--vulnerable' ? sourceArgs : [];
-            return (await execDotnet(['list', projectPath, 'package', flag, '--include-transitive', '--format', 'json', ...extra], { timeout: 120000 })).stdout;
+            return (await execDotnet(['list', target, 'package', flag, '--include-transitive', '--no-restore', '--format', 'json', ...extra], { timeout })).stdout;
         } catch (error) {
             // The reason from the CLI's output ("Failed to fetch results from V2 feed at ..."): the exception only says "Command failed"
-            log.warn(`dotnet list package ${flag} failed for ${path.basename(projectPath)}: ${cliFailureReason(error)}`);
+            log.warn(`dotnet list package ${flag} failed for ${path.basename(target)}: ${cliFailureReason(error)}`);
+            complete = false;
             return '';
         }
     };
     const [vulnerable, deprecated] = await Promise.all([list('--vulnerable'), list('--deprecated')]);
-    return parseAdvisories(vulnerable, deprecated);
+    return { advisories: parseAdvisories(vulnerable, deprecated), complete };
+}
+
+/** Runs the two lists for a project (a restore must have happened; the answer needs the feeds' vulnerability data) */
+export async function readProjectAdvisories(projectPath: string, sourceArgs: readonly string[] = []): Promise<PackageAdvisories> {
+    return (await readTargetAdvisories(projectPath, sourceArgs)).advisories;
 }

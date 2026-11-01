@@ -2,7 +2,7 @@ jest.mock('vscode', () => ({ workspace: { workspaceFolders: [] } }), { virtual: 
 jest.mock('../../../../services/nuget/dotnetCli', () => ({ ...jest.requireActual('../../../../services/nuget/dotnetCli'), execDotnet: jest.fn() }));
 
 import { execDotnet } from '../../../../services/nuget/dotnetCli';
-import { advisorySourceArgs, mergeAdvisories, parseAdvisories, readProjectAdvisories } from '../../../../services/nuget/packageAdvisories';
+import { advisorySourceArgs, mergeAdvisories, parseAdvisories, readProjectAdvisories, readTargetAdvisories } from '../../../../services/nuget/packageAdvisories';
 import { advisoryKey } from '../../../../services/nuget/types';
 
 // As `dotnet list package --vulnerable|--deprecated --include-transitive --format json` writes them (SDK 10)
@@ -46,6 +46,20 @@ describe('package advisories', () => {
         expect(Object.keys(advisories)).toEqual([advisoryKey('WindowsAzure.Storage', '9.3.3')]);
     });
 
+    it('reads from the last restore and says when a list failed, so that its emptiness is not "no vulnerabilities"', async () => {
+        const run = execDotnet as jest.Mock;
+        run.mockReset().mockImplementation(async (args: string[]) => {
+            if (args.includes('--vulnerable')) { throw new Error('no network'); }
+            return { stdout: deprecated, stderr: '' };
+        });
+        const failed = await readTargetAdvisories('/w/App.sln');
+        expect(failed.complete).toBe(false);
+        expect(run.mock.calls.every(call => (call[0] as string[]).includes('--no-restore'))).toBe(true);
+
+        run.mockReset().mockResolvedValue({ stdout: '', stderr: '' });
+        expect((await readTargetAdvisories('/w/App.sln')).complete).toBe(true);
+    });
+
     describe('where the vulnerability data comes from', () => {
         const source = (url: string, enabled = true, isLocal = false) => ({ name: url, url, enabled, isLocal });
 
@@ -68,7 +82,7 @@ describe('package advisories', () => {
             run.mockReset().mockResolvedValue({ stdout: '', stderr: '' });
             await readProjectAdvisories('/w/A.csproj', ['--source', 'https://api.nuget.org/v3/index.json']);
             const [vulnerableCall, deprecatedCall] = run.mock.calls.map(call => call[0] as string[]);
-            expect(vulnerableCall).toEqual(['list', '/w/A.csproj', 'package', '--vulnerable', '--include-transitive', '--format', 'json', '--source', 'https://api.nuget.org/v3/index.json']);
+            expect(vulnerableCall).toEqual(['list', '/w/A.csproj', 'package', '--vulnerable', '--include-transitive', '--no-restore', '--format', 'json', '--source', 'https://api.nuget.org/v3/index.json']);
             expect(deprecatedCall).not.toContain('--source');
         });
     });

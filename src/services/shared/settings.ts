@@ -16,6 +16,8 @@ export const Settings = {
     offerSlnxConversion: () => vscode.workspace.getConfiguration('shinobi.solution').get<boolean>('offerSlnxConversion', true),
     /** Offer to move a solution-level .nuget/NuGet.Config to nuget.config, where dotnet reads it, when the solution opens */
     offerNugetConfigMove: () => vscode.workspace.getConfiguration('shinobi.solution').get<boolean>('offerNugetConfigMove', true),
+    /** Offer to change nuget.org's old address (V2) in a solution's NuGet.Config to the V3 service index */
+    offerNuGetV3Migration: () => vscode.workspace.getConfiguration('shinobi.nuget').get<boolean>('offerV3Migration', true),
     /** Builds write the source generators' output (Dependencies > Analyzers) */
     emitGeneratedFiles: () => vscode.workspace.getConfiguration('shinobi.build').get<boolean>('emitGeneratedFiles', true),
     /** Discover tests again after every build */

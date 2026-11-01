@@ -147,11 +147,18 @@ export class NuGetCustomEditorProvider implements vscode.CustomTextEditorProvide
 
                 case 'getPackageAdvisories': {
                     // After the lists: asking the feeds takes a while; a project or solution without a restore reports nothing
+                    // What was read last time goes out at once; the new read follows and replaces it
+                    const known = context ? NuGetManagerService.getCachedAdvisories(context) : undefined;
+                    if (known) {
+                        sendToUi(webview, { type: 'packageAdvisories', payload: { advisories: known } });
+                    }
                     const advisories = context ? await NuGetManagerService.getAdvisories(context).catch(error => {
                         log.warn('Could not read the vulnerabilities and deprecations:', error);
-                        return {};
+                        return known ?? {};
                     }) : {};
-                    sendToUi(webview, { type: 'packageAdvisories', payload: { advisories } });
+                    if (advisories !== known) {
+                        sendToUi(webview, { type: 'packageAdvisories', payload: { advisories } });
+                    }
                     break;
                 }
 

@@ -87,7 +87,7 @@ export async function reportRejectedCredentials(requestUrl: string, status: numb
 }
 
 /** Whether the file lies in an open workspace folder or a git checkout (where a token could get committed) */
-function isInWorkspace(file: string): boolean {
+export function isInWorkspace(file: string): boolean {
     const dir = path.dirname(file);
     if ((vscode.workspace.workspaceFolders ?? []).some(folder => {
         const relative = path.relative(folder.uri.fsPath, file);

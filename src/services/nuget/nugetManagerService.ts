@@ -12,7 +12,7 @@ import {
     PackageAdvisories,
     isNuGetOrgUrl
 } from './types';
-import { advisorySourceArgs, mergeAdvisories, readProjectAdvisories } from './packageAdvisories';
+import { advisorySourceArgs, mergeAdvisories, readTargetAdvisories } from './packageAdvisories';
 import { SolutionService } from '../solution/solutionService';
 import { UnloadedProjects } from '../solution/unloadedProjects';
 import { LocalNuGetPackage } from '../../webview/nuget-view/shared';
@@ -292,19 +292,57 @@ export class NuGetManagerService {
      * Whether nuget.org is one of the enabled sources. Icons and READMEs are read from nuget.org by package id, so
      * without it a private package's id is not sent there (and a public package of the same id shows nothing of it)
      */
-    /** The vulnerabilities and deprecations of the packages of a project, or of every loaded project of the solution */
-    static async getAdvisories(context: { type: 'project' | 'solution'; target: string }): Promise<PackageAdvisories> {
+    // The vulnerabilities and deprecations of the last complete read, by manager (in memory): they take minutes on a big solution, so
+    // a manager that opens, or refreshes, shows these at once while the new ones are read; a read that failed does not replace them
+    private static readonly advisoryCache = new Map<string, PackageAdvisories>();
+    private static readonly advisoryRuns = new Map<string, Promise<PackageAdvisories>>();
+
+    /** The advisories of the last complete read of this manager, if there was one */
+    static getCachedAdvisories(context: { type: 'project' | 'solution'; target: string }): PackageAdvisories | undefined {
+        return this.advisoryCache.get(`${context.type}|${context.target}`);
+    }
+
+    /** The vulnerabilities and deprecations of the packages of a project, or of every loaded project of the solution (one read at a time per manager) */
+    static getAdvisories(context: { type: 'project' | 'solution'; target: string }): Promise<PackageAdvisories> {
+        const key = `${context.type}|${context.target}`;
+        const running = this.advisoryRuns.get(key);
+        if (running) {
+            return running;
+        }
+        const run = this.readAdvisories(context).then(({ advisories, complete }) => {
+            if (complete) {
+                this.advisoryCache.set(key, advisories);
+                return advisories;
+            }
+            // Some list failed (no network, a feed that said no): what was known stays, rather than nothing
+            return this.advisoryCache.get(key) ?? advisories;
+        }).finally(() => { this.advisoryRuns.delete(key); });
+        this.advisoryRuns.set(key, run);
+        return run;
+    }
+
+    private static async readAdvisories(context: { type: 'project' | 'solution'; target: string }): Promise<{ advisories: PackageAdvisories; complete: boolean }> {
         const solution = SolutionService.getActiveSolution();
+        const sourceArgs = advisorySourceArgs(await PackageBrowseService.getPackageSources().catch(() => []));
+        // The solution in one go: two dotnet processes read the feeds once, instead of two for each of its projects
+        if (context.type === 'solution' && solution?.solutionPath) {
+            const whole = await readTargetAdvisories(solution.solutionPath, sourceArgs, 600000);
+            if (whole.complete) {
+                return whole;
+            }
+        }
         const projects = context.type === 'project'
             ? [context.target]
             : [...(solution?.projects.keys() ?? [])].filter(project => !UnloadedProjects.isUnloaded(solution!.solutionPath, project));
         const all: PackageAdvisories[] = [];
-        const sourceArgs = advisorySourceArgs(await PackageBrowseService.getPackageSources().catch(() => []));
+        let complete = true;
         // A few at a time: each is two dotnet processes that ask the feeds
         for (let i = 0; i < projects.length; i += 3) {
-            all.push(...await Promise.all(projects.slice(i, i + 3).map(project => readProjectAdvisories(project, sourceArgs))));
+            const read = await Promise.all(projects.slice(i, i + 3).map(project => readTargetAdvisories(project, sourceArgs)));
+            all.push(...read.map(entry => entry.advisories));
+            complete &&= read.every(entry => entry.complete);
         }
-        return mergeAdvisories(all);
+        return { advisories: mergeAdvisories(all), complete };
     }
 
     static async usesNuGetOrg(): Promise<boolean> {

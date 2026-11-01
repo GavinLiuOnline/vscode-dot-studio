@@ -111,6 +111,11 @@
             "default": true,
             "markdownDescription": "When a `.sln` opens, offer to convert it to `.slnx`, the current solution format (*Don't Ask Again* turns it off for one solution)."
           },
+          "shinobi.nuget.offerV3Migration": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "When a solution's `NuGet.Config` lists nuget.org by its old address (`https://www.nuget.org/api/v2/`, or `.../api/v3/` without `index.json`), offer to change it to `https://api.nuget.org/v3/index.json`: the V2 feed has no vulnerability data (*Don't Ask Again* turns it off for one solution)."
+          },
           "shinobi.solution.offerNugetConfigMove": {
             "type": "boolean",
             "default": true,

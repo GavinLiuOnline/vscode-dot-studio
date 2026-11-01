@@ -18,6 +18,7 @@ import { checkCSharpExtension } from './services/shared/csharpExtensionCheck';
 import { BuildConfiguration } from './services/build/buildConfiguration';
 import { SlnxMigration } from './services/solution/slnxMigration';
 import { LegacyConfigOffer, offerLegacyConfigMove } from './services/nuget/legacyConfigOffer';
+import { NuGetV3Offer } from './services/nuget/nugetV3Offer';
 import { SolutionDiscovery } from './services/solution/solutionDiscovery';
 import { reportPacked } from './services/build/pack';
 import { UnloadedProjects } from './services/solution/unloadedProjects';
@@ -113,6 +114,7 @@ export function activate(context: vscode.ExtensionContext) {
     StartupChoice.initialize(context.workspaceState);
     SlnxMigration.initialize(context.workspaceState);
     LegacyConfigOffer.initialize(context.workspaceState);
+    NuGetV3Offer.initialize(context.workspaceState);
     SolutionDiscovery.initialize(context.workspaceState);
     UnloadedProjects.initialize(context.workspaceState);
     ShowAllFiles.initialize(context.workspaceState);

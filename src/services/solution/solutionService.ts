@@ -9,6 +9,7 @@ import { logger } from '../../core/logger';
 import { checkOmniSharpForSlnx } from '../shared/csharpExtensionCheck';
 import { offerSlnxMigration } from './slnxMigration';
 import { offerLegacyConfigMove } from '../nuget/legacyConfigOffer';
+import { offerNuGetV3Migration } from '../nuget/nugetV3Offer';
 import { setActiveSolutionPath } from './workspaceFolders';
 import { ShowAllFiles } from './showAllFiles';
 
@@ -96,6 +97,7 @@ export class SolutionService {
                 },
             }).catch(error => log.error('Error offering the .slnx conversion:', error));
             offerLegacyConfigMove(solutionPath, 'open').catch(error => log.error('Error offering the NuGet.Config move:', error));
+            offerNuGetV3Migration(solutionPath).catch(error => log.error('Error offering the nuget.org V3 address:', error));
             log.info(`Initialized solution: ${path.basename(solutionPath)}`);
 
             return solution;
