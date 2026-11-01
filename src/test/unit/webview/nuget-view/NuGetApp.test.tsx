@@ -37,6 +37,18 @@ const openBrowse = () => {
 };
 
 describe('NuGet manager', () => {
+    it('data of the last time is shown but read-only until the new data comes', () => {
+        render(<App />);
+        post({ type: 'nugetData', payload: { installedPackages: [pkg('Serilog')], projects: [project], searchResults: [], stale: true } });
+        expect(screen.getByRole('status').textContent).toContain('Showing the last result');
+        expect(screen.getAllByText('Serilog').length).toBeGreaterThan(0);
+        expect(screen.getAllByPlaceholderText('Initializing...').length).toBeGreaterThan(0);
+
+        post({ type: 'nugetData', payload: { installedPackages: [pkg('Serilog')], projects: [project], searchResults: [] } });
+        expect(screen.queryByRole('status')).toBeNull();
+        expect(screen.queryAllByPlaceholderText('Initializing...')).toHaveLength(0);
+    });
+
     it('keeps the Browse results when the host sends a refresh without any', () => {
         openBrowse();
         post({ type: 'searchResults', payload: { searchResults: [pkg('Serilog'), pkg('Serilog.Sinks.Console')] } });

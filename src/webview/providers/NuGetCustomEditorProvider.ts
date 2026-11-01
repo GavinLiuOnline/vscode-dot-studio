@@ -11,6 +11,7 @@ import { NuGetWebview } from './views/NuGetWebview';
 import { sendToUi } from '../nuget-view/shared';
 import { dependencyPaths, readPackageGraphs } from '../../services/nuget/packageGraph';
 import { BackendCmd } from '../../types/commands/backend';
+import type { NuGetViewData } from '../../types/commands/ui';
 import { ProjectItemsService } from '../../services/project/items/projectItemsService';
 
 import { ensureActiveSolution, handleSources, handleSearchPackages, getNuGetData, handleGetConsolidatePackages, handleInstallPackage, handleUninstallPackage, handleBulkUpdatePackages, handleBulkConsolidatePackages, getPackageIcon, getPackageReadme, NuGetHost } from './nuget/nugetMessageHandlers';
@@ -257,11 +258,22 @@ export class NuGetCustomEditorProvider implements vscode.CustomTextEditorProvide
         return entry.done;
     }
 
+    // The last data sent per manager (in memory, for this session): a manager that opens, or comes back after its tab was closed, shows
+    // the previous lists at once, marked as old, while the new ones are worked out (the solution's take half a minute on a big one)
+    private readonly _lastData = new Map<string, NuGetViewData>();
+    private readonly _showedData = new WeakSet<vscode.Webview>();
+
     private async _sendData(
         webview: vscode.Webview,
         context: { type: 'project' | 'solution', target: string },
         includePrerelease: boolean) {
 
+        const cacheKey = `${context.type}|${context.target}|${includePrerelease}`;
+        const previous = this._lastData.get(cacheKey);
+        if (previous && !this._showedData.has(webview)) {
+            sendToUi(webview, { type: 'nugetData', payload: { ...previous, stale: true } });
+        }
+        this._showedData.add(webview);
         try {
             // Get NuGet data based on context (project vs solution)
             const nugetData = await getNuGetData(context, includePrerelease);
@@ -271,10 +283,15 @@ export class NuGetCustomEditorProvider implements vscode.CustomTextEditorProvide
             const manageSources = Settings.nugetPackageSources();
             const sourceMapping = manageSources ? readSourceMapping(configStartDir()) : undefined;
 
-            sendToUi(webview, {
-                type: 'nugetData',
-                payload: { ...nugetData, sources, manageSources, sourceMapping }
-            });
+            const fresh = { ...nugetData, sources, manageSources, sourceMapping };
+            const cache = this._lastData;
+            cache.delete(cacheKey);
+            cache.set(cacheKey, fresh);
+            // A few managers at most: the oldest goes
+            while (cache.size > 6) {
+                cache.delete(cache.keys().next().value!);
+            }
+            sendToUi(webview, { type: 'nugetData', payload: fresh });
 
         } catch (error) {
             log.error('Error updating NuGet webview:', error);

@@ -36,6 +36,8 @@ export const App: React.FC = () => {
     // The package source Browse searches ('' = all enabled sources)
     const [selectedSource, setSelectedSource] = useState('');
     const [initializing, setInitializing] = useState(true);
+    // The lists shown are those of the last time, the new ones are on their way (nothing can be changed until they are here)
+    const [stale, setStale] = useState(false);
     // Starts as the setting shinobi.nuget.includePrerelease says (passed on the root element)
     const [includePrerelease, setIncludePrerelease] = useState(() => document.getElementById('root')?.dataset.includePrerelease === 'true');
     const [activeTab, setActiveTab] = useState('installed');
@@ -194,8 +196,9 @@ export const App: React.FC = () => {
                         setSelectedPackage(safeData.installedPackages[0]);
                     }
 
-                    // Mark initialization as complete
-                    setInitializing(false);
+                    // Mark initialization as complete (not with the data of the last time: it stays read-only until the new data comes)
+                    setInitializing(!!message.payload.stale);
+                    setStale(!!message.payload.stale);
                     break;
                 case 'searchResults':
                     const searchResults = message.payload?.searchResults;
@@ -793,6 +796,7 @@ export const App: React.FC = () => {
                         selectedPackage={selectedPackage}
                         projects={data.projects || []}
                         transitivePackages={data.transitivePackages ?? undefined}
+                        advisories={advisories}
                         selectedProjects={selectedProjects}
                         setSelectedProjects={setSelectedProjects}
                         initializing={initializing}
@@ -914,6 +918,7 @@ export const App: React.FC = () => {
                         selectedPackage={selectedPackage}
                         projects={data.projects || []}
                         transitivePackages={data.transitivePackages ?? undefined}
+                        advisories={advisories}
                         selectedProjects={selectedProjects}
                         setSelectedProjects={setSelectedProjects}
                         initializing={initializing}
@@ -1027,6 +1032,7 @@ export const App: React.FC = () => {
                         selectedPackage={selectedPackage}
                         projects={data.projects || []}
                         transitivePackages={data.transitivePackages ?? undefined}
+                        advisories={advisories}
                         selectedProjects={selectedProjects}
                         setSelectedProjects={setSelectedProjects}
                         initializing={initializing}
@@ -1116,6 +1122,7 @@ export const App: React.FC = () => {
                         selectedPackage={selectedPackage}
                         projects={data.projects || []}
                         transitivePackages={data.transitivePackages ?? undefined}
+                        advisories={advisories}
                         selectedProjects={selectedProjects}
                         setSelectedProjects={setSelectedProjects}
                         initializing={initializing}
@@ -1309,6 +1316,11 @@ export const App: React.FC = () => {
                 }
             `}</style>
             <LoadingBar visible={shouldShowLoadingBar} />
+            {stale && (
+                <div role="status" style={{ padding: '4px 12px', fontSize: '12px', color: 'var(--vscode-descriptionForeground)' }}>
+                    Showing the last result while the lists are read again...
+                </div>
+            )}
             {errorMessage && (
                 <div role="alert" style={{
                     display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', fontSize: '12px',

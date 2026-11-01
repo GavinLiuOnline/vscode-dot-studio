@@ -36,6 +36,8 @@ export interface NuGetViewData {
     readonly sourceMapping?: SourceMapping;
     /** The setting `shinobi.nuget.packageSources` is on: the Sources tab shows */
     readonly manageSources?: boolean;
+    /** The data of the last time while the new is worked out: shown, but nothing can be changed yet */
+    readonly stale?: boolean;
 }
 
 export declare type PackageAdvisoriesCmd = {

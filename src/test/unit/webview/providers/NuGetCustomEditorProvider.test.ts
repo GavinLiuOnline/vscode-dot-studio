@@ -125,6 +125,32 @@ describe('NuGetCustomEditorProvider refreshes', () => {
         expect(installedVersions(webview)).toEqual(['2.0.0']);
     });
 
+    test('a manager that opens again shows the last data at once, marked as old, and then the new', async () => {
+        const provider = new NuGetCustomEditorProvider({} as any, {} as any);
+        const first = await openEditor(provider);
+        expect(installedVersions(first.webview)).toEqual(['1.0.0']);
+        expect(first.webview.postMessage.mock.calls.every(([message]) => !message.payload?.stale)).toBe(true);
+
+        // The tab was closed and opened again, the new data takes a while
+        installedVersion = '2.0.0';
+        let finish: () => void = () => { };
+        const slow = new Promise<unknown>(resolve => { finish = () => resolve({ installedPackages: [{ id: 'Serilog', currentVersion: '2.0.0' }], outdatedPackages: [], transitivePackages: [], consolidatePackages: [], projects: [] }); });
+        (NuGetManagerService.getSolutionNuGetData as jest.Mock).mockImplementationOnce(() => slow);
+        const second = await openEditor(provider);
+
+        const sent = second.webview.postMessage.mock.calls.map(([message]) => message).filter(message => message.type === 'nugetData');
+        expect(sent).toHaveLength(1);
+        expect(sent[0].payload.stale).toBe(true);
+        expect(sent[0].payload.installedPackages[0].currentVersion).toBe('1.0.0');
+
+        finish();
+        await flush();
+        const all = second.webview.postMessage.mock.calls.map(([message]) => message).filter(message => message.type === 'nugetData');
+        expect(all).toHaveLength(2);
+        expect(all[1].payload.stale).toBeUndefined();
+        expect(all[1].payload.installedPackages[0].currentVersion).toBe('2.0.0');
+    });
+
     test('requests that come while a refresh runs share one more refresh, with the newest choice', async () => {
         const { webview, receive } = await openEditor(new NuGetCustomEditorProvider({} as any, {} as any));
         const data = { installedPackages: [{ id: 'Serilog', currentVersion: '1.0.0' }], outdatedPackages: [], transitivePackages: [], consolidatePackages: [], projects: [] };
