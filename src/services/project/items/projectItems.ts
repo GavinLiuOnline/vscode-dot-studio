@@ -212,6 +212,8 @@ interface MsbuildItem {
     FullPath?: string;
     Identity?: string;
     Link?: string;
+    /** `<Visible>false</Visible>`: Visual Studio's Solution Explorer does not list the item */
+    Visible?: string;
     GrpcServices?: string;
     SourceUrl?: string;
     DefiningProjectFullPath?: string;
@@ -268,6 +270,11 @@ export function parseMsbuildItems(output: string, projectDir: string): ProjectIt
                 continue;
             }
             const link = item.Link?.replace(/[\\/]/g, path.sep);
+            // A package's build props add files from the package folder as hidden links (xunit.runner.visualstudio: xunit.abstractions.dll
+            // and its test adapter, to be copied to the output): Visual Studio does not show them, nor do we
+            if (link && String(item.Visible).trim().toLowerCase() === 'false') {
+                continue;
+            }
             entries.push({
                 fullPath,
                 virtualPath: link ? path.resolve(projectDir, link) : fullPath,

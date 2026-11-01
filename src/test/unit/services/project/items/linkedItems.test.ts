@@ -107,3 +107,22 @@ describe('the confirmations', () => {
         expect(multiDeleteQuestion(3, [shared, shared])).toContain('2 of them are linked files: the real files outside the project are deleted');
     });
 });
+
+describe('hidden links (a package adds files of its folder as <Visible>false</Visible> links)', () => {
+    const packageDir = path.join(root, 'nuget', 'xunit.runner.visualstudio', 'build');
+    const output = JSON.stringify({
+        Items: {
+            None: [
+                { Identity: path.join(packageDir, 'xunit.abstractions.dll'), FullPath: path.join(packageDir, 'xunit.abstractions.dll'), Link: 'xunit.abstractions.dll', Visible: 'False', CopyToOutputDirectory: 'PreserveNewest' },
+                { Identity: path.join(packageDir, 'adapter.dll'), FullPath: path.join(packageDir, 'adapter.dll'), Link: 'adapter.dll', Visible: 'false' },
+                { Identity: '..\\Shared\\Shared.cs', FullPath: shared, Link: 'Linked\\Shared.cs' },
+            ],
+        },
+    });
+
+    test('are not in the tree, a normal link still is', () => {
+        const items = parseMsbuildItems(output, projectDir)!;
+        expect(items.linkedEntries().map(entry => entry.fullPath)).toEqual([shared]);
+        expect(items.isLinked(path.join(packageDir, 'xunit.abstractions.dll'))).toBe(false);
+    });
+});
