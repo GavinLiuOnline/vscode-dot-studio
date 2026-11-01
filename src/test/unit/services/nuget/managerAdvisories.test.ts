@@ -11,11 +11,18 @@ jest.mock('../../../../services/solution/solutionService', () => ({
 }));
 
 import { NuGetManagerService } from '../../../../services/nuget/nugetManagerService';
+import { PackageBrowseService } from '../../../../services/nuget/packageBrowseService';
 
 describe('NuGetManagerService.getAdvisories', () => {
     beforeEach(() => {
+        jest.spyOn(PackageBrowseService, 'getPackageSources').mockResolvedValue([{ name: 'nuget.org', url: 'https://www.nuget.org/api/v2/', enabled: true, isLocal: false }]);
         mockRead.mockReset().mockImplementation(async (project: string) => ({ [`${project}|1`]: { deprecation: { reasons: ['Legacy'] } } }));
         mockUnloaded.mockReset().mockImplementation((_solution: string, project: string) => project === '/w/B.csproj');
+    });
+
+    it('hands the V3 nuget.org source to every read when the config only has the V2 URL', async () => {
+        await NuGetManagerService.getAdvisories({ type: 'solution', target: '/w/App.sln' });
+        expect(mockRead.mock.calls.map(call => call[1])).toEqual([['--source', 'https://api.nuget.org/v3/index.json'], ['--source', 'https://api.nuget.org/v3/index.json']]);
     });
 
     it('reads one project for a project manager', async () => {

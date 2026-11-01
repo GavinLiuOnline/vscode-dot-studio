@@ -12,7 +12,7 @@ import {
     PackageAdvisories,
     isNuGetOrgUrl
 } from './types';
-import { mergeAdvisories, readProjectAdvisories } from './packageAdvisories';
+import { advisorySourceArgs, mergeAdvisories, readProjectAdvisories } from './packageAdvisories';
 import { SolutionService } from '../solution/solutionService';
 import { UnloadedProjects } from '../solution/unloadedProjects';
 import { LocalNuGetPackage } from '../../webview/nuget-view/shared';
@@ -295,9 +295,10 @@ export class NuGetManagerService {
             ? [context.target]
             : [...(solution?.projects.keys() ?? [])].filter(project => !UnloadedProjects.isUnloaded(solution!.solutionPath, project));
         const all: PackageAdvisories[] = [];
+        const sourceArgs = advisorySourceArgs(await PackageBrowseService.getPackageSources().catch(() => []));
         // A few at a time: each is two dotnet processes that ask the feeds
         for (let i = 0; i < projects.length; i += 3) {
-            all.push(...await Promise.all(projects.slice(i, i + 3).map(project => readProjectAdvisories(project))));
+            all.push(...await Promise.all(projects.slice(i, i + 3).map(project => readProjectAdvisories(project, sourceArgs))));
         }
         return mergeAdvisories(all);
     }

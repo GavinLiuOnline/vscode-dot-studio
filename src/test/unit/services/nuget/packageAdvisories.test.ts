@@ -2,7 +2,7 @@ jest.mock('vscode', () => ({ workspace: { workspaceFolders: [] } }), { virtual: 
 jest.mock('../../../../services/nuget/dotnetCli', () => ({ execDotnet: jest.fn() }));
 
 import { execDotnet } from '../../../../services/nuget/dotnetCli';
-import { mergeAdvisories, parseAdvisories, readProjectAdvisories } from '../../../../services/nuget/packageAdvisories';
+import { advisorySourceArgs, mergeAdvisories, parseAdvisories, readProjectAdvisories } from '../../../../services/nuget/packageAdvisories';
 import { advisoryKey } from '../../../../services/nuget/types';
 
 // As `dotnet list package --vulnerable|--deprecated --include-transitive --format json` writes them (SDK 10)
@@ -44,5 +44,32 @@ describe('package advisories', () => {
         const advisories = await readProjectAdvisories('/w/A.csproj');
         expect(run.mock.calls.map(call => call[0].slice(0, 4))).toEqual([['list', '/w/A.csproj', 'package', '--vulnerable'], ['list', '/w/A.csproj', 'package', '--deprecated']]);
         expect(Object.keys(advisories)).toEqual([advisoryKey('WindowsAzure.Storage', '9.3.3')]);
+    });
+
+    describe('where the vulnerability data comes from', () => {
+        const source = (url: string, enabled = true, isLocal = false) => ({ name: url, url, enabled, isLocal });
+
+        it('a V2 URL of nuget.org has no vulnerability data (the CLI then finds none): ask nuget.org V3', () => {
+            expect(advisorySourceArgs([source('https://birs.pkgs.visualstudio.com/_packaging/CIRRUS/nuget/v3/index.json'), source('https://www.nuget.org/api/v2/')]))
+                .toEqual(['--source', 'https://api.nuget.org/v3/index.json']);
+            expect(advisorySourceArgs([source('https://www.nuget.org/api/v2')])).toEqual(['--source', 'https://api.nuget.org/v3/index.json']);
+        });
+
+        it('leaves the sources alone when nuget.org is V3 already, absent, disabled or a local folder', () => {
+            expect(advisorySourceArgs([source('https://api.nuget.org/v3/index.json')])).toEqual([]);
+            expect(advisorySourceArgs([source('https://api.nuget.org/v3/index.json'), source('https://www.nuget.org/api/v2/')])).toEqual([]);
+            expect(advisorySourceArgs([source('https://contoso/v3/index.json')])).toEqual([]);
+            expect(advisorySourceArgs([source('https://www.nuget.org/api/v2/', false)])).toEqual([]);
+            expect(advisorySourceArgs([source('/home/me/packages', true, true)])).toEqual([]);
+        });
+
+        it('passes the source to the vulnerable list only', async () => {
+            const run = execDotnet as jest.Mock;
+            run.mockReset().mockResolvedValue({ stdout: '', stderr: '' });
+            await readProjectAdvisories('/w/A.csproj', ['--source', 'https://api.nuget.org/v3/index.json']);
+            const [vulnerableCall, deprecatedCall] = run.mock.calls.map(call => call[0] as string[]);
+            expect(vulnerableCall).toEqual(['list', '/w/A.csproj', 'package', '--vulnerable', '--include-transitive', '--format', 'json', '--source', 'https://api.nuget.org/v3/index.json']);
+            expect(deprecatedCall).not.toContain('--source');
+        });
     });
 });

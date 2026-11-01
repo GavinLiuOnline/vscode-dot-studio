@@ -1,5 +1,5 @@
 import { execDotnet } from './dotnetCli';
-import { advisoryKey, PackageAdvisories, PackageAdvisory } from './types';
+import { advisoryKey, PackageAdvisories, PackageAdvisory, PackageSource, upgradeNuGetOrgUrl } from './types';
 import { logger } from '../../core/logger';
 
 const log = logger('PackageAdvisories');
@@ -69,11 +69,27 @@ export function mergeAdvisories(all: readonly PackageAdvisories[]): PackageAdvis
     return merged;
 }
 
+const NUGET_ORG_V3 = 'https://api.nuget.org/v3/index.json';
+
+/**
+ * `dotnet list package --vulnerable` reads the vulnerability data from the feeds' V3 service index; a V2 URL of nuget.org
+ * (`https://www.nuget.org/api/v2/`, still in many NuGet.Config files) has none, and the command then answers "no vulnerable
+ * packages" for everything. With such a source and no V3 nuget.org beside it, ask nuget.org's V3 feed for the data.
+ */
+export function advisorySourceArgs(sources: readonly PackageSource[]): string[] {
+    const enabled = sources.filter(source => source.enabled && !source.isLocal);
+    const hasV3 = enabled.some(source => source.url.toLowerCase().includes('api.nuget.org/v3'));
+    const hasV2 = enabled.some(source => /nuget\.org/i.test(source.url) && upgradeNuGetOrgUrl(source.url) !== source.url);
+    return hasV2 && !hasV3 ? ['--source', NUGET_ORG_V3] : [];
+}
+
 /** Runs the two lists for a project (a restore must have happened; the answer needs the feeds' vulnerability data) */
-export async function readProjectAdvisories(projectPath: string): Promise<PackageAdvisories> {
+export async function readProjectAdvisories(projectPath: string, sourceArgs: readonly string[] = []): Promise<PackageAdvisories> {
     const list = async (flag: string): Promise<string> => {
         try {
-            return (await execDotnet(['list', projectPath, 'package', flag, '--include-transitive', '--format', 'json'], { timeout: 120000 })).stdout;
+            // `--source` only for the vulnerable list: deprecation data comes from the configured feeds as before
+            const extra = flag === '--vulnerable' ? sourceArgs : [];
+            return (await execDotnet(['list', projectPath, 'package', flag, '--include-transitive', '--format', 'json', ...extra], { timeout: 120000 })).stdout;
         } catch (error) {
             log.warn(`dotnet list package ${flag} failed for ${projectPath}:`, error);
             return '';
