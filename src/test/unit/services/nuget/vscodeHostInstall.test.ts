@@ -14,7 +14,7 @@ describe('vscodeHost.install', () => {
 });
 
 describe('cliFailureReason', () => {
-    const { cliFailureReason } = jest.requireActual('../../../../services/nuget/packageOperationsService') as typeof import('../../../../services/nuget/packageOperationsService');
+    const { cliFailureReason } = jest.requireActual('../../../../services/nuget/dotnetCli') as typeof import('../../../../services/nuget/dotnetCli');
 
     it('gives the error line of the output: the CLI prints it to stdout, the exception only says "Command failed"', () => {
         const error = Object.assign(new Error('Command failed: dotnet add X.csproj package Cirrus.RuleSet --no-restore\n'), {

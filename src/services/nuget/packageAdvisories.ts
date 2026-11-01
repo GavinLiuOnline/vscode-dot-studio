@@ -1,4 +1,5 @@
-import { execDotnet } from './dotnetCli';
+import * as path from 'path';
+import { cliFailureReason, execDotnet } from './dotnetCli';
 import { advisoryKey, PackageAdvisories, PackageAdvisory, PackageSource, upgradeNuGetOrgUrl } from './types';
 import { logger } from '../../core/logger';
 
@@ -91,7 +92,8 @@ export async function readProjectAdvisories(projectPath: string, sourceArgs: rea
             const extra = flag === '--vulnerable' ? sourceArgs : [];
             return (await execDotnet(['list', projectPath, 'package', flag, '--include-transitive', '--format', 'json', ...extra], { timeout: 120000 })).stdout;
         } catch (error) {
-            log.warn(`dotnet list package ${flag} failed for ${projectPath}:`, error);
+            // The reason from the CLI's output ("Failed to fetch results from V2 feed at ..."): the exception only says "Command failed"
+            log.warn(`dotnet list package ${flag} failed for ${path.basename(projectPath)}: ${cliFailureReason(error)}`);
             return '';
         }
     };

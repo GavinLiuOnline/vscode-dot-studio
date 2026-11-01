@@ -260,6 +260,23 @@ describe('NuGet manager: refresh and package source', () => {
             expect(shown()).toEqual(['Serilog']);
         });
 
+        it('a package used in two versions is flagged when the older one is vulnerable, though the list shows the newest', () => {
+            jest.useFakeTimers();
+            const { container } = render(<App />);
+            post({ type: 'nugetData', payload: {
+                installedPackages: [{ ...installed('Serilog', '4.0.0'), versionsInUse: ['4.0.0'] }],
+                transitivePackages: [{ ...installed('System.Security.Cryptography.Pkcs', '10.0.14'), versionsInUse: ['10.0.14', '9.0.11'], transitiveReferencedBy: ['Serilog'] }],
+                projects: [project], searchResults: [],
+            } });
+            post({ type: 'packageAdvisories', payload: { advisories: { 'system.security.cryptography.pkcs|9.0.11': { vulnerabilities: [{ severity: 'High', url: 'https://github.com/advisories/x' }] } } } });
+
+            fireEvent.click(screen.getByText('Vulnerable'));
+            fireEvent.click(screen.getByText('System.Security.Cryptography.Pkcs'));
+
+            expect(screen.getAllByText('vulnerable: high').length).toBeGreaterThan(0);
+            expect(container.textContent).toContain('Version 9.0.11 in use has known vulnerabilities');
+        });
+
         it('the details of a vulnerable package link the advisory', () => {
             const { container } = open();
             post({ type: 'packageAdvisories', payload: { advisories: { 'newtonsoft.json|12.0.1': { vulnerabilities: [{ severity: 'High', url: 'https://github.com/advisories/GHSA-5crp-9r3c-p9vr' }] } } } });

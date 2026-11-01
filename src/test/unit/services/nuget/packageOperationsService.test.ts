@@ -1,5 +1,5 @@
 jest.mock('vscode', () => ({ workspace: { workspaceFolders: [] }, window: {}, commands: {}, env: {} }), { virtual: true });
-jest.mock('../../../../services/nuget/dotnetCli', () => ({ execDotnet: jest.fn() }));
+jest.mock('../../../../services/nuget/dotnetCli', () => ({ ...jest.requireActual('../../../../services/nuget/dotnetCli'), execDotnet: jest.fn() }));
 jest.mock('../../../../services/nuget/feedAuth', () => ({ reportRejectedInOutput: jest.fn() }));
 
 import { execDotnet } from '../../../../services/nuget/dotnetCli';

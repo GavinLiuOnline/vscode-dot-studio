@@ -15,7 +15,9 @@ export default function NugetDetail({ selectedPackage, advisory, mappedSources }
             {!!advisory?.vulnerabilities?.length && (
                 <div role="alert" style={{ marginBottom: '16px', padding: '8px 12px', border: '1px solid var(--vscode-errorForeground)', borderRadius: '4px' }}>
                     <div style={{ fontWeight: 'bold', color: 'var(--vscode-errorForeground)', marginBottom: '4px' }}>
-                        This version has known vulnerabilities
+                        {advisory.vulnerableVersions && (advisory.vulnerableVersions.length > 1 || advisory.vulnerableVersions[0] !== ((selectedPackage as { version?: string }).version ?? selectedPackage.currentVersion))
+                            ? `Version${advisory.vulnerableVersions.length > 1 ? 's' : ''} ${advisory.vulnerableVersions.join(', ')} in use ${advisory.vulnerableVersions.length > 1 ? 'have' : 'has'} known vulnerabilities`
+                            : 'This version has known vulnerabilities'}
                     </div>
                     {advisory.vulnerabilities.map(vulnerability => (
                         <div key={vulnerability.url}>

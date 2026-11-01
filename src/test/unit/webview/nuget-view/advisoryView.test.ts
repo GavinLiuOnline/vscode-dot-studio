@@ -1,4 +1,4 @@
-import { advisoryBadges, passesAdvisoryFilter, worstSeverity } from '../../../../webview/nuget-view/advisoryView';
+import { advisoryAcrossVersions, advisoryBadges, passesAdvisoryFilter, worstSeverity } from '../../../../webview/nuget-view/advisoryView';
 
 const high = { vulnerabilities: [{ severity: 'Low', url: 'a' }, { severity: 'High', url: 'b' }] };
 const deprecated = { deprecation: { reasons: ['Legacy', 'CriticalBugs'], alternative: { id: 'Azure.Storage.Common' } } };
@@ -26,5 +26,35 @@ describe('advisory view helpers', () => {
         expect(passesAdvisoryFilter(high, { vulnerable: true, deprecated: false })).toBe(true);
         expect(passesAdvisoryFilter(high, { vulnerable: false, deprecated: true })).toBe(false);
         expect(passesAdvisoryFilter(deprecated, { vulnerable: true, deprecated: true })).toBe(true);
+    });
+});
+
+describe('advisoryAcrossVersions', () => {
+    const advisories = {
+        'system.security.cryptography.pkcs|9.0.11': { vulnerabilities: [{ severity: 'High', url: 'https://github.com/advisories/x' }] },
+        'system.security.cryptography.pkcs|10.0.14': {},
+    };
+
+    it('finds the vulnerable version when the list shows the newest one', () => {
+        const advisory = advisoryAcrossVersions(advisories, 'System.Security.Cryptography.Pkcs', ['10.0.14', '9.0.11'], '10.0.14');
+        expect(advisory?.vulnerabilities).toEqual([{ severity: 'High', url: 'https://github.com/advisories/x' }]);
+        expect(advisory?.vulnerableVersions).toEqual(['9.0.11']);
+    });
+
+    it('is the plain advisory when only the shown version is in use', () => {
+        expect(advisoryAcrossVersions(advisories, 'System.Security.Cryptography.Pkcs', ['9.0.11'], '9.0.11')).toBe(advisories['system.security.cryptography.pkcs|9.0.11']);
+        expect(advisoryAcrossVersions(advisories, 'System.Security.Cryptography.Pkcs', undefined, '9.0.11')).toBe(advisories['system.security.cryptography.pkcs|9.0.11']);
+    });
+
+    it('is nothing for versions without advisories', () => {
+        expect(advisoryAcrossVersions(advisories, 'Serilog', ['4.0.0'], '4.0.0')).toBeUndefined();
+        expect(advisoryAcrossVersions(advisories, 'System.Security.Cryptography.Pkcs', ['10.0.14'], '10.0.14')).toEqual(advisories['system.security.cryptography.pkcs|10.0.14']);
+    });
+
+    it('joins the vulnerabilities of several vulnerable versions without repeating an advisory', () => {
+        const both = { 'a|1.0.0': { vulnerabilities: [{ severity: 'High', url: 'u1' }] }, 'a|2.0.0': { vulnerabilities: [{ severity: 'High', url: 'u1' }, { severity: 'Low', url: 'u2' }] } };
+        const advisory = advisoryAcrossVersions(both, 'A', ['1.0.0', '2.0.0'], '2.0.0');
+        expect(advisory?.vulnerabilities?.map(v => v.url)).toEqual(['u1', 'u2']);
+        expect([...(advisory?.vulnerableVersions ?? [])].sort()).toEqual(['1.0.0', '2.0.0']);
     });
 });

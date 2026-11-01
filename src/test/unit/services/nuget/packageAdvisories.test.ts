@@ -1,5 +1,5 @@
 jest.mock('vscode', () => ({ workspace: { workspaceFolders: [] } }), { virtual: true });
-jest.mock('../../../../services/nuget/dotnetCli', () => ({ execDotnet: jest.fn() }));
+jest.mock('../../../../services/nuget/dotnetCli', () => ({ ...jest.requireActual('../../../../services/nuget/dotnetCli'), execDotnet: jest.fn() }));
 
 import { execDotnet } from '../../../../services/nuget/dotnetCli';
 import { advisorySourceArgs, mergeAdvisories, parseAdvisories, readProjectAdvisories } from '../../../../services/nuget/packageAdvisories';

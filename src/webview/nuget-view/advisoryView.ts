@@ -1,4 +1,4 @@
-import { PackageAdvisory } from '../../services/nuget/types';
+import { advisoryKey, PackageAdvisories, PackageAdvisory } from '../../services/nuget/types';
 
 const SEVERITIES = ['Critical', 'High', 'Moderate', 'Low'] as const;
 
@@ -42,4 +42,31 @@ export function passesAdvisoryFilter(advisory: PackageAdvisory | undefined, filt
         return true;
     }
     return (filter.vulnerable && !!advisory?.vulnerabilities?.length) || (filter.deprecated && !!advisory?.deprecation);
+}
+
+/**
+ * The advisory of a package that the projects may use in several versions: the list shows one version, but a vulnerable older
+ * one still counts (the projects that use it are affected). The vulnerabilities of all the versions in use, with the vulnerable
+ * versions named when they are not just the shown one; the deprecation is the same for every version.
+ */
+export function advisoryAcrossVersions(advisories: PackageAdvisories, id: string, versionsInUse: readonly string[] | undefined, shown: string): PackageAdvisory | undefined {
+    const versions = [...new Set([shown, ...(versionsInUse ?? [])].filter(Boolean))];
+    const found = versions.flatMap(version => {
+        const advisory = advisories[advisoryKey(id, version)];
+        return advisory ? [{ version, advisory }] : [];
+    });
+    if (found.length === 0) {
+        return undefined;
+    }
+    if (found.length === 1 && found[0].version === shown && versions.length <= 1) {
+        return found[0].advisory;
+    }
+    const vulnerable = found.filter(entry => entry.advisory.vulnerabilities?.length);
+    const vulnerabilities = vulnerable.flatMap(entry => entry.advisory.vulnerabilities ?? [])
+        .filter((vulnerability, index, all) => all.findIndex(other => other.url === vulnerability.url) === index);
+    const deprecation = found.find(entry => entry.advisory.deprecation)?.advisory.deprecation;
+    return {
+        ...(vulnerabilities.length ? { vulnerabilities, vulnerableVersions: vulnerable.map(entry => entry.version) } : {}),
+        ...(deprecation ? { deprecation } : {}),
+    };
 }

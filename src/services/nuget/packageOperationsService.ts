@@ -2,21 +2,9 @@ import * as path from 'path';
 import { logger } from '../../core/logger';
 import { PackageInstallOptions, PackageOperationResult } from './types';
 import { reportRejectedInOutput } from './feedAuth';
-import { execDotnet } from './dotnetCli';
+import { cliFailureReason, execDotnet } from './dotnetCli';
 
 const log = logger('PackageOperationsService');
-
-/**
- * Why a dotnet command failed, in one line: the `error:` lines of its output (the CLI prints them to stdout, and the
- * message of the exception then has only "Command failed: dotnet add ..."), else the exception's first line
- */
-export function cliFailureReason(error: unknown): string {
-    const { stdout = '', stderr = '', message = '' } = (error ?? {}) as { stdout?: string; stderr?: string; message?: string };
-    const errors = `${stderr}\n${stdout}`.split(/\r?\n/)
-        .map(line => /^\s*(?:error|fail)\b\s*:?\s*(.+)$/i.exec(line)?.[1]?.replace(/\s+-\s*$/, '').trim())
-        .filter((line): line is string => !!line);
-    return errors.length > 0 ? [...new Set(errors)].join(' ') : (message.split(/\r?\n/)[0] || 'Unknown error');
-}
 
 /**
  * NuGet package operations (install, uninstall, restore) with the dotnet CLI. A command that fails exits with an error

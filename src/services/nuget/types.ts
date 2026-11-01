@@ -254,6 +254,8 @@ export interface PackageOperationResult {
 
 /** What `dotnet list package --vulnerable` and `--deprecated` report about one version of a package */
 export interface PackageAdvisory {
+    /** The versions in use that the vulnerabilities are for (set when a package is used in several versions) */
+    readonly vulnerableVersions?: readonly string[];
     readonly vulnerabilities?: readonly { readonly severity: string; readonly url: string }[];
     readonly deprecation?: { readonly reasons: readonly string[]; readonly alternative?: { readonly id: string; readonly range?: string } };
 }

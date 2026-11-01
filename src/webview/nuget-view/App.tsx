@@ -12,8 +12,8 @@ import { PackageList } from './components/PackageList';
 import { SourcesView } from './components/SourcesView';
 import { TwoPanel } from './components/TwoPanel';
 import { LabelledCheckbox } from './components/LabelledCheckbox';
-import { advisoryKey, ManagedSource, PackageAdvisories, PackageAdvisory, ProjectInfo } from '../../services/nuget/types';
-import { passesAdvisoryFilter } from './advisoryView';
+import { ManagedSource, PackageAdvisories, PackageAdvisory, ProjectInfo } from '../../services/nuget/types';
+import { advisoryAcrossVersions, passesAdvisoryFilter } from './advisoryView';
 import { mappedSources } from '../../services/nuget/packageSourceMapping';
 import { VersionUtils } from '../../services/shared/versionUtils';
 import { NuGetViewData, UICmd } from '../../types/commands/ui';
@@ -49,7 +49,7 @@ export const App: React.FC = () => {
     const mappedSourcesOf = (pkg: LocalNuGetPackage | null | undefined): string[] | undefined =>
         pkg && data.sourceMapping ? mappedSources(data.sourceMapping, pkg.id) : undefined;
     const advisoryOf = (pkg: LocalNuGetPackage | null | undefined): PackageAdvisory | undefined =>
-        pkg ? advisories[advisoryKey(pkg.id, (pkg as { version?: string }).version ?? pkg.currentVersion)] : undefined;
+        pkg ? advisoryAcrossVersions(advisories, pkg.id, pkg.versionsInUse, (pkg as { version?: string }).version ?? pkg.currentVersion) : undefined;
     // Visual Studio's "Transitive packages" section starts collapsed
     const [transitiveExpanded, setTransitiveExpanded] = useState(false);
     const [consolidateLoading, setConsolidateLoading] = useState(false);

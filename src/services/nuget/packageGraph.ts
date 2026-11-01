@@ -113,6 +113,8 @@ export interface TransitivePackage<P> {
     readonly id: string;
     /** The highest version restore resolved across the projects */
     readonly currentVersion: string;
+    /** Every version restore resolved across the projects and frameworks (an older one may be the vulnerable one) */
+    readonly versionsInUse: string[];
     /** Projects that get the package through others */
     readonly projects: P[];
     /** The top-level packages that bring it in; with the project's name when there are several projects */
@@ -125,14 +127,17 @@ export interface TransitivePackage<P> {
  */
 export function collectTransitivePackages<P>(projects: readonly { project: P & { name: string }; graph: PackageGraph }[]): TransitivePackage<P>[] {
     const direct = new Set(projects.flatMap(({ graph }) => graph.direct.map(id => id.toLowerCase())));
-    const byId = new Map<string, { id: string; currentVersion: string; projects: P[]; transitiveReferencedBy: string[] }>();
+    const byId = new Map<string, { id: string; currentVersion: string; versionsInUse: string[]; projects: P[]; transitiveReferencedBy: string[] }>();
     for (const { project, graph } of projects) {
         for (const [key, referrers] of transitiveReferrers(graph)) {
             if (direct.has(key)) {
                 continue;
             }
             const resolved = graph.packages.get(key)!;
-            const entry = byId.get(key) ?? { id: resolved.id, currentVersion: resolved.version, projects: [], transitiveReferencedBy: [] };
+            const entry = byId.get(key) ?? { id: resolved.id, currentVersion: resolved.version, versionsInUse: [], projects: [], transitiveReferencedBy: [] };
+            if (!entry.versionsInUse.includes(resolved.version)) {
+                entry.versionsInUse.push(resolved.version);
+            }
             if (VersionUtils.compare(resolved.version, entry.currentVersion) < 0) {
                 entry.currentVersion = resolved.version;
             }

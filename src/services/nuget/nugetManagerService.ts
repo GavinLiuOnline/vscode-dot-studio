@@ -180,7 +180,7 @@ export class NuGetManagerService {
                 : await PackageInstalledService.getInstalledPackagesWithMetadata();
 
             // Group by package ID and create projects array
-            const packageMap = new Map<string, (InstalledPackage & { projects: ProjectInfo[] })>();
+            const packageMap = new Map<string, (InstalledPackage & { projects: ProjectInfo[]; versionsInUse: string[] })>();
 
             log.debug(`Grouping ${installedPackages.length} packages for UI`);
 
@@ -202,8 +202,12 @@ export class NuGetManagerService {
                 }
 
                 const existing = packageMap.get(pkg.id);
+                const versionInUse = (pkg as { version?: string }).version ?? pkg.currentVersion;
 
                 if (existing) {
+                    if (versionInUse && !existing.versionsInUse.includes(versionInUse)) {
+                        existing.versionsInUse.push(versionInUse);
+                    }
                     // Add project info to existing package
                     if (pkg.projectName) {
                         // Find the full project info from allProjects
@@ -218,6 +222,7 @@ export class NuGetManagerService {
                     packageMap.set(pkg.id, {
                         ...pkg,
                         // currentVersion is already correct from pkg.currentVersion
+                        versionsInUse: versionInUse ? [versionInUse] : [],
                         projects: fullProjectInfo ? [fullProjectInfo] : []
                     });
                 }

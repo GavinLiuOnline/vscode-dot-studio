@@ -94,5 +94,25 @@ describe('packageGraph', () => {
             expect(transitive.map(pkg => pkg.id)).not.toContain('Microsoft.EntityFrameworkCore.Relational');
             expect(transitive.map(pkg => pkg.id)).not.toContain('SQLitePCLRaw.core');
         });
+
+        it('names every version restore resolved, not only the highest (an older one may be the vulnerable one)', () => {
+            const older = parsePackageGraph(assets({
+                'net10.0': {
+                    'Microsoft.EntityFrameworkCore.Relational/9.0.1': { type: 'package', dependencies: { 'Microsoft.EntityFrameworkCore': '9.0.1' } },
+                    'Microsoft.EntityFrameworkCore/9.0.1': { type: 'package' },
+                },
+            }, { 'net10.0': ['Microsoft.EntityFrameworkCore.Relational'] }))!;
+            const consumer = parsePackageGraph(assets({
+                'net10.0': {
+                    'Some.Lib/1.0.0': { type: 'package', dependencies: { 'Microsoft.EntityFrameworkCore': '9.0.1' } },
+                    'Microsoft.EntityFrameworkCore/9.0.1': { type: 'package' },
+                },
+            }, { 'net10.0': ['Some.Lib'] }))!;
+            const transitive = collectTransitivePackages([{ project: web, graph }, { project: api, graph: consumer }]);
+            const ef = transitive.find(pkg => pkg.id === 'Microsoft.EntityFrameworkCore')!;
+            expect(ef.currentVersion).toBe('10.0.13');
+            expect([...ef.versionsInUse].sort()).toEqual(['10.0.13', '9.0.1']);
+            expect(older).toBeDefined();
+        });
     });
 });
