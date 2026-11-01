@@ -9,11 +9,45 @@ export interface PackageGraph {
     readonly direct: string[];
     /** By lower-case package id: its id, resolved version and the ids of the packages it depends on */
     readonly packages: Map<string, { readonly id: string; readonly version: string; readonly dependencies: string[] }>;
+    /** The projects this one references, with the ids they depend on: packages only they bring in are transitive here too */
+    readonly projectReferences?: { readonly id: string; readonly dependencies: string[] }[];
 }
 
 export interface ResolvedPackage {
     readonly id: string;
     readonly version: string;
+}
+
+/** The framework name a target is keyed by for an alias: `net471` is `.NETFramework,Version=v4.7.1` (.NET Core 3.1 and older, .NET Standard and .NET Framework use the long name) */
+export function targetNameOfAlias(alias: string): string | undefined {
+    const framework = /^net(4\d{1,2})$/i.exec(alias);
+    if (framework) {
+        return `.NETFramework,Version=v${framework[1].split('').join('.')}`;
+    }
+    const standard = /^netstandard(\d+\.\d+)$/i.exec(alias);
+    if (standard) {
+        return `.NETStandard,Version=v${standard[1]}`;
+    }
+    const core = /^netcoreapp(\d+\.\d+)$/i.exec(alias);
+    return core ? `.NETCoreApp,Version=v${core[1]}` : undefined;
+}
+
+/**
+ * The key of the framework's target in project.assets.json: its alias (current SDKs, `net10.0`), else its long name
+ * (`.NETFramework,Version=v4.7.1`: how the older frameworks are keyed, in an order of their own, not the order of the
+ * project's frameworks), else the one target left over once the other frameworks took theirs
+ */
+function targetKeyOf(alias: string, frameworks: string[], targetKeys: string[]): string {
+    if (targetKeys.includes(alias)) {
+        return alias;
+    }
+    const long = targetNameOfAlias(alias);
+    if (long && targetKeys.includes(long)) {
+        return long;
+    }
+    const left = targetKeys.filter(key => !frameworks.includes(key) && !frameworks.some(other => targetNameOfAlias(other) === key));
+    const unmatched = frameworks.filter(other => !targetKeys.includes(other) && !(targetNameOfAlias(other) && targetKeys.includes(targetNameOfAlias(other)!)));
+    return left[Math.max(0, unmatched.indexOf(alias))] ?? targetKeys[Math.max(0, frameworks.indexOf(alias))];
 }
 
 /**
@@ -33,24 +67,37 @@ export function parsePackageGraph(assetsJson: string, framework?: string): Packa
         return undefined;
     }
     const alias = framework && frameworks.includes(framework) ? framework : frameworks[0];
-    // The targets are keyed by alias (net10.0) in current SDKs, by full name in older ones; same order
-    const targetKey = targetKeys.includes(alias) ? alias : targetKeys[Math.max(0, frameworks.indexOf(alias))];
+    const targetKey = targetKeyOf(alias, frameworks, targetKeys);
 
     const packages: PackageGraph['packages'] = new Map();
+    const projectReferences: NonNullable<PackageGraph['projectReferences']> = [];
     for (const [key, entry] of Object.entries<any>(assets.targets[targetKey] ?? {})) {
-        if (entry?.type !== 'package') {
-            continue;
-        }
         const slash = key.lastIndexOf('/');
         const id = key.slice(0, slash);
-        packages.set(id.toLowerCase(), { id, version: key.slice(slash + 1), dependencies: Object.keys(entry.dependencies ?? {}) });
+        if (entry?.type === 'project') {
+            projectReferences.push({ id, dependencies: Object.keys(entry.dependencies ?? {}) });
+        } else if (entry?.type === 'package') {
+            packages.set(id.toLowerCase(), { id, version: key.slice(slash + 1), dependencies: Object.keys(entry.dependencies ?? {}) });
+        }
     }
 
     return {
         framework: alias ?? targetKey,
         direct: Object.keys(assets.project?.frameworks?.[alias]?.dependencies ?? {}),
         packages,
+        projectReferences,
     };
+}
+
+/** The graphs of all the frameworks a project targets (a package may exist for one of them only) */
+export function parsePackageGraphs(assetsJson: string): PackageGraph[] {
+    let aliases: string[];
+    try {
+        aliases = Object.keys(JSON.parse(assetsJson)?.project?.frameworks ?? {});
+    } catch {
+        return [];
+    }
+    return aliases.flatMap(alias => parsePackageGraph(assetsJson, alias) ?? []);
 }
 
 /** The packages a package depends on, with the versions restore picked */
@@ -85,6 +132,34 @@ export function transitiveReferrers(graph: PackageGraph): Map<string, string[]> 
         };
         visit(direct);
     }
+    // Packages that only a referenced project brings in: "Transitively referenced by" the project, as in Visual Studio
+    for (const project of graph.projectReferences ?? []) {
+        const label = `${project.id} (project)`;
+        const seen = new Set<string>();
+        const visit = (id: string) => {
+            for (const dependency of graph.packages.get(id.toLowerCase())?.dependencies ?? []) {
+                const key = dependency.toLowerCase();
+                if (seen.has(key) || !graph.packages.has(key)) {
+                    continue;
+                }
+                seen.add(key);
+                if (!directIds.has(key)) {
+                    referrers.set(key, [...(referrers.get(key) ?? []), label]);
+                }
+                visit(key);
+            }
+        };
+        for (const dependency of project.dependencies) {
+            const key = dependency.toLowerCase();
+            if (graph.packages.has(key) && !seen.has(key)) {
+                seen.add(key);
+                if (!directIds.has(key)) {
+                    referrers.set(key, [...(referrers.get(key) ?? []), label]);
+                }
+                visit(key);
+            }
+        }
+    }
     return referrers;
 }
 
@@ -109,6 +184,26 @@ export function readPackageGraph(projectPath: string, framework?: string): Packa
     return graph;
 }
 
+const graphsCache = new Map<string, { mtime: number; graphs: PackageGraph[] }>();
+
+/** The package graphs of every framework of a project after its last restore; none before the first one */
+export function readPackageGraphs(projectPath: string): PackageGraph[] {
+    const assetsPath = path.join(path.dirname(projectPath), 'obj', 'project.assets.json');
+    let mtime: number;
+    try {
+        mtime = fs.statSync(assetsPath).mtimeMs;
+    } catch {
+        return [];
+    }
+    const cached = graphsCache.get(projectPath);
+    if (cached?.mtime === mtime) {
+        return cached.graphs;
+    }
+    const graphs = parsePackageGraphs(fs.readFileSync(assetsPath, 'utf8'));
+    graphsCache.set(projectPath, { mtime, graphs });
+    return graphs;
+}
+
 export interface TransitivePackage<P> {
     readonly id: string;
     /** The highest version restore resolved across the projects */
@@ -127,6 +222,8 @@ export interface TransitivePackage<P> {
  */
 export function collectTransitivePackages<P>(projects: readonly { project: P & { name: string }; graph: PackageGraph }[]): TransitivePackage<P>[] {
     const direct = new Set(projects.flatMap(({ graph }) => graph.direct.map(id => id.toLowerCase())));
+    // The same project once per framework: only different projects need their name in "referenced by"
+    const severalProjects = new Set(projects.map(entry => entry.project)).size > 1;
     const byId = new Map<string, { id: string; currentVersion: string; versionsInUse: string[]; projects: P[]; transitiveReferencedBy: string[] }>();
     for (const { project, graph } of projects) {
         for (const [key, referrers] of transitiveReferrers(graph)) {
@@ -141,8 +238,15 @@ export function collectTransitivePackages<P>(projects: readonly { project: P & {
             if (VersionUtils.compare(resolved.version, entry.currentVersion) < 0) {
                 entry.currentVersion = resolved.version;
             }
-            entry.projects.push(project);
-            entry.transitiveReferencedBy.push(...referrers.map(referrer => projects.length > 1 ? `${referrer} (${project.name})` : referrer));
+            // One entry per project and framework: a project and a referrer count once
+            if (!entry.projects.includes(project)) {
+                entry.projects.push(project);
+            }
+            for (const referrer of referrers.map(name => severalProjects ? `${name} (${project.name})` : name)) {
+                if (!entry.transitiveReferencedBy.includes(referrer)) {
+                    entry.transitiveReferencedBy.push(referrer);
+                }
+            }
             byId.set(key, entry);
         }
     }

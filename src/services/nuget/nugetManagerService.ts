@@ -16,8 +16,7 @@ import { advisorySourceArgs, mergeAdvisories, readProjectAdvisories } from './pa
 import { SolutionService } from '../solution/solutionService';
 import { UnloadedProjects } from '../solution/unloadedProjects';
 import { LocalNuGetPackage } from '../../webview/nuget-view/shared';
-import { collectTransitivePackages, readPackageGraph } from './packageGraph';
-import { activeFrameworkOf } from '../project/projectFramework';
+import { collectTransitivePackages, readPackageGraphs } from './packageGraph';
 
 const log = logger('NuGetManagerService');
 
@@ -368,10 +367,8 @@ export class NuGetManagerService {
      * from their last restore, with the same metadata as the installed ones
      */
     static async getTransitivePackages(projects: ProjectInfo[]) {
-        const graphs = projects.flatMap(project => {
-            const graph = readPackageGraph(project.path, activeFrameworkOf(project.path));
-            return graph ? [{ project, graph }] : [];
-        });
+        // Every framework of every project: a package (a vulnerable one) may exist for one of them only
+        const graphs = projects.flatMap(project => readPackageGraphs(project.path).map(graph => ({ project, graph })));
         return PackageSharedService.enrichWithBrowseMetadata(collectTransitivePackages(graphs));
     }
 

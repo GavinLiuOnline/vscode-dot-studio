@@ -1,4 +1,4 @@
-import { collectTransitivePackages, packageDependencies, parsePackageGraph, transitiveReferrers } from '../../../../services/nuget/packageGraph';
+import { collectTransitivePackages, packageDependencies, parsePackageGraph, parsePackageGraphs, targetNameOfAlias, transitiveReferrers } from '../../../../services/nuget/packageGraph';
 
 const assets = (targets: Record<string, Record<string, unknown>>, direct: Record<string, string[]>) => JSON.stringify({
     targets,
@@ -54,6 +54,28 @@ describe('packageGraph', () => {
         expect(packageDependencies(parsePackageGraph(multi, 'net10.0')!, 'A')).toEqual([]);
         // Without a framework: the first one
         expect(parsePackageGraph(multi)!.framework).toBe('net8.0');
+    });
+
+    it('finds the target of an old framework by its long name, whatever order the targets come in', () => {
+        // As NuGet writes a project that targets net471 and net10.0: the frameworks net10.0 first, the targets .NETFramework first
+        const json = JSON.stringify({
+            targets: {
+                '.NETFramework,Version=v4.7.1': { 'Old/1.0.0': { type: 'package' } },
+                'net10.0': { 'New/2.0.0': { type: 'package' } },
+            },
+            project: { frameworks: { 'net10.0': { dependencies: { New: {} } }, net471: { dependencies: { Old: {} } } } },
+        });
+        expect([...parsePackageGraph(json, 'net471')!.packages.keys()]).toEqual(['old']);
+        expect([...parsePackageGraph(json, 'net10.0')!.packages.keys()]).toEqual(['new']);
+        expect(parsePackageGraphs(json).map(graph => [graph.framework, [...graph.packages.keys()]])).toEqual([['net10.0', ['new']], ['net471', ['old']]]);
+    });
+
+    it('names the long target of an alias', () => {
+        expect(targetNameOfAlias('net471')).toBe('.NETFramework,Version=v4.7.1');
+        expect(targetNameOfAlias('net48')).toBe('.NETFramework,Version=v4.8');
+        expect(targetNameOfAlias('netstandard2.0')).toBe('.NETStandard,Version=v2.0');
+        expect(targetNameOfAlias('netcoreapp3.1')).toBe('.NETCoreApp,Version=v3.1');
+        expect(targetNameOfAlias('net10.0')).toBeUndefined();
     });
 
     it('has no graph for unreadable assets', () => {
@@ -113,6 +135,58 @@ describe('packageGraph', () => {
             expect(ef.currentVersion).toBe('10.0.13');
             expect([...ef.versionsInUse].sort()).toEqual(['10.0.13', '9.0.1']);
             expect(older).toBeDefined();
+        });
+
+        describe('as Cirrus.Core has them: several frameworks and project references', () => {
+            // Localisation targets net471 and net10.0: Microsoft.Data.SqlClient (and so Pkcs) only exists for net10.0
+            const multi = assets({
+                net471: {
+                    'Some.Lib/1.0.0': { type: 'package' },
+                    'System.Text.Encodings.Web/4.5.0': { type: 'package' },
+                    'Cirrus.Core/1.0.0': { type: 'project', dependencies: { 'System.Text.Encodings.Web': '4.5.0' } },
+                },
+                'net10.0': {
+                    'Some.Lib/1.0.0': { type: 'package' },
+                    'Microsoft.Data.SqlClient/6.1.4': { type: 'package', dependencies: { 'System.Security.Cryptography.Pkcs': '9.0.11' } },
+                    'System.Security.Cryptography.Pkcs/9.0.11': { type: 'package' },
+                    'Cirrus.Core/1.0.0': { type: 'project', dependencies: { 'Newtonsoft.Json': '13.0.3' } },
+                    'Newtonsoft.Json/13.0.3': { type: 'package' },
+                },
+            }, { net471: ['Some.Lib'], 'net10.0': ['Some.Lib', 'Microsoft.Data.SqlClient'] });
+            const lib = { name: 'Localisation', path: '/repo/Localisation/Localisation.csproj' };
+
+            it('parses the graph of every framework', () => {
+                expect(parsePackageGraphs(multi).map(graph => graph.framework)).toEqual(['net471', 'net10.0']);
+                expect(parsePackageGraphs('not json')).toEqual([]);
+            });
+
+            it('a package that exists for one framework only is transitive, with its referrer', () => {
+                const transitive = collectTransitivePackages(parsePackageGraphs(multi).map(graph => ({ project: lib, graph })));
+                const pkcs = transitive.find(pkg => pkg.id === 'System.Security.Cryptography.Pkcs')!;
+                expect(pkcs.currentVersion).toBe('9.0.11');
+                expect(pkcs.transitiveReferencedBy).toEqual(['Microsoft.Data.SqlClient']);
+                expect(pkcs.projects).toEqual([lib]);
+            });
+
+            it('a package that only a referenced project brings in is transitive, referenced by that project', () => {
+                const transitive = collectTransitivePackages(parsePackageGraphs(multi).map(graph => ({ project: lib, graph })));
+                expect(transitive.map(pkg => [pkg.id, pkg.transitiveReferencedBy])).toEqual(expect.arrayContaining([
+                    ['System.Text.Encodings.Web', ['Cirrus.Core (project)']],
+                    ['Newtonsoft.Json', ['Cirrus.Core (project)']],
+                ]));
+                // Referenced by the project itself: top-level, never transitive
+                expect(transitive.map(pkg => pkg.id)).not.toContain('Some.Lib');
+            });
+
+            it('names a referrer once, however many frameworks bring it in', () => {
+                const twice = assets({
+                    net471: { 'A/1.0.0': { type: 'package', dependencies: { B: '1.0.0' } }, 'B/1.0.0': { type: 'package' } },
+                    'net10.0': { 'A/1.0.0': { type: 'package', dependencies: { B: '1.0.0' } }, 'B/1.0.0': { type: 'package' } },
+                }, { net471: ['A'], 'net10.0': ['A'] });
+                const [b] = collectTransitivePackages(parsePackageGraphs(twice).map(graph => ({ project: lib, graph })));
+                expect(b.transitiveReferencedBy).toEqual(['A']);
+                expect(b.projects).toEqual([lib]);
+            });
         });
     });
 });
