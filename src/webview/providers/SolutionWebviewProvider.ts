@@ -277,6 +277,8 @@ export class SolutionWebviewProvider implements vscode.WebviewViewProvider {
                         const option = this._frameworkService.getFrameworkOptions().find(candidate => (candidate.value ?? '') === value);
                         if (option) {
                             await this._frameworkService.setActiveFramework(option.value);
+                            // The Dependencies tree and the toolbar follow the choice
+                            this.refresh();
                         }
                     }
                 } else if (message.payload?.action && TOOLBAR_ACTIONS.includes(message.payload.action)) {

@@ -3,6 +3,7 @@ import { FrameworkOption } from '../../types/framework';
 import { DebugConfigService } from './debugConfigService';
 import { logger } from '../../core/logger';
 import { Solution } from '../../core/Solution';
+import { FrameworkChoice } from '../project/frameworkChoice';
 
 const log = logger('FrameworkDropdownService');
 
@@ -27,16 +28,11 @@ export class FrameworkDropdownService {
 
     public getFrameworkOptions(): FrameworkOption[] {
         try {
-            // First, try to get frameworks from the current startup project
-            const startupProjectPath = this.solution?.getStartupProject();
-            const project = this.solution?.projects.get(startupProjectPath || '');
-            let frameworks: string[] = project?.frameworks || [];
-            // Fallback: if no startup project or no frameworks found, get from solution
-            if (frameworks.length === 0) {
-                log.info('No frameworks found in startup project, falling back to solution frameworks');
-                if (this.solution?.solutionFile) {
-                    frameworks = SolutionService.getAllFrameworks(this.solution.solutionFile);
-                }
+            // Every framework any loaded project targets: the choice is the solution's, not the startup project's
+            let frameworks: string[] = [...new Set([...(this.solution?.projects.values() ?? [])].flatMap(project => project.frameworks))];
+            // Fallback: no project has been read yet, the solution file's list
+            if (frameworks.length === 0 && this.solution?.solutionFile) {
+                frameworks = SolutionService.getAllFrameworks(this.solution.solutionFile);
             }
 
             if (frameworks.length === 0) {
@@ -85,21 +81,28 @@ export class FrameworkDropdownService {
         }
     }
 
+    /**
+     * The solution's framework: remembered for the solution (the Dependencies tree and the C# language context of every project that
+     * targets it follow), and F5 uses it when the startup project targets it. Auto (undefined) forgets the choice.
+     */
     public async setActiveFramework(framework?: string): Promise<void> {
-        // Update the debug configuration with the new framework
         const currentStartupProject = this.solution?.getStartupProject();
-
-        log.info(`Framework changed to: ${framework}, current startup project: ${currentStartupProject}`);
-        if (currentStartupProject) {
-            log.info(`Updating startup configuration with new framework: ${framework}`);
-            try {
-                await DebugConfigService.updateStartupConfiguration(currentStartupProject, framework);
-                log.info(`Startup configuration updated successfully`);
-            } catch (error) {
-                log.error('Error updating startup configuration after framework change:', error);
-            }
-        } else {
-            log.warn('No current startup project found, cannot update debug configuration');
+        log.info(`Framework changed to: ${framework ?? 'Auto'}, current startup project: ${currentStartupProject}`);
+        if (this.solution?.solutionPath) {
+            await FrameworkChoice.set(this.solution.solutionPath, framework);
+        }
+        if (!currentStartupProject) {
+            return;
+        }
+        // A startup project that does not target the framework keeps its own (the F5 of a net10.0 web app stays when net472 is chosen for a library)
+        const targets = this.solution?.projects.get(currentStartupProject)?.frameworks ?? [];
+        if (framework && !targets.includes(framework)) {
+            return;
+        }
+        try {
+            await DebugConfigService.updateStartupConfiguration(currentStartupProject, framework);
+        } catch (error) {
+            log.error('Error updating startup configuration after framework change:', error);
         }
     }
 

@@ -19,6 +19,8 @@ import { BuildConfiguration } from './services/build/buildConfiguration';
 import { SlnxMigration } from './services/solution/slnxMigration';
 import { LegacyConfigOffer, offerLegacyConfigMove } from './services/nuget/legacyConfigOffer';
 import { NuGetV3Offer } from './services/nuget/nugetV3Offer';
+import { FrameworkChoice } from './services/project/frameworkChoice';
+import { applyFrameworkContext } from './services/code/projectContext';
 import { SolutionDiscovery } from './services/solution/solutionDiscovery';
 import { reportPacked } from './services/build/pack';
 import { UnloadedProjects } from './services/solution/unloadedProjects';
@@ -115,6 +117,7 @@ export function activate(context: vscode.ExtensionContext) {
     SlnxMigration.initialize(context.workspaceState);
     LegacyConfigOffer.initialize(context.workspaceState);
     NuGetV3Offer.initialize(context.workspaceState);
+    FrameworkChoice.initialize(context.workspaceState);
     SolutionDiscovery.initialize(context.workspaceState);
     UnloadedProjects.initialize(context.workspaceState);
     ShowAllFiles.initialize(context.workspaceState);
@@ -201,6 +204,15 @@ export function activate(context: vscode.ExtensionContext) {
         )
     );
 
+    const applyChosenFramework = (documents: readonly vscode.TextDocument[]) => {
+        const solution = SolutionService.getActiveSolution();
+        if (!solution) {
+            return Promise.resolve();
+        }
+        const projects = [...solution.projects.values()].map(project => ({ name: project.name, projectPath: project.projectPath, frameworks: project.frameworks }));
+        return applyFrameworkContext(documents, solution.getActiveFramework() ?? undefined, projects, (command, ...args) => vscode.commands.executeCommand(command, ...args));
+    };
+
     // Register commands
     context.subscriptions.push(
         vscode.commands.registerCommand('shinobi.openNuGetManager', (projectPath?: string) => {
@@ -208,6 +220,14 @@ export function activate(context: vscode.ExtensionContext) {
         }),
         vscode.commands.registerCommand('shinobi.openNuGetManagerForSolution', (solutionPath?: string) => {
             void NuGetCustomEditorProvider.openNuGetManagerForSolution(solutionPath);
+        }),
+        // The framework chosen for the solution is also the C# language context of the files of every project that targets it: of the open
+        // files when it is chosen, and of each file as its editor comes to the front (the C# extension starts a file on its first framework)
+        FrameworkChoice.onDidChange(() => void applyChosenFramework(vscode.workspace.textDocuments)),
+        vscode.window.onDidChangeActiveTextEditor(editor => {
+            if (editor) {
+                void applyChosenFramework([editor.document]);
+            }
         }),
         vscode.commands.registerCommand('shinobi.solution.selectFramework', async () => {
             const frameworkOptions = frameworkDropdownService.getFrameworkOptions();

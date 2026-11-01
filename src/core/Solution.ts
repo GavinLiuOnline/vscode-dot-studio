@@ -16,6 +16,7 @@ import { SimpleDebounceManager } from '../services/shared/debounceManager';
 import { workspaceFolderOf } from '../services/solution/workspaceFolders';
 import { UnloadedProjects } from '../services/solution/unloadedProjects';
 import { pathKey } from '../services/project/items/projectItems';
+import { FrameworkChoice } from '../services/project/frameworkChoice';
 
 export interface SolutionFileTreeNode {
     name: string;
@@ -738,7 +739,8 @@ export class Solution {
      * Gets the current active framework from cache
      */
     getActiveFramework(): string | null {
-        return this._cachedFramework;
+        // The solution-wide choice of Select Framework; else the framework of the Startup configuration
+        return FrameworkChoice.get(this._solutionPath) ?? this._cachedFramework;
     }
 
     /**

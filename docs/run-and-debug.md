@@ -94,7 +94,7 @@ The ⚙ button in the Solution Explorer's toolbar switches the solution configur
 
 Solutions with several platforms (Any CPU, x64) add **Select Solution Platform...** to that menu, and the view title shows both (`Debug | x64`). Which configuration and platform each project builds in, and whether it builds, is set in the [Configuration Manager](configuration-manager.md); F5 and the build before it use the project's mapped values.
 
-**Select Framework** in the toolbar picks the target framework of multi-targeted startup projects.
+**Select Framework** in the toolbar lists every target framework any project of the solution has (not only the startup project's) and picks one for the solution: F5 uses it when the startup project targets it (otherwise the startup project keeps its own); the Dependencies tree shows it for the projects that target it; and the C# language context of those projects' files follows, so `#if` regions, diagnostics and IntelliSense of a `net472;net10.0` library go by the framework you picked (it needs the C# extension's *Select project context*, which is switched for you: open files at once, other files as you open them). **Auto** leaves everything to the defaults. A project that does not target the chosen framework is not changed.
 
 The program path comes from MSBuild, so `OutputPath`, `AssemblyName` and the artifacts layout work.
 
