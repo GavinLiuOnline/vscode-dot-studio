@@ -218,19 +218,28 @@ export interface TransitivePackage<P> {
 
 /**
  * The NuGet manager's "Transitive packages", like Visual Studio's: packages the projects only get through
- * other packages, sorted by id. A package that any project references itself is a top-level package instead.
+ * other packages, sorted by id. A package that a project references itself is a top-level package instead, in the version it
+ * references; another project that gets it in another version through packages (a vulnerable 9.0.11 next to a referenced 10.0.14) is listed here.
  */
 export function collectTransitivePackages<P>(projects: readonly { project: P & { name: string }; graph: PackageGraph }[]): TransitivePackage<P>[] {
-    const direct = new Set(projects.flatMap(({ graph }) => graph.direct.map(id => id.toLowerCase())));
+    // The versions the projects reference packages with themselves, by lower-case id: a project that gets the same package in the
+    // same version through others adds nothing (it is a top-level package); another version is a version in use of its own
+    const directVersions = new Map<string, Set<string>>();
+    for (const { graph } of projects) {
+        for (const id of graph.direct) {
+            const version = graph.packages.get(id.toLowerCase())?.version;
+            directVersions.set(id.toLowerCase(), (directVersions.get(id.toLowerCase()) ?? new Set()).add(version ?? ''));
+        }
+    }
     // The same project once per framework: only different projects need their name in "referenced by"
     const severalProjects = new Set(projects.map(entry => entry.project)).size > 1;
     const byId = new Map<string, { id: string; currentVersion: string; versionsInUse: string[]; projects: P[]; transitiveReferencedBy: string[] }>();
     for (const { project, graph } of projects) {
         for (const [key, referrers] of transitiveReferrers(graph)) {
-            if (direct.has(key)) {
+            const resolved = graph.packages.get(key)!;
+            if (directVersions.get(key)?.has(resolved.version)) {
                 continue;
             }
-            const resolved = graph.packages.get(key)!;
             const entry = byId.get(key) ?? { id: resolved.id, currentVersion: resolved.version, versionsInUse: [], projects: [], transitiveReferencedBy: [] };
             if (!entry.versionsInUse.includes(resolved.version)) {
                 entry.versionsInUse.push(resolved.version);

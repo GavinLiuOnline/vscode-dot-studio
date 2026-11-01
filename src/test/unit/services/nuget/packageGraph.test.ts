@@ -178,6 +178,31 @@ describe('packageGraph', () => {
                 expect(transitive.map(pkg => pkg.id)).not.toContain('Some.Lib');
             });
 
+            it('another version of a package some project references itself still counts where it comes in through others', () => {
+                const direct = parsePackageGraph(assets({ 'net10.0': {
+                    'System.Security.Cryptography.Pkcs/10.0.14': { type: 'package' },
+                } }, { 'net10.0': ['System.Security.Cryptography.Pkcs'] }))!;
+                const sameVersion = parsePackageGraph(assets({ 'net10.0': {
+                    'Microsoft.Data.SqlClient/6.1.4': { type: 'package', dependencies: { 'System.Security.Cryptography.Pkcs': '10.0.14' } },
+                    'System.Security.Cryptography.Pkcs/10.0.14': { type: 'package' },
+                } }, { 'net10.0': ['Microsoft.Data.SqlClient'] }))!;
+                const older = parsePackageGraph(assets({ 'net10.0': {
+                    'Microsoft.Data.SqlClient/6.1.4': { type: 'package', dependencies: { 'System.Security.Cryptography.Pkcs': '9.0.11' } },
+                    'System.Security.Cryptography.Pkcs/9.0.11': { type: 'package' },
+                } }, { 'net10.0': ['Microsoft.Data.SqlClient'] }))!;
+                const a = { name: 'A', path: '/a.csproj' };
+                const b = { name: 'B', path: '/b.csproj' };
+                const c = { name: 'C', path: '/c.csproj' };
+
+                const transitive = collectTransitivePackages([{ project: a, graph: direct }, { project: b, graph: sameVersion }, { project: c, graph: older }]);
+                const pkcs = transitive.find(pkg => pkg.id === 'System.Security.Cryptography.Pkcs')!;
+
+                // B gets the very version A references: nothing to add. C gets 9.0.11, which no list showed before.
+                expect(pkcs.versionsInUse).toEqual(['9.0.11']);
+                expect(pkcs.projects).toEqual([c]);
+                expect(pkcs.transitiveReferencedBy).toEqual(['Microsoft.Data.SqlClient (C)']);
+            });
+
             it('names a referrer once, however many frameworks bring it in', () => {
                 const twice = assets({
                     net471: { 'A/1.0.0': { type: 'package', dependencies: { B: '1.0.0' } }, 'B/1.0.0': { type: 'package' } },
