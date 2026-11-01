@@ -51,6 +51,15 @@ Edge cases and cosmetics; decided to leave until the code review of Phase 22 is 
 - [ ] Never offer an orphan removal of a version that another framework still uses (today any multi-targeted project suppresses the prompt)
 - [ ] Docs, GIF and manual-testing entries for the conditional cases
 
+## Phase 40: Our own C# language server and debugger (0.6)
+The extension needs a C# extension for the language server and the debugger (`coreclr`). The one from Open VSX (`muhammad-sammy.csharp`, the Roslyn language server with netcoredbg) has limits we run into; they are the reasons to bundle our own (the Phase 30 item "No C# extension needed" has the how). Found so far (2026-11), with what was checked:
+
+- **Debugger is netcoredbg, not Microsoft's:** a project started with "Start without debugging" (`noDebug: true`) is attached to the debugger anyway and gets no breakpoints (see Known bugs); no Hot Reload with the debugger attached and no Edit and Continue (`dotnet watch` refuses assembly updates while a debugger is attached); it cannot attach to Mono or .NET Framework processes (only `coreclr`).
+- **The language context of a multi-targeted file can only be switched by its command:** the context (project and target framework a file is analysed in: `#if` regions, diagnostics, IntelliSense) is kept per file in memory and starts on the first framework. The only way in is the undocumented command `csharp.changeProjectContext(document, { projectName, tfm })` (read from `dist/extension.js` of 2.160.9; matches the label `Project (tfm)`), there is no way to read the current context, to set it for a project or to have it persist. Select Framework drives it for the open files and for each file as its editor comes to the front.
+- **A switched context does not always bring the preprocessor symbols along (reported, not investigated):** with the context on `net472`, `NET471_OR_GREATER` is not defined in the hover/greyed regions; going to `net471` and then `net472` defines it. It may be the language server's workspace state after a switch, or our call; to check with a language server we control.
+- **The project load follows every project file edit:** each `dotnet add package` makes the server reload the project (and the projects that reference it), run `dotnet restore` and start a new build host process ("Completed (re)load of N project(s)" in its log, several seconds each, six in a row for one update); on a 50-project solution this is part of the load that froze a PC during a package update (cause not proven, see Phase 23).
+- **Not ours to change:** release cadence and which Microsoft features the Open VSX build leaves out; a bug in the server is fixed there, not here.
+
 ## Not Planned
 - Accessibility of the Solution Explorer and the other views (ARIA tree roles, keyboard multi-select, links that cannot be focused, colour-only markers): to be done when someone opens an issue (A3-9, A3-10)
 - An expand that arrives while the tree is being rebuilt can show collapsed for a moment; it is remembered and the next rebuild opens it (A2-12)
