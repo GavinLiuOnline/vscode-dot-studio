@@ -792,6 +792,7 @@ export const App: React.FC = () => {
                     <ProjectList
                         selectedPackage={selectedPackage}
                         projects={data.projects || []}
+                        transitivePackages={data.transitivePackages ?? undefined}
                         selectedProjects={selectedProjects}
                         setSelectedProjects={setSelectedProjects}
                         initializing={initializing}
@@ -912,6 +913,7 @@ export const App: React.FC = () => {
                     <ProjectList
                         selectedPackage={selectedPackage}
                         projects={data.projects || []}
+                        transitivePackages={data.transitivePackages ?? undefined}
                         selectedProjects={selectedProjects}
                         setSelectedProjects={setSelectedProjects}
                         initializing={initializing}
@@ -1024,6 +1026,7 @@ export const App: React.FC = () => {
                     <ProjectList
                         selectedPackage={selectedPackage}
                         projects={data.projects || []}
+                        transitivePackages={data.transitivePackages ?? undefined}
                         selectedProjects={selectedProjects}
                         setSelectedProjects={setSelectedProjects}
                         initializing={initializing}
@@ -1112,6 +1115,7 @@ export const App: React.FC = () => {
                     <ProjectList
                         selectedPackage={selectedPackage}
                         projects={data.projects || []}
+                        transitivePackages={data.transitivePackages ?? undefined}
                         selectedProjects={selectedProjects}
                         setSelectedProjects={setSelectedProjects}
                         initializing={initializing}

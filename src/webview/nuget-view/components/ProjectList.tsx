@@ -14,6 +14,8 @@ interface ProjectListProps {
     setSelectedProjects: (projects: Set<string>) => void;
     initializing?: boolean;
     projectPath?: string | null; // For project-specific context
+    /** The transitive packages: a project that does not install the package itself shows the version it gets through others */
+    transitivePackages?: LocalNuGetPackage[];
 }
 
 export default function ProjectList({
@@ -22,7 +24,8 @@ export default function ProjectList({
     selectedProjects,
     setSelectedProjects,
     initializing = false,
-    projectPath
+    projectPath,
+    transitivePackages
 }: ProjectListProps) {
 
     // Auto-select projects based on context
@@ -101,7 +104,13 @@ export default function ProjectList({
                             }}>
                                 {(() => {
                                     const installedPackage = project.packages?.find(pkg => pkg.id.toLowerCase() === selectedPackage.id.toLowerCase());
-                                    return installedPackage ? versionLabel(installedPackage) : 'Not installed';
+                                    if (installedPackage) {
+                                        return versionLabel(installedPackage);
+                                    }
+                                    const transitive = [selectedPackage, ...(transitivePackages ?? [])]
+                                        .find(pkg => pkg.id.toLowerCase() === selectedPackage.id.toLowerCase() && pkg.projectVersions?.[project.path])
+                                        ?.projectVersions?.[project.path];
+                                    return transitive ? `${transitive.join(', ')} (transitive)` : 'Not installed';
                                 })()}
                             </div>
                         </div>

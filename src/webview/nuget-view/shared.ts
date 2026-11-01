@@ -14,6 +14,8 @@ export interface LocalNuGetPackage extends NuGetPackage {
     transitiveReferencedBy?: string[];
     /** Every version of the package the projects use (the list shows one); an advisory may be for another than the shown one */
     versionsInUse?: string[];
+    /** Transitive packages: the version(s) each project gets, by project path */
+    projectVersions?: Record<string, string[]>;
     /** Installed packages: where the version comes from (Central Package Management) */
     versionSource?: PackageVersionSource;
     /** Installed packages: the file the version is written in */

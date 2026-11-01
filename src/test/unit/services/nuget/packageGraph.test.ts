@@ -200,6 +200,7 @@ describe('packageGraph', () => {
                 // B gets the very version A references: nothing to add. C gets 9.0.11, which no list showed before.
                 expect(pkcs.versionsInUse).toEqual(['9.0.11']);
                 expect(pkcs.projects).toEqual([c]);
+                expect(pkcs.projectVersions).toEqual({ '/c.csproj': ['9.0.11'] });
                 expect(pkcs.transitiveReferencedBy).toEqual(['Microsoft.Data.SqlClient (C)']);
             });
 
