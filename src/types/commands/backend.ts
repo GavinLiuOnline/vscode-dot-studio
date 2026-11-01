@@ -137,6 +137,15 @@ export declare type TreeFocusChangedCmd = {
     }
 }
 
+/** How one project gets a package through other packages (the hover over its version in the package's project list) */
+export declare type GetDependencyPathsCmd = {
+    readonly type: 'getDependencyPaths',
+    readonly payload: {
+        readonly projectPath: string,
+        readonly packageId: string,
+    }
+}
+
 /** The nodes selected in the tree (Ctrl/Shift+click), for commands that act on all of them */
 export declare type TreeSelectionChangedCmd = {
     readonly type: 'treeSelectionChanged',
@@ -183,6 +192,7 @@ export declare type BackendCmd =
     ExpandNodeCmd |
     CollapseNodeCmd |
     TreeFocusChangedCmd |
+    GetDependencyPathsCmd |
     TreeSelectionChangedCmd |
     MoveNodesCmd |
     ToolbarActionCmd |

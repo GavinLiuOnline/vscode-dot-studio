@@ -9,6 +9,7 @@ import { NuGetV3Service } from '../../services/nuget/nugetV3Service';
 import { logger } from '../../core/logger';
 import { NuGetWebview } from './views/NuGetWebview';
 import { sendToUi } from '../nuget-view/shared';
+import { dependencyPaths, readPackageGraphs } from '../../services/nuget/packageGraph';
 import { BackendCmd } from '../../types/commands/backend';
 import { ProjectItemsService } from '../../services/project/items/projectItemsService';
 
@@ -150,6 +151,13 @@ export class NuGetCustomEditorProvider implements vscode.CustomTextEditorProvide
                         return {};
                     }) : {};
                     sendToUi(webview, { type: 'packageAdvisories', payload: { advisories } });
+                    break;
+                }
+
+                case 'getDependencyPaths': {
+                    const { projectPath, packageId } = message.payload;
+                    const paths = readPackageGraphs(projectPath).flatMap(graph => dependencyPaths(graph, packageId));
+                    sendToUi(webview, { type: 'dependencyPaths', payload: { projectPath, packageId, paths } });
                     break;
                 }
 

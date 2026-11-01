@@ -176,6 +176,16 @@ export declare type DiagnosticsCmd = {
     }
 }
 
+export declare type DependencyPathsCmd = {
+    readonly type: 'dependencyPaths',
+    readonly payload: {
+        readonly projectPath: string,
+        readonly packageId: string,
+        /** Per framework, the hops from what the project references down to the package */
+        readonly paths: { readonly framework: string, readonly hops: string[] }[],
+    }
+}
+
 export declare type IconThemeCmd = {
     readonly type: 'iconTheme',
     readonly payload: {
@@ -208,6 +218,7 @@ export declare type UICmd =
     StartRenameCmd |
     SelectNodeCmd |
     DiagnosticsCmd |
+    DependencyPathsCmd |
     IconThemeCmd |
     ToolbarStateCmd |
     PackageAdvisoriesCmd |

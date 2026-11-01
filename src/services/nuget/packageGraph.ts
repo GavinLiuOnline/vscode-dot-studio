@@ -163,6 +163,70 @@ export function transitiveReferrers(graph: PackageGraph): Map<string, string[]> 
     return referrers;
 }
 
+/** How a project gets a package: the hops from something it references to the package, e.g. `Core (project)`, `Microsoft.Data.SqlClient 6.1.4`, `System.Security.Cryptography.Pkcs 9.0.11` */
+export interface DependencyPath {
+    readonly framework: string;
+    readonly hops: string[];
+}
+
+/**
+ * The shortest ways a package comes into a project for one framework, shortest first: from a package the project references
+ * itself, or from a project it references, down to the package. At most `limit` per graph (a package can come in a dozen ways)
+ */
+export function dependencyPaths(graph: PackageGraph, packageId: string, limit = 4): DependencyPath[] {
+    const target = packageId.toLowerCase();
+    if (!graph.packages.has(target)) {
+        return [];
+    }
+    const label = (key: string) => {
+        const resolved = graph.packages.get(key)!;
+        return `${resolved.id} ${resolved.version}`;
+    };
+    type Node = { readonly key: string; readonly project: boolean };
+    const projects = new Map((graph.projectReferences ?? []).map(project => [project.id.toLowerCase(), project] as const));
+    const edges = (node: Node): Node[] => {
+        const dependencies = node.project ? projects.get(node.key)?.dependencies ?? [] : graph.packages.get(node.key)?.dependencies ?? [];
+        return dependencies.flatMap((dependency): Node[] => {
+            const key = dependency.toLowerCase();
+            return projects.has(key) ? [{ key, project: true }] : graph.packages.has(key) ? [{ key, project: false }] : [];
+        });
+    };
+    const nameOf = (node: Node) => node.project ? `${projects.get(node.key)!.id} (project)` : label(node.key);
+    const roots: Node[] = [
+        ...graph.direct.filter(id => graph.packages.has(id.toLowerCase())).map(id => ({ key: id.toLowerCase(), project: false })),
+        ...[...projects.keys()].map(key => ({ key, project: true })),
+    ];
+    // Breadth first: the shortest paths come out first
+    const found: DependencyPath[] = [];
+    const queue: Node[][] = roots.filter(root => !(root.key === target && !root.project)).map(root => [root]);
+    const maxDepth = 12;
+    // A dense graph has endless ways to a deep package: a few thousand paths looked at are enough for the shortest ones
+    let looked = 0;
+    while (queue.length > 0 && found.length < limit && looked++ < 5000) {
+        const path = queue.shift()!;
+        const last = path[path.length - 1];
+        if (path.length > maxDepth) {
+            continue;
+        }
+        for (const next of edges(last)) {
+            if (path.some(node => node.key === next.key && node.project === next.project)) {
+                continue;
+            }
+            const extended = [...path, next];
+            if (!next.project && next.key === target) {
+                found.push({ framework: graph.framework, hops: extended.map(nameOf) });
+                if (found.length >= limit) {
+                    break;
+                }
+            } else {
+                queue.push(extended);
+            }
+        }
+    }
+    // A path the same hops as another (a project reachable as root and through another project) once
+    return found.filter((path, index) => found.findIndex(other => other.hops.join('>') === path.hops.join('>')) === index);
+}
+
 const cache = new Map<string, { mtime: number; graph: PackageGraph | undefined }>();
 
 /** The package graph of a project after its last restore; undefined before the first one */

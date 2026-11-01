@@ -1,4 +1,4 @@
-import { collectTransitivePackages, packageDependencies, parsePackageGraph, parsePackageGraphs, targetNameOfAlias, transitiveReferrers } from '../../../../services/nuget/packageGraph';
+import { collectTransitivePackages, dependencyPaths, packageDependencies, parsePackageGraph, parsePackageGraphs, targetNameOfAlias, transitiveReferrers } from '../../../../services/nuget/packageGraph';
 
 const assets = (targets: Record<string, Record<string, unknown>>, direct: Record<string, string[]>) => JSON.stringify({
     targets,
@@ -215,4 +215,53 @@ describe('packageGraph', () => {
             });
         });
     });
+
+describe('dependencyPaths (how a project gets a package)', () => {
+    const assetsWith = (target: Record<string, unknown>, direct: string[]) => parsePackageGraph(assets({ 'net10.0': target }, { 'net10.0': direct }))!;
+
+    it('names every hop from a package the project references down to the package', () => {
+        const graph = assetsWith({
+            'Microsoft.Data.SqlClient/6.1.4': { type: 'package', dependencies: { 'Azure.Identity': '1.0.0' } },
+            'Azure.Identity/1.0.0': { type: 'package', dependencies: { 'System.Security.Cryptography.Pkcs': '9.0.11' } },
+            'System.Security.Cryptography.Pkcs/9.0.11': { type: 'package' },
+        }, ['Microsoft.Data.SqlClient']);
+        expect(dependencyPaths(graph, 'system.security.cryptography.pkcs')).toEqual([
+            { framework: 'net10.0', hops: ['Microsoft.Data.SqlClient 6.1.4', 'Azure.Identity 1.0.0', 'System.Security.Cryptography.Pkcs 9.0.11'] },
+        ]);
+    });
+
+    it('starts at a referenced project when that is what brings the package in', () => {
+        const graph = assetsWith({
+            'Cirrus.Core.Localisation/1.0.0': { type: 'project', dependencies: { 'Microsoft.Data.SqlClient': '6.1.4' } },
+            'Microsoft.Data.SqlClient/6.1.4': { type: 'package', dependencies: { 'System.Security.Cryptography.Pkcs': '9.0.11' } },
+            'System.Security.Cryptography.Pkcs/9.0.11': { type: 'package' },
+        }, []);
+        expect(dependencyPaths(graph, 'System.Security.Cryptography.Pkcs').map(path => path.hops)).toEqual([
+            ['Cirrus.Core.Localisation (project)', 'Microsoft.Data.SqlClient 6.1.4', 'System.Security.Cryptography.Pkcs 9.0.11'],
+        ]);
+    });
+
+    it('lists the shortest ways first, no more than the limit, and none for a package the project does not have', () => {
+        const graph = assetsWith({
+            'A/1.0.0': { type: 'package', dependencies: { Target: '1.0.0', B: '1.0.0' } },
+            'B/1.0.0': { type: 'package', dependencies: { Target: '1.0.0' } },
+            'C/1.0.0': { type: 'package', dependencies: { Target: '1.0.0' } },
+            'Target/1.0.0': { type: 'package' },
+        }, ['A', 'C']);
+        const paths = dependencyPaths(graph, 'Target', 2).map(path => path.hops);
+        expect(paths).toHaveLength(2);
+        expect(paths.every(hops => hops.length === 2)).toBe(true);
+        expect(dependencyPaths(graph, 'Target').map(path => path.hops.length)).toEqual([2, 2, 3]);
+        expect(dependencyPaths(graph, 'Missing')).toEqual([]);
+    });
+
+    it('survives a cycle', () => {
+        const graph = assetsWith({
+            'A/1.0.0': { type: 'package', dependencies: { B: '1.0.0' } },
+            'B/1.0.0': { type: 'package', dependencies: { A: '1.0.0', Target: '1.0.0' } },
+            'Target/1.0.0': { type: 'package' },
+        }, ['A']);
+        expect(dependencyPaths(graph, 'Target').map(path => path.hops)).toEqual([['A 1.0.0', 'B 1.0.0', 'Target 1.0.0']]);
+    });
+});
 });

@@ -277,6 +277,25 @@ describe('NuGet manager: refresh and package source', () => {
             expect(container.textContent).toContain('Version 9.0.11 in use has known vulnerabilities');
         });
 
+        it('the details of a transitive package do not list who references it, the project list says how', () => {
+            jest.useFakeTimers();
+            const { container } = render(<App />);
+            post({ type: 'nugetData', payload: {
+                installedPackages: [installed('Serilog', '4.0.0')],
+                transitivePackages: [{ ...installed('System.Text.Json', '8.0.0'), transitiveReferencedBy: ['Cirrus.Core (project) (Cirrus.AspNetCore.Hosting)', 'Serilog (Cirrus.EfCore)'], projects: [project], projectVersions: { 'P.csproj': ['8.0.0'] } }],
+                projects: [project], searchResults: [],
+            } });
+            fireEvent.click(screen.getByText('Vulnerable'));
+            fireEvent.click(screen.getByText('Vulnerable'));
+            fireEvent.click(screen.getByText(/Transitive packages/));
+            fireEvent.click(screen.getByText('System.Text.Json'));
+
+            expect(container.textContent).toContain('Only referenced through other packages');
+            expect(container.textContent).not.toContain('Transitively referenced by');
+            expect(container.textContent).not.toContain('Cirrus.Core (project) (Cirrus.AspNetCore.Hosting)');
+            expect(container.textContent).toContain('8.0.0 (transitive)');
+        });
+
         it('the details of a vulnerable package link the advisory', () => {
             const { container } = open();
             post({ type: 'packageAdvisories', payload: { advisories: { 'newtonsoft.json|12.0.1': { vulnerabilities: [{ severity: 'High', url: 'https://github.com/advisories/GHSA-5crp-9r3c-p9vr' }] } } } });

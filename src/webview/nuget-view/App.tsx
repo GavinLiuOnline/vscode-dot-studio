@@ -894,7 +894,7 @@ export const App: React.FC = () => {
                         collapsed={!transitiveShown}
                         onToggleCollapsed={() => setTransitiveExpanded(expanded => !expanded)}
                         indexOffset={filteredPackages.length}
-                        getNote={pkg => pkg.transitiveReferencedBy && `Transitively referenced by ${pkg.transitiveReferencedBy.join(', ')}`}
+                        getNote={pkg => pkg.projects && `Transitive, in ${pkg.projects.length} project${pkg.projects.length === 1 ? '' : 's'}`}
                     />
                 )}
                     </>
@@ -905,7 +905,7 @@ export const App: React.FC = () => {
                     <NugetHeader selectedPackage={selectedPackage} />
                     {selectedPackage.transitiveReferencedBy && (
                         <div style={{ fontSize: '12px', color: 'var(--vscode-descriptionForeground)', marginBottom: '12px' }}>
-                            Transitively referenced by: {selectedPackage.transitiveReferencedBy.join(', ')}.
+                            Only referenced through other packages. Hover the version of a project below to see how it gets it.
                             Install it to reference it directly, e.g. to use a newer version.
                         </div>
                     )}

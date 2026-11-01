@@ -1,5 +1,6 @@
-import { useEffect } from "react";
-import { ensureArray, LocalNuGetPackage } from "../shared";
+import { useEffect, useState } from "react";
+import { ensureArray, LocalNuGetPackage, sendToBackend } from "../shared";
+import { UICmd } from "../../../types/commands/ui";
 import { Checkbox } from "vscrui";
 import { logger } from "../../shared/logger";
 import { ProjectInfo as BackendProjectInfo } from "../../../services/nuget/types";
@@ -27,6 +28,37 @@ export default function ProjectList({
     projectPath,
     transitivePackages
 }: ProjectListProps) {
+
+    // How a project gets the package through others (the hover over its version): asked when the mouse comes, answered once
+    const [paths, setPaths] = useState<Record<string, { framework: string; hops: string[] }[]>>({});
+    const [hovered, setHovered] = useState<string | undefined>(undefined);
+    useEffect(() => {
+        const listener = (event: MessageEvent<UICmd>) => {
+            if (event.data.type === 'dependencyPaths') {
+                const { projectPath: path, packageId, paths: found } = event.data.payload;
+                setPaths(current => ({ ...current, [`${path}|${packageId.toLowerCase()}`]: found }));
+            }
+        };
+        window.addEventListener('message', listener);
+        return () => window.removeEventListener('message', listener);
+    }, []);
+    const hover = (projectPath: string | undefined) => {
+        setHovered(projectPath);
+        const key = projectPath && `${projectPath}|${selectedPackage.id.toLowerCase()}`;
+        if (projectPath && key && !paths[key]) {
+            sendToBackend({ type: 'getDependencyPaths', payload: { projectPath, packageId: selectedPackage.id } });
+        }
+    };
+
+    const transitiveVersionsOf = (project: BackendProjectInfo): string[] | undefined => {
+        if (project.packages?.some(pkg => pkg.id.toLowerCase() === selectedPackage.id.toLowerCase())) {
+            return undefined;
+        }
+        return [selectedPackage, ...(transitivePackages ?? [])]
+            .find(pkg => pkg.id.toLowerCase() === selectedPackage.id.toLowerCase() && pkg.projectVersions?.[project.path])
+            ?.projectVersions?.[project.path];
+    };
+    const isTransitiveIn = (project: BackendProjectInfo) => !!transitiveVersionsOf(project);
 
     // Auto-select projects based on context
     useEffect(() => {
@@ -100,16 +132,20 @@ export default function ProjectList({
                                 fontSize: '11px',
                                 color: 'var(--vscode-descriptionForeground)',
                                 marginLeft: '8px',
-                                flexShrink: 0
-                            }}>
+                                flexShrink: 0,
+                                position: 'relative'
+                            }}
+                                onMouseEnter={() => isTransitiveIn(project) && hover(project.path)}
+                                onMouseLeave={() => hover(undefined)}>
+                                {hovered === project.path && isTransitiveIn(project) && (
+                                    <DependencyPaths project={project.name} paths={paths[`${project.path}|${selectedPackage.id.toLowerCase()}`]} />
+                                )}
                                 {(() => {
                                     const installedPackage = project.packages?.find(pkg => pkg.id.toLowerCase() === selectedPackage.id.toLowerCase());
                                     if (installedPackage) {
                                         return versionLabel(installedPackage);
                                     }
-                                    const transitive = [selectedPackage, ...(transitivePackages ?? [])]
-                                        .find(pkg => pkg.id.toLowerCase() === selectedPackage.id.toLowerCase() && pkg.projectVersions?.[project.path])
-                                        ?.projectVersions?.[project.path];
+                                    const transitive = transitiveVersionsOf(project);
                                     return transitive ? `${transitive.join(', ')} (transitive)` : 'Not installed';
                                 })()}
                             </div>
@@ -117,6 +153,27 @@ export default function ProjectList({
                     </div>
                 ));
             })()}
+        </div>
+    );
+}
+/** The box over a project's version: every hop from what the project references down to the package, per framework */
+function DependencyPaths({ project, paths }: { project: string; paths: { framework: string; hops: string[] }[] | undefined }) {
+    return (
+        <div role="tooltip" style={{
+            position: 'absolute', right: 0, bottom: '100%', zIndex: 10, minWidth: '260px', maxWidth: '520px', padding: '6px 10px',
+            background: 'var(--vscode-editorHoverWidget-background)', color: 'var(--vscode-editorHoverWidget-foreground)',
+            border: '1px solid var(--vscode-editorHoverWidget-border)', boxShadow: '0 2px 8px var(--vscode-widget-shadow)', fontSize: '12px', whiteSpace: 'normal'
+        }}>
+            {!paths && 'Loading...'}
+            {paths && paths.length === 0 && 'Not found in the last restore.'}
+            {paths?.map((path, index) => (
+                <div key={index} style={{ marginBottom: index < paths.length - 1 ? '6px' : 0 }}>
+                    <div style={{ opacity: 0.7 }}>{path.framework}</div>
+                    {[project, ...path.hops].map((hop, depth) => (
+                        <div key={depth} style={{ paddingLeft: `${depth * 12}px` }}>{depth > 0 ? '\u21B3 ' : ''}{hop}</div>
+                    ))}
+                </div>
+            ))}
         </div>
     );
 }
