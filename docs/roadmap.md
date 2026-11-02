@@ -1,6 +1,6 @@
 # Roadmap
 
-Ordered by what is needed to drop Visual Studio for daily work. Phases 1–21 are done (see [History](history.md)): web apps, SOAP clients, templates, tests, private feeds, the Visual Studio basics, publishing, readiness for others, solutions, projects and configurations, code cleanup and refactoring, and the second rounds for run & debug, for the Solution Explorer, for NuGet and for connected services. Phase 22 is quality and documentation, phase 23 the small limitations left until after the code review, phase 30 what may come later, phase 35 packages per target framework (last, only if it proves necessary). Everything else is under Not Planned: a change request on GitHub brings it back.
+Ordered by what is needed to drop Visual Studio for daily work. Phases 1–21 are done (see [History](history.md)): web apps, SOAP clients, templates, tests, private feeds, the Visual Studio basics, publishing, readiness for others, solutions, projects and configurations, code cleanup and refactoring, and the second rounds for run & debug, for the Solution Explorer, for NuGet and for connected services. Phase 22 is quality and documentation, phase 23 the small limitations left until after the code review, phase 30 what may come later, phase 35 packages per target framework (last, only if it proves necessary), phase 40 the issues with the Open VSX C# extension (the case for bundling our own server, not planned), phase 45 refactorings inside the C# server. Everything else is under Not Planned: a change request on GitHub brings it back.
 
 What still needs a check in VS Code itself is listed in [manual-testing.md](manual-testing.md).
 
@@ -62,6 +62,16 @@ The extension needs a C# extension for the language server and the debugger (`co
 - **The project load follows every project file edit:** each `dotnet add package` makes the server reload the project (and the projects that reference it), run `dotnet restore` and start a new build host process ("Completed (re)load of N project(s)" in its log, several seconds each, six in a row for one update); on a 50-project solution this is part of the load that froze a PC during a package update (cause not proven, see Phase 23).
 - **Not ours to change:** release cadence and which Microsoft features the Open VSX build leaves out; a bug in the server is fixed there, not here.
 
+## Phase 45: Refactorings inside the C# server
+The C# extension's Roslyn server loads extra assemblies given with `--extension`; the C# extension passes them from its setting `dotnet.server.extensionPaths` (scope `machine-overridable`, read in its `package.json` and code, version 2.160.9). A small .NET assembly of ours (about 100 KB, compiled against the Roslyn packages, nothing of Roslyn shipped) could add `CodeRefactoringProvider`s that appear in `Ctrl+.` next to the server's own, with its full semantic model, in the server's process and for projects of any target framework (it analyses source and reference metadata; `net4x` projects go through its `BuildHost-net472`). The refactorings Roslyn has the logic for but the server does not offer (see Not Planned) are the candidates. Nothing is verified yet beyond the setting existing.
+
+- [ ] Spike, a few hours: a net8 class library with one provider ("Extract interface (all public members)"), the setting pointing at it, a server restart, `Ctrl+.` on a class of the Contoso sample (own Xvfb display, as `scripts/screenshots/capture.sh`). Go on only if the server picks the provider up; check the Open VSX build and, if available, Microsoft's
+- [ ] Which Roslyn version to compile against and how far a provider built for one server version still loads in the next (public APIs only; a test that loads it into the installed server)
+- [ ] The first refactorings as fixed actions without a dialog (the server has none): Extract Interface (all public members, a new file next to the class, `: IFoo` on the class), Move Type to Namespace, Pull Members Up / Push Down by scenario; later ones that need choices (Change Signature, a member picker) through custom server requests and our own UI
+- [ ] Packaging: the assembly built in CI (the .NET SDK is there), added to the `.vsix`; no Roslyn in it
+- [ ] Switching it on: our extension writes `dotnet.server.extensionPaths` into the user's settings only after asking (a restart of the C# server follows), or the docs give the path to add by hand; an off switch; keep other entries of the setting
+- [ ] Docs, manual-testing entries, and a test that loads the assembly into the installed server and asks for the code actions
+
 ## Not Planned
 - Accessibility of the Solution Explorer and the other views (ARIA tree roles, keyboard multi-select, links that cannot be focused, colour-only markers): to be done when someone opens an issue (A3-9, A3-10)
 - An expand that arrives while the tree is being rebuilt can show collapsed for a moment; it is remembered and the next rebuild opens it (A2-12)
@@ -85,7 +95,7 @@ The extension needs a C# extension for the language server and the debugger (`co
 - Search in the Solution Explorer (Visual Studio's Ctrl+;): Ctrl+P and Sync with Active Document cover it; to be built if someone opens an issue for it
 - The diagnostic rules of each analyzer under Dependencies > Analyzers: `.editorconfig` sets their severities
 - OpenAPI clients (Visual Studio's "Add Connected Service > OpenAPI"): Microsoft deprecated `<OpenApiReference>` and `dotnet openapi` in .NET 10 and recommends the generators' own tools (NSwag, Kiota with its VS Code extension); to be built if someone opens an issue
-- Refactorings the C# extension's Roslyn server does not offer (Change Signature, Move to namespace, Pull members up, Visual Studio's Extract Interface dialog): only if they are missed; to be built if someone opens an issue
+- Refactorings the C# extension's Roslyn server does not offer (Change Signature, Move to namespace, Pull members up, Visual Studio's Extract Interface dialog): see Phase 45 for a way in through the server's extension assemblies; not before it proves out
 - Solution filters (`.slnf`, load part of a big solution): to be built if someone opens an issue
 - Scaffolding ("New Scaffolded Item": controllers with EF, Identity): to be built if someone opens an issue
 - Docker / docker-compose launch profiles: not used by the team, and those who use them write them by hand; to be built if someone opens an issue
