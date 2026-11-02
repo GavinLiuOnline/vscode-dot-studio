@@ -41,13 +41,19 @@ describe('debounce managers', () => {
 
     it('cancel drops a pending rerun', async () => {
         let runs = 0;
-        const debouncer = new SimpleDebounceManager(async () => { runs++; await sleep(60); }, 10);
+        let release: () => void = () => { };
+        // The run ends when the test says so, not after a time that a slow machine can overshoot
+        const debouncer = new SimpleDebounceManager(async () => { runs++; await new Promise<void>(resolve => { release = resolve; }); }, 10);
         debouncer.trigger();
-        await sleep(30);
+        for (let waited = 0; runs < 1 && waited < 2000; waited += 5) {
+            await sleep(5);
+        }
+        expect(runs).toBe(1);
         debouncer.trigger();
-        await sleep(20); // the timer fires while running: a rerun is pending
+        await sleep(40); // the timer fires while the run goes on: a rerun is pending
         debouncer.cancel();
-        await sleep(250);
+        release();
+        await sleep(100);
         expect(runs).toBe(1);
     });
 });
