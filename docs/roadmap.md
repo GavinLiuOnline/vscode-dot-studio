@@ -1,6 +1,6 @@
 # Roadmap
 
-Ordered by what is needed to drop Visual Studio for daily work. Phases 1–21 are done (see [History](history.md)): web apps, SOAP clients, templates, tests, private feeds, the Visual Studio basics, publishing, readiness for others, solutions, projects and configurations, code cleanup and refactoring, and the second rounds for run & debug, for the Solution Explorer, for NuGet and for connected services. Phase 22 is quality and documentation, phase 23 the small limitations left until after the code review, phase 30 what may come later, phase 35 packages per target framework (last, only if it proves necessary), phase 40 the issues with the Open VSX C# extension (the case for bundling our own server, not planned), phase 45 refactorings inside the C# server. Everything else is under Not Planned: a change request on GitHub brings it back.
+Ordered by what is needed to drop Visual Studio for daily work. Phases 1–21 are done (see [History](history.md)): web apps, SOAP clients, templates, tests, private feeds, the Visual Studio basics, publishing, readiness for others, solutions, projects and configurations, code cleanup and refactoring, and the second rounds for run & debug, for the Solution Explorer, for NuGet and for connected services. Phase 22 is quality and documentation, phase 23 the small limitations left until after the code review, phase 30 what may come later, phase 35 packages per target framework (last, only if it proves necessary), phase 40 the issues with the Open VSX C# extension (the case for bundling our own server, not planned), phase 45 refactorings inside the C# server, phase 50 navigation and debugging extras. Everything else is under Not Planned: a change request on GitHub brings it back.
 
 What still needs a check in VS Code itself is listed in [manual-testing.md](manual-testing.md).
 
@@ -52,6 +52,8 @@ Edge cases and cosmetics; decided to leave until the code review of Phase 22 is 
 - [ ] Docs, GIF and manual-testing entries for the conditional cases
 
 ## Phase 40: Our own C# language server and debugger (0.6)
+Parked (2026-11-02): maintaining our own client and server is more than we want to carry; this list stays as the record of what the Open VSX extension costs us, and as the case if a Phase 45 style extension is not enough.
+
 The extension needs a C# extension for the language server and the debugger (`coreclr`). The one from Open VSX (`muhammad-sammy.csharp`, the Roslyn language server with netcoredbg) has limits we run into; they are the reasons to bundle our own (the Phase 30 item "No C# extension needed" has the how). Found so far (2026-11), with what was checked:
 
 - **Debugger is netcoredbg, not Microsoft's:** a project started with "Start without debugging" (`noDebug: true`) is attached to the debugger anyway and gets no breakpoints (see Known bugs); no Hot Reload with the debugger attached and no Edit and Continue (`dotnet watch` refuses assembly updates while a debugger is attached); it cannot attach to Mono or .NET Framework processes (only `coreclr`).
@@ -71,6 +73,12 @@ The C# extension's Roslyn server loads extra assemblies given with `--extension`
 - [ ] Packaging: the assembly built in CI (the .NET SDK is there), added to the `.vsix`; no Roslyn in it
 - [ ] Switching it on: our extension writes `dotnet.server.extensionPaths` into the user's settings only after asking (a restart of the C# server follows), or the docs give the path to add by hand; an off switch; keep other entries of the setting
 - [ ] Docs, manual-testing entries, and a test that loads the assembly into the installed server and asks for the code actions
+
+## Phase 50: Navigation and debugging extras (after Phase 45)
+Ideas from JetBrains' ReSharper extension for VS Code (the refactorings are Phase 45); only what is not already there.
+
+- [ ] Go to external sources, first look at what the C# extension has: its Roslyn server already navigates into metadata-as-source, decompiled code and SourceLink or embedded sources, switched by `dotnet.navigation.navigateToDecompiledSources` and `dotnet.navigation.navigateToSourceLinkAndEmbeddedSources` (both on by default in the Open VSX build 2.160.9; its command `csharp.showDecompilationTerms` shows the decompiler's terms). Nothing to build for the navigation itself; the gap is the UX: say what you landed in (a SourceLink file, embedded source, decompiled, metadata signatures only), and make it reachable from the Solution Explorer: Go to Definition from the package and assembly nodes under Dependencies (an assembly's types, a package's assemblies), so a library can be browsed without a call site
+- [ ] Debugger extras that matter day to day: inline variable values in the editor while stopped (the DAP gives the values; VS Code has an inline values feature for languages that provide it), dependent breakpoints (a breakpoint that is only armed after another one was hit), a better attach picker (we have one: see Attach to Process). Smart step into and set next statement need the engine to support them: netcoredbg has no smart step into and I do not know of set next statement there, so both depend on the netcoredbg-or-own-debugger question (Phase 40, parked); check netcoredbg's current feature list before promising either
 
 ## Not Planned
 - Accessibility of the Solution Explorer and the other views (ARIA tree roles, keyboard multi-select, links that cannot be focused, colour-only markers): to be done when someone opens an issue (A3-9, A3-10)

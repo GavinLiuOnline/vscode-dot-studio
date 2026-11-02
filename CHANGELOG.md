@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.2.1
+
+Fixes from the first tests on Windows and on a 50-project solution (Cirrus.Core): the Test Explorer lists only test projects and every target framework of them, the NuGet manager finds vulnerable packages that projects only get through other packages or other frameworks and reads them in one go, Select Framework is the solution's (also the C# language context), and the log is quiet.
 
 - **Fixed, Test Explorer:** a .NET Framework test app (`net472`, e.g. xUnit v3) is started as its own exe (with `mono` on Linux and macOS), not through `dotnet`, which failed with "hostpolicy.dll not found"; libraries below a `Directory.Build.props` that names test packages (even only under a `Condition`) are no longer listed as test projects: MSBuild's `IsTestProject` decides.
 - **Fixed, Solution Explorer:** the wavy underline of nodes with warnings and errors was clipped to a dotted line by the name's `overflow: hidden`; messages (infos) get the wavy line too, not a dotted one.

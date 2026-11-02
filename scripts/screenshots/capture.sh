@@ -86,8 +86,9 @@ wants() { [[ " $SCENES " == *" $1 "* ]]; }
 
 # Tree navigation with the Solution Explorer's own keys: the first click focuses the tree, typing jumps to a node
 # (type-to-find), Right expands it
-# The y of the first tree row: below the view title and the toolbar row of the Solution Explorer
-TREE_TOP=135
+# The y of the first tree row: below the view title and the toolbar row of the Solution Explorer (109 since the toolbar lost its borders; a click
+# 26 px lower hit the second row, Solution Items, and expanded it in the shots)
+TREE_TOP=109
 tree_focus() { key ctrl+alt+l; pause 1; click 140 "$TREE_TOP"; }
 tree_open() { for name in "$@"; do type_text "$name"; pause 1.2; key Right; pause 1.5; done; }
 tree_select() { pause 1.2; type_text "$1"; pause 1.2; }
@@ -270,6 +271,8 @@ if wants nuget; then
     shop_web_menu 327
     pause 15
     close_panel
+    # The command fails while the manager's webview has the focus (a test run of an earlier scene reopened the panel): the button
+    close_panel_button
     shot nuget
 fi
 
@@ -315,6 +318,7 @@ if wants gif-nuget; then
     shop_web_menu 327
     pause 10
     close_panel
+    close_panel_button
     record_stop nuget
 fi
 
@@ -379,7 +383,9 @@ if wants gif-attach-to-process; then
     # The sample web app runs without the debugger, in its own process group so that stop_app ends dotnet run and the app
     setsid dotnet run --no-build --project "$SOLUTION/src/Shop.Web" --urls http://localhost:5181 >"$WORK/app.log" 2>&1 &
     APP_PID=$!
-    pause 8
+    # Until the app listens (a fixed wait was not enough at times: the list then said "No running .NET process")
+    for _ in $(seq 1 40); do curl -s -o /dev/null http://localhost:5181 && break; sleep 1; done
+    pause 2
     record_start
     pause 1
     key ctrl+shift+p; pause 0.8; type_text "Attach to Process"; pause 1.5; key Return; pause 3
@@ -527,8 +533,8 @@ if wants gif-show-all-files; then
     tree_focus; tree_open Contoso src Shop.Core
     record_start
     pause 2
-    # The title bar's Show All Files button: Legacy, bin and obj appear greyed out
-    click 395 52; pause 2
+    # The toolbar's Show All Files button: Legacy, bin and obj appear greyed out
+    click 386 81; pause 2
     # Legacy is the fourth row below the project (Dependencies, bin, Catalog, Legacy), Old.cs the fifth once it is open
     row_y=$(( $(project_y src Shop.Core) + 80 ))
     click 200 "$row_y"; key Right; pause 1.5
@@ -538,7 +544,7 @@ if wants gif-show-all-files; then
     click 200 "$row_y" 3; pause 1.5
     click 280 $(( row_y + 137 )); pause 3
     # Show All Files off again (bin and obj go, Old.cs is now one row higher), then Exclude From Project in the same slot
-    click 395 52; pause 2
+    click 386 81; pause 2
     row_y=$(( row_y - 20 ))
     click 200 "$row_y" 3; pause 1.5
     click 280 $(( row_y + 137 )); pause 3
