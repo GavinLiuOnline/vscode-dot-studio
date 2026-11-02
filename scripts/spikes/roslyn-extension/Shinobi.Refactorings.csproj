@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- The folder of the C# extension's language server (its .roslyn folder); pass -p:RoslynDir=... -->
+    <RoslynDir Condition="'$(RoslynDir)' == ''">$(HOME)/.vscode-oss/extensions/muhammad-sammy.csharp-2.160.9-g01198ecc1f-linux-x64/.roslyn</RoslynDir>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>Shinobi.Refactorings</AssemblyName>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CodeAnalysis"><HintPath>$(RoslynDir)/Microsoft.CodeAnalysis.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp"><HintPath>$(RoslynDir)/Microsoft.CodeAnalysis.CSharp.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Microsoft.CodeAnalysis.Workspaces"><HintPath>$(RoslynDir)/Microsoft.CodeAnalysis.Workspaces.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp.Workspaces"><HintPath>$(RoslynDir)/Microsoft.CodeAnalysis.CSharp.Workspaces.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Microsoft.CodeAnalysis.Features"><HintPath>$(RoslynDir)/Microsoft.CodeAnalysis.Features.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="System.Composition.AttributedModel"><HintPath>$(RoslynDir)/System.Composition.AttributedModel.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>
