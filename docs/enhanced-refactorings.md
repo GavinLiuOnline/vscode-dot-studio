@@ -11,7 +11,8 @@ Refactorings that need choices ask them in a form in the editor area, like a dia
 | Extract Interface with a dialog (members, name, new file) | Yes | ✅ [Added](#extract-interface) |
 | Extract Members to Partial Class (pick members, they move to `Type.<Name>.cs`) | No (Rider) | ✅ [Added](#extract-members-to-partial-class) |
 | Extract Superclass (pick members, per member "make abstract"; the result is compiled before it is applied) | Yes (Extract Base Class) | ✅ [Added](#extract-superclass) |
-| Rename, Extract Method, Generate Constructor, Encapsulate Field, Use file-scoped namespace, Use primary constructor, Move Type to File, ... | Yes | ➖ The C# server offers them in Ctrl+. already; not repeated here |
+| Extract Method / Extract Local Function with the compiler's check (the server's own makes uncompilable `out` parameters) | Yes | ✅ [Added](#extract-method-checked) |
+| Rename, Generate Constructor, Encapsulate Field, Use file-scoped namespace, Use primary constructor, Move Type to File, ... | Yes | ➖ The C# server offers them in Ctrl+. already; not repeated here |
 | Pull Members Up (pick members and the base class or interface, with a warning for members that use what stays) | Yes | 🔜 Planned |
 | Use Base Type Where Possible (a checkbox of Extract Interface and Extract Superclass) | No (Rider) | 🔜 Planned |
 | Push Members Down (pick members and the derived types) | No (Rider) | 🔜 Planned |
@@ -62,6 +63,22 @@ What it refuses, with the reason, and never generates half of:
 - a member that uses something declared in another part of the type cannot move.
 
 **The result is compiled first** (a fork of the solution in the language server: the changed file and the new one): when the edit would add compiler errors, nothing is applied and a dialog lists the first ones. The same check runs for Extract Interface and Extract Members to Partial. Both files are saved after a successful extraction, as for the other refactorings.
+
+## Extract Method (checked)
+
+Select statements or an expression and press Ctrl+. > **Extract method (checked)...** or **Extract local function (checked)...**, next to the server's own *Extract method* and *Extract local function*. It uses the server's own edit (name `NewMethod`, parameters, placement and the rename afterwards stay the server's) and checks it before it is applied.
+
+Why: the server makes a variable that the selection assigns only on some paths an `out` parameter and does not assign it in the new method, so the result does not compile (CS0177). The typical selection is a condition with `out var` or a pattern variable behind `&&`:
+
+```csharp
+if (this.map.TryGetValue(name, out var forId)
+    && forId != null
+    && forId.TryGetValue(langKey ?? string.Empty, out var item))
+```
+
+becomes `NewMethod(name, langKey, out item)` whose body returns the condition and never assigns `item` when `forId` is null. The checked entry compiles the server's edit on a copy of the solution; for every CS0177 on an `out` parameter of the new method it adds `item = default;` as the first line of that method (`default(T)` in projects below C# 7.1), compiles again and applies the result only when it adds no compiler errors.
+
+What it does not repair: `ref` and `out` in `async` methods, iterators and lambdas (CS1988 and friends), and anything else that does not compile. Nothing is applied then, and a dialog lists the first compiler errors; use the server's entry and fix the result by hand, or change the selection. The entries show where the server offers its own (a selection the server cannot extract gets none), and only for the server's English titles.
 
 ## Needs
 

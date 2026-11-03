@@ -1,16 +1,11 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 import { logger } from '../../core/logger';
 import { RefactorChoice, RefactorForm } from '../../types/refactoring';
 import { RefactoringPanel } from '../../webview/providers/RefactoringPanel';
 import { CSharpServer } from './csharpServer';
-import { refreshProjectForNewFile } from './newFileRefresh';
+import { applyServerResult, ServerResult } from './applyResult';
 
 const log = logger('TypeRefactoring');
-
-interface ServerEdit { startLine: number; startCharacter: number; endLine: number; endCharacter: number; newText: string }
-/** What the server's handlers answer: edits of the file and a new file */
-interface ServerResult { edits: ServerEdit[]; newFilePath?: string; newFileContent?: string; errors?: string[] }
 
 /** A refactoring of the type under the cursor that asks for choices in a form and lets the server build the edits */
 export interface TypeRefactoringSpec<Form extends RefactorForm = RefactorForm> {
@@ -84,45 +79,6 @@ export class TypeRefactoring implements vscode.CodeActionProvider {
         if (!result) {
             throw new Error('The language server gave no edits.');
         }
-        // The server compiled the result before handing it out: edits that would add compiler errors are not applied
-        if (result.errors?.length) {
-            const shown = result.errors.slice(0, 8);
-            const more = result.errors.length > shown.length ? `\n... and ${result.errors.length - shown.length} more` : '';
-            log.warn(`${this.spec.actionTitle} refused, new errors: ${result.errors.join(' | ')}`);
-            void vscode.window.showErrorMessage(
-                `${this.spec.actionTitle.replace(/\.\.\.$/, '')} was not applied: the result would not compile (${result.errors.length} new error${result.errors.length === 1 ? '' : 's'}). Nothing was changed.`,
-                { modal: true, detail: shown.join('\n') + more });
-            return;
-        }
-        if (result.newFilePath && fs.existsSync(result.newFilePath)) {
-            void vscode.window.showErrorMessage(`${result.newFilePath} already exists; pick another name.`);
-            return;
-        }
-        const document = await vscode.workspace.openTextDocument(uri);
-        const wasDirty = document.isDirty;
-        const edit = new vscode.WorkspaceEdit();
-        for (const change of result.edits) {
-            edit.replace(uri, new vscode.Range(change.startLine, change.startCharacter, change.endLine, change.endCharacter), change.newText);
-        }
-        if (result.newFilePath && result.newFileContent !== undefined) {
-            const created = vscode.Uri.file(result.newFilePath);
-            edit.createFile(created, { ignoreIfExists: false });
-            edit.insert(created, new vscode.Position(0, 0), result.newFileContent);
-        }
-        if (!await vscode.workspace.applyEdit(edit)) {
-            throw new Error('The edits could not be applied.');
-        }
-        // Saved, so a build and the language server see the new file (an unsaved one is only in the editor); the file the user
-        // was editing only when it had no other unsaved changes
-        if (result.newFilePath) {
-            await (await vscode.workspace.openTextDocument(vscode.Uri.file(result.newFilePath))).save();
-            if (refreshProjectForNewFile(result.newFilePath)) {
-                log.debug('Touched the project file: the language server does not see new files in multi-targeted projects otherwise');
-            }
-        }
-        if (!wasDirty) {
-            await document.save();
-        }
-        log.info(`${this.spec.actionTitle} on ${uri.fsPath}`);
+        await applyServerResult(uri, result, this.spec.actionTitle);
     }
 }

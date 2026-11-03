@@ -394,6 +394,16 @@
         "category": ".NET"
       },
       {
+        "command": "shinobi.refactor.extractMethodChecked",
+        "title": "Extract Method (checked)...",
+        "category": ".NET"
+      },
+      {
+        "command": "shinobi.refactor.extractLocalFunctionChecked",
+        "title": "Extract Local Function (checked)...",
+        "category": ".NET"
+      },
+      {
         "command": "shinobi.refactor.extractSuperclass",
         "title": "Extract Superclass...",
         "category": ".NET"
@@ -1404,6 +1414,14 @@
         },
         {
           "command": "shinobi.refactor.extractPartial",
+          "when": "false"
+        },
+        {
+          "command": "shinobi.refactor.extractMethodChecked",
+          "when": "false"
+        },
+        {
+          "command": "shinobi.refactor.extractLocalFunctionChecked",
           "when": "false"
         },
         {

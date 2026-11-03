@@ -37,6 +37,7 @@ import { TypeRefactoring } from './services/refactoring/typeRefactoring';
 import { EXTRACT_INTERFACE } from './services/refactoring/extractInterface';
 import { EXTRACT_PARTIAL } from './services/refactoring/extractPartial';
 import { EXTRACT_SUPERCLASS } from './services/refactoring/extractSuperclass';
+import { ExtractMethodChecked, EXTRACT_METHOD_CHECKED, EXTRACT_LOCAL_FUNCTION_CHECKED } from './services/refactoring/extractMethodChecked';
 import { runCodeCleanupOnActiveFile } from './services/code/codeCleanup/activeFileCleanup';
 import { TestExplorer } from './services/testing/testExplorer';
 import { setFeedSources } from './services/nuget/feedAuth';
@@ -137,6 +138,7 @@ export function activate(context: vscode.ExtensionContext) {
     StartupProjectsPanel.extensionUri = context.extensionUri;
     RefactoringPanel.extensionUri = context.extensionUri;
     const csharpServer = new CSharpServer(vscode.Uri.joinPath(context.extensionUri, SERVER_EXTENSION_PATH).fsPath);
+    const checkedExtractions = [EXTRACT_METHOD_CHECKED, EXTRACT_LOCAL_FUNCTION_CHECKED].map(extraction => new ExtractMethodChecked(csharpServer, extraction));
     const typeRefactorings = [EXTRACT_INTERFACE, EXTRACT_PARTIAL, EXTRACT_SUPERCLASS].map(spec => new TypeRefactoring(csharpServer, spec));
     // The expired-token message needs the configured sources to know which feed a request went to
     setFeedSources(() => PackageBrowseService.getPackageSources());
@@ -363,6 +365,12 @@ export function activate(context: vscode.ExtensionContext) {
         }),
         vscode.commands.registerCommand('shinobi.configurationManager.open', () => ConfigurationManagerPanel.show()),
         vscode.commands.registerCommand('shinobi.startupProjects.open', () => StartupProjectsPanel.show()),
+        ...checkedExtractions.flatMap(extraction => [
+            vscode.languages.registerCodeActionsProvider({ language: 'csharp' }, extraction, ExtractMethodChecked.metadata),
+            vscode.commands.registerCommand(extraction.extraction.command, (uri: vscode.Uri, range: vscode.Range) => extraction.run(uri, range).catch(error => {
+                void vscode.window.showErrorMessage(`${extraction.extraction.title.replace(/\.\.\.$/, '')} failed: ${error instanceof Error ? error.message : String(error)}`);
+            })),
+        ]),
         ...typeRefactorings.flatMap(refactoring => [
             vscode.languages.registerCodeActionsProvider({ language: 'csharp' }, refactoring, TypeRefactoring.metadata),
             vscode.commands.registerCommand(refactoring.spec.command, (uri: vscode.Uri, position: vscode.Position) => refactoring.run(uri, position).catch(error => {

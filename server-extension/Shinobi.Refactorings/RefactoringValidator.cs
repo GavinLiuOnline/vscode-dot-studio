@@ -18,10 +18,14 @@ public static class RefactoringValidator
     }
 
     public static async Task<IReadOnlyList<string>> NewErrorsAsync(Document document, ExtractInterfaceResult result, CancellationToken ct)
+        => (await NewDiagnosticsAsync(document, result, ct).ConfigureAwait(false)).Added.Select(Describe).ToList();
+
+    /// <summary>The document with the result applied (in its forked solution) and the errors the result adds to the project.</summary>
+    public static async Task<(Document? After, IReadOnlyList<Diagnostic> Added)> NewDiagnosticsAsync(Document document, ExtractInterfaceResult result, CancellationToken ct)
     {
         var project = document.Project;
         var before = await project.GetCompilationAsync(ct).ConfigureAwait(false);
-        if (before is null) { return []; }
+        if (before is null) { return (null, []); }
 
         var text = await document.GetTextAsync(ct).ConfigureAwait(false);
         var changes = result.Edits
@@ -34,18 +38,23 @@ public static class RefactoringValidator
             solution = solution.AddDocument(DocumentId.CreateNewId(project.Id), Path.GetFileName(path), SourceText.From(content), filePath: path);
         }
         var after = await solution.GetProject(project.Id)!.GetCompilationAsync(ct).ConfigureAwait(false);
-        if (after is null) { return []; }
+        if (after is null) { return (null, []); }
 
         var known = Errors(before).GroupBy(Key).ToDictionary(g => g.Key, g => g.Count());
-        var added = new List<string>();
+        var added = new List<Diagnostic>();
         foreach (var diagnostic in Errors(after))
         {
             var key = Key(diagnostic);
             if (known.TryGetValue(key, out var left) && left > 0) { known[key] = left - 1; continue; }
-            var span = diagnostic.Location.GetLineSpan();
-            added.Add($"{Path.GetFileName(span.Path)}({span.StartLinePosition.Line + 1},{span.StartLinePosition.Character + 1}): {diagnostic.Id}: {diagnostic.GetMessage()}");
+            added.Add(diagnostic);
         }
-        return added;
+        return (solution.GetDocument(document.Id), added);
+    }
+
+    public static string Describe(Diagnostic diagnostic)
+    {
+        var span = diagnostic.Location.GetLineSpan();
+        return $"{Path.GetFileName(span.Path)}({span.StartLinePosition.Line + 1},{span.StartLinePosition.Character + 1}): {diagnostic.Id}: {diagnostic.GetMessage()}";
     }
 
     private static IEnumerable<Diagnostic> Errors(Compilation compilation)

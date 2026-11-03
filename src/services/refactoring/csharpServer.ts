@@ -83,6 +83,11 @@ export class CSharpServer {
         }
     }
 
+    /** A request of the language server's own protocol (`textDocument/codeAction`, `codeAction/resolve`...) */
+    request<R>(method: string, params: unknown): Promise<R> {
+        return this.send<R>(method, params);
+    }
+
     /** Runs the handler `handler` (a class of our assembly) on `document` and returns its JSON answer */
     async document<M, R>(document: vscode.Uri, handler: string, message: M): Promise<R | undefined> {
         const dispatch = async () => this.send<{ response?: string }>(DISPATCH_DOCUMENT, {
