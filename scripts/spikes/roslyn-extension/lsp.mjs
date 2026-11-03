@@ -84,6 +84,15 @@ for (const [label, re, token] of probes) {
   console.log(`== ${label} (${line + 1}:${character + 1}):`, (result.result ?? []).map(a => a.title).join(' || '));
 }
 console.log('Shinobi action present:', actions.some(a => /Shinobi/.test(a.title)));
+if (process.env.PROBE_MESSAGE) {
+  // PROBE_MESSAGE='{"method":"textDocument/_vs_dipatchExtensionMessage","params":{...}}', with {{uri}} and {{dll}} replaced
+  // a JSON array of such objects is sent one after the other
+  const probes = [].concat(JSON.parse(process.env.PROBE_MESSAGE.replaceAll('{{uri}}', uri).replaceAll('{{dll}}', extension)));
+  for (const probe of probes) {
+    const reply = await request(probe.method, probe.params);
+    console.log('PROBE reply:', JSON.stringify(reply).slice(0, 1500));
+  }
+}
 console.log('server stderr tail:', serverLog.join('').split('\n').slice(-6).join('\n').slice(0, 600));
 child.kill();
 process.exit(0);

@@ -16,10 +16,13 @@
     <GenerateDependencyFile>false</GenerateDependencyFile>
     <DebugType>none</DebugType>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- the handler package is a prerelease of the same 5.0.0 assembly version; its exact-version dependency is only a compile-time one -->
+    <NoWarn>$(NoWarn);NU1608</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="$(RoslynVersion)" ExcludeAssets="runtime" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.ExternalAccess.Extensions" Version="5.0.0-2.25609.2" ExcludeAssets="runtime" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>
