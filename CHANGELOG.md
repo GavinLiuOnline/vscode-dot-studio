@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.2
+## 0.2.3
 
 Simplified Chinese: the extension speaks the language VS Code does — commands, menus, settings, notifications, input and QuickPick prompts, and every webview — with English as the fallback.
 
