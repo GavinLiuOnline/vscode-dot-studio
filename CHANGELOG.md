@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.2
+
+Simplified Chinese: the extension speaks the language VS Code does — commands, menus, settings, notifications, input and QuickPick prompts, and every webview — with English as the fallback.
+
+- **Added, all views:** the manifest's strings are localized in `package.nls.json` and `package.nls.zh-cn.json` (commands, submenus, settings with their descriptions and enum values, view titles, welcome pages, custom editors and task definitions), and the extension host's messages in `l10n/bundle.l10n.json` and `l10n/bundle.l10n.zh-cn.json` through `t()` in `src/core/i18n.ts`, which takes the English text as the key.
+- **Added, webviews:** a shared dictionary (`src/webview/shared/i18n.ts`) translates the Solution Explorer, NuGet manager, Error List, Configuration Manager, Startup Projects, Publish and New Project panels; they follow the language VS Code runs in (`<html lang>` set by their HTML), not a setting of their own.
+- **Fixed, menu generator:** `npm run generate:menus` writes the NLS keys of the generated commands and submenus to `package.nls.json` again, so regenerating the menus keeps the Chinese titles.
+
 ## 0.2.1
 
 Fixes from the first tests on Windows and on a 50-project solution (Cirrus.Core): the Test Explorer lists only test projects and every target framework of them, the NuGet manager finds vulnerable packages that projects only get through other packages or other frameworks and reads them in one go, Select Framework is the solution's (also the C# language context), and the log is quiet.
