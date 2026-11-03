@@ -13,8 +13,12 @@ interface CSharpApi {
 export const SERVER_EXTENSION_PATH = 'out/server-extension/Shinobi.Refactorings.dll';
 
 const ACTIVATE = 'server/_vs_activateExtension';
+const DEACTIVATE = 'server/_vs_deactivateExtension';
 // sic: the server spells it "dipatch" for documents
 const DISPATCH_DOCUMENT = 'textDocument/_vs_dipatchExtensionMessage';
+
+const ALREADY_REGISTERED = /already registered/i;
+const messageOf = (error: unknown): string => error instanceof Error ? error.message : String(error);
 
 async function api(): Promise<CSharpApi | undefined> {
     for (const id of Object.values(CSHARP_EXTENSIONS)) {
@@ -48,15 +52,35 @@ export class CSharpServer {
         return send<R>({ method, numberOfParams: 1, parameterStructures: 'byName' }, params, new vscode.CancellationTokenSource().token);
     }
 
-    /** Has the server load our assembly; again after the server restarted */
+    /**
+     * Has the server load our assembly. The server refuses a second registration ("is already registered"), which it is
+     * when this window forgot it did it (the C# extension kept its server, the registration is gone with a project or solution
+     * reload, or two requests raced): that is fine, unless `force` (the handler is not found although it is registered), then
+     * the registration is dropped and made again.
+     */
     private activate(force = false): Promise<unknown> {
         if (!this.activated || force) {
-            this.activated = this.send(ACTIVATE, { assemblyFilePath: this.assemblyPath }).catch(error => {
+            this.activated = this.register(force).catch(error => {
                 this.activated = undefined;
                 throw error;
             });
         }
         return this.activated;
+    }
+
+    private async register(force: boolean): Promise<void> {
+        const request = { assemblyFilePath: this.assemblyPath };
+        try {
+            await this.send(ACTIVATE, request);
+        } catch (error) {
+            if (!ALREADY_REGISTERED.test(messageOf(error))) {
+                throw error;
+            }
+            if (force) {
+                await this.send(DEACTIVATE, request);
+                await this.send(ACTIVATE, request);
+            }
+        }
     }
 
     /** Runs the handler `handler` (a class of our assembly) on `document` and returns its JSON answer */
@@ -72,7 +96,7 @@ export class CSharpServer {
         try {
             reply = await dispatch();
         } catch (error) {
-            if (!/No handler found/.test(String(error instanceof Error ? error.message : error))) {
+            if (!/No handler found/.test(messageOf(error))) {
                 throw error;
             }
             // The server restarted since: it has to be told about our assembly again

@@ -46,4 +46,36 @@ describe('CSharpServer', () => {
         send.mockImplementation(async (type: { method: string }) => { if (type.method.includes('dipatch')) { throw new Error('boom'); } return {}; });
         await expect(new CSharpServer('/x.dll').document(uri, 'H', {})).rejects.toThrow('boom');
     });
+
+    it('takes "already registered" as registered, and registers again only when the handler is missing', async () => {
+        let dispatches = 0;
+        send.mockImplementation(async (type: { method: string }) => {
+            if (type.method.includes('deactivate')) { return {}; }
+            if (type.method.includes('activate')) { throw new Error("Extension '/x.dll' is already registered."); }
+            return dispatches++ === 0 ? { response: '{"ok":1}' } : { response: 'null' };
+        });
+        const server = new CSharpServer('/x.dll');
+        expect(await server.document(uri, 'H', {})).toEqual({ ok: 1 });
+        expect(send.mock.calls.map(call => call[0].method)).toEqual(['server/_vs_activateExtension', 'textDocument/_vs_dipatchExtensionMessage']);
+    });
+
+    it('drops the registration and makes it again when the server knows it but not the handler', async () => {
+        let registered = true;
+        let dispatches = 0;
+        send.mockImplementation(async (type: { method: string }) => {
+            if (type.method.includes('deactivate')) { registered = false; return {}; }
+            if (type.method.includes('activate')) {
+                if (registered) { throw new Error("Extension '/x.dll' is already registered."); }
+                registered = true;
+                return {};
+            }
+            if (dispatches++ === 0) { throw new Error('No handler found for message H.'); }
+            return { response: '{"ok":2}' };
+        });
+        expect(await new CSharpServer('/x.dll').document(uri, 'H', {})).toEqual({ ok: 2 });
+        expect(send.mock.calls.map(call => call[0].method)).toEqual([
+            'server/_vs_activateExtension', 'textDocument/_vs_dipatchExtensionMessage',
+            'server/_vs_activateExtension', 'server/_vs_deactivateExtension', 'server/_vs_activateExtension', 'textDocument/_vs_dipatchExtensionMessage',
+        ]);
+    });
 });
