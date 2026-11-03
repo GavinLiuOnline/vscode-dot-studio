@@ -394,6 +394,11 @@
         "category": ".NET"
       },
       {
+        "command": "shinobi.refactor.extractSuperclass",
+        "title": "Extract Superclass...",
+        "category": ".NET"
+      },
+      {
         "command": "shinobi.startupProjects.open",
         "title": "Configure Startup Projects...",
         "category": ".NET"
@@ -1402,6 +1407,10 @@
           "when": "false"
         },
         {
+          "command": "shinobi.refactor.extractSuperclass",
+          "when": "false"
+        },
+        {
           "command": "shinobi.codeCleanup.file",
           "when": "editorLangId == csharp"
         },
@@ -1784,6 +1793,7 @@
     "typecheck": "tsc --noEmit",
     "typecheck:watch": "tsc --noEmit --watch",
     "test": "jest",
+    "test:server-extension": "dotnet test server-extension/Shinobi.Refactorings.Tests --nologo -v q",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "generate:menus": "node scripts/generate-context-menus.js",

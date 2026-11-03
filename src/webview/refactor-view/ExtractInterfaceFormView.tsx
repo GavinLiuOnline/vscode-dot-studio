@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ExtractInterfaceChoice, ExtractInterfaceForm, MemberInfo, SyntaxPalette } from '../../types/refactoring';
+import { FileTargets } from './FileTargets';
 import { MembersForm } from './MembersForm';
 
 /** The interface as it will be written; the type parameters of the type are not known here */
@@ -24,21 +25,7 @@ export const ExtractInterfaceFormView: React.FC<{
             typeName={form.typeName}
             nameLabel="Interface name"
             initialName={form.interfaceName}
-            targets={name => (
-                <section>
-                    <h2>Generate into</h2>
-                    <div className="targets">
-                        <label className={`target${newFile ? ' on' : ''}`}>
-                            <input type="radio" name="target" checked={newFile} onChange={() => setNewFile(true)} />
-                            <span><div className="what">New file</div><div className="where">{name}.cs, next to {form.typeName}</div></span>
-                        </label>
-                        <label className={`target${newFile ? '' : ' on'}`}>
-                            <input type="radio" name="target" checked={!newFile} onChange={() => setNewFile(false)} />
-                            <span><div className="what">The same file</div><div className="where">Above {form.typeName}</div></span>
-                        </label>
-                    </div>
-                </section>
-            )}
+            targets={name => <FileTargets newFile={newFile} onChange={setNewFile} fileName={`${name}.cs`} typeName={form.typeName} />}
             membersLabel="Members"
             members={form.members}
             previewOf={(name, chosen) => previewOf(name, chosen.map(interfaceLine))}

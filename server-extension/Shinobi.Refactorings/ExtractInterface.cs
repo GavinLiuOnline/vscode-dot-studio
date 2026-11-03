@@ -40,7 +40,8 @@ public sealed record TextEdit(
 public sealed record ExtractInterfaceResult(
     [property: JsonPropertyName("edits")] IReadOnlyList<TextEdit> Edits,
     [property: JsonPropertyName("newFilePath")] string? NewFilePath,
-    [property: JsonPropertyName("newFileContent")] string? NewFileContent);
+    [property: JsonPropertyName("newFileContent")] string? NewFileContent,
+    [property: JsonPropertyName("errors")] IReadOnlyList<string>? Errors = null);
 
 /// <summary>What the Extract Interface dialog lists: the type under the cursor and its members that can go into an interface.</summary>
 public sealed class ExtractInterfaceInfoHandler : IExtensionDocumentMessageHandler<TypeAt, ExtractInterfaceInfo?>
@@ -106,7 +107,7 @@ public sealed class ExtractInterfaceHandler : IExtensionDocumentMessageHandler<E
         {
             edits.Add(At(text, ExtractInterfaceSupport.LineStartBefore(text, declaration), body.ToString() + eol));
         }
-        return new ExtractInterfaceResult(edits, newFilePath, newFileContent);
+        return await RefactoringValidator.CheckAsync(document, new ExtractInterfaceResult(edits, newFilePath, newFileContent), cancellationToken).ConfigureAwait(false);
     }
 
     private static TextEdit At(SourceText text, int position, string newText)

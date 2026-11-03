@@ -10,7 +10,7 @@ const log = logger('TypeRefactoring');
 
 interface ServerEdit { startLine: number; startCharacter: number; endLine: number; endCharacter: number; newText: string }
 /** What the server's handlers answer: edits of the file and a new file */
-interface ServerResult { edits: ServerEdit[]; newFilePath?: string; newFileContent?: string }
+interface ServerResult { edits: ServerEdit[]; newFilePath?: string; newFileContent?: string; errors?: string[] }
 
 /** A refactoring of the type under the cursor that asks for choices in a form and lets the server build the edits */
 export interface TypeRefactoringSpec<Form extends RefactorForm = RefactorForm> {
@@ -40,7 +40,7 @@ export class TypeRefactoring implements vscode.CodeActionProvider {
 
     constructor(private readonly server: CSharpServer, readonly spec: TypeRefactoringSpec) {}
 
-    private info(uri: vscode.Uri, position: vscode.Position): Promise<(Omit<RefactorForm, 'kind'> & { typeName: string }) | null | undefined> {
+    private info(uri: vscode.Uri, position: vscode.Position): Promise<(Omit<RefactorForm, 'kind'> & { typeName: string; refusal?: string }) | null | undefined> {
         return this.server.document(uri, `${this.spec.handler}InfoHandler`, { position });
     }
 
@@ -69,6 +69,11 @@ export class TypeRefactoring implements vscode.CodeActionProvider {
             void vscode.window.showInformationMessage(this.spec.notOnTypeMessage);
             return;
         }
+        // The server knows this type cannot be refactored this way (a nested class, another part names a base class...): the reason, no form
+        if (info.refusal) {
+            void vscode.window.showWarningMessage(info.refusal);
+            return;
+        }
         const { title, form } = this.spec.formOf(info as never);
         const choice = await RefactoringPanel.pick(title, form);
         if (!choice || choice.kind !== this.spec.kind) {
@@ -78,6 +83,16 @@ export class TypeRefactoring implements vscode.CodeActionProvider {
             uri, `${this.spec.handler}Handler`, { ...choice, position });
         if (!result) {
             throw new Error('The language server gave no edits.');
+        }
+        // The server compiled the result before handing it out: edits that would add compiler errors are not applied
+        if (result.errors?.length) {
+            const shown = result.errors.slice(0, 8);
+            const more = result.errors.length > shown.length ? `\n... and ${result.errors.length - shown.length} more` : '';
+            log.warn(`${this.spec.actionTitle} refused, new errors: ${result.errors.join(' | ')}`);
+            void vscode.window.showErrorMessage(
+                `${this.spec.actionTitle.replace(/\.\.\.$/, '')} was not applied: the result would not compile (${result.errors.length} new error${result.errors.length === 1 ? '' : 's'}). Nothing was changed.`,
+                { modal: true, detail: shown.join('\n') + more });
+            return;
         }
         if (result.newFilePath && fs.existsSync(result.newFilePath)) {
             void vscode.window.showErrorMessage(`${result.newFilePath} already exists; pick another name.`);

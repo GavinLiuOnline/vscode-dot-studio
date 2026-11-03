@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Tests of the refactorings' logic on source text: an in-memory Roslyn workspace, no language server. The Roslyn packages are
+    referenced with their assemblies here (the extension itself ships none, the server brings them).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <NoWarn>$(NoWarn);NU1608</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.0.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.ExternalAccess.Extensions" Version="5.0.0-2.25609.2" />
+    <Using Include="Xunit" />
+    <ProjectReference Include="../Shinobi.Refactorings/Shinobi.Refactorings.csproj" />
+  </ItemGroup>
+
+</Project>

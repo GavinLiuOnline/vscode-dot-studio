@@ -7,6 +7,13 @@ export interface MemberInfo {
     kind: 'method' | 'property' | 'event' | 'field' | 'constructor' | 'type';
     /** The member as it is written (its declaration up to the body) */
     signature: string;
+    /** Extract Superclass: the base class can declare the member abstract, with this declaration (the type keeps its body as an override) */
+    canBeAbstract?: boolean;
+    abstractSignature?: string;
+    /** Extract Superclass: the ids of the members this one uses by their plain name; they have to come along */
+    deps?: string[];
+    /** Extract Superclass: why the member cannot move */
+    blocked?: string;
 }
 
 /** What Extract Interface asks: the members of the type and a name for the interface */
@@ -39,9 +46,27 @@ export interface ExtractPartialChoice {
     memberIds: string[];
 }
 
+/** What Extract Superclass asks: the name of the base class, where it goes and the members that move to it (or are declared abstract in it) */
+export interface ExtractSuperclassForm {
+    kind: 'extractSuperclass';
+    typeName: string;
+    baseName: string;
+    members: MemberInfo[];
+}
+
+export interface ExtractSuperclassChoice {
+    kind: 'extractSuperclass';
+    baseName: string;
+    /** Every member that goes along: moved, or declared abstract in the base class */
+    memberIds: string[];
+    /** The members of `memberIds` that stay in the type as overrides of an abstract declaration */
+    abstractIds: string[];
+    newFile: boolean;
+}
+
 /** The forms the tab can show; every refactoring that needs choices adds one */
-export type RefactorForm = ExtractInterfaceForm | ExtractPartialForm;
-export type RefactorChoice = ExtractInterfaceChoice | ExtractPartialChoice;
+export type RefactorForm = ExtractInterfaceForm | ExtractPartialForm | ExtractSuperclassForm;
+export type RefactorChoice = ExtractInterfaceChoice | ExtractPartialChoice | ExtractSuperclassChoice;
 
 /** What a token of the C# preview is; `plain` has no colour */
 export type TokenKind = 'keyword' | 'interface' | 'class' | 'method' | 'property' | 'parameter' | 'plain';

@@ -67,6 +67,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - run: npm run test:server-extension
 
       # Fails when the version has no changelog entry (the Marketplace shows CHANGELOG.md too)
       - name: Changelog section

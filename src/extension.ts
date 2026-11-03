@@ -36,6 +36,7 @@ import { CSharpServer, SERVER_EXTENSION_PATH } from './services/refactoring/csha
 import { TypeRefactoring } from './services/refactoring/typeRefactoring';
 import { EXTRACT_INTERFACE } from './services/refactoring/extractInterface';
 import { EXTRACT_PARTIAL } from './services/refactoring/extractPartial';
+import { EXTRACT_SUPERCLASS } from './services/refactoring/extractSuperclass';
 import { runCodeCleanupOnActiveFile } from './services/code/codeCleanup/activeFileCleanup';
 import { TestExplorer } from './services/testing/testExplorer';
 import { setFeedSources } from './services/nuget/feedAuth';
@@ -136,7 +137,7 @@ export function activate(context: vscode.ExtensionContext) {
     StartupProjectsPanel.extensionUri = context.extensionUri;
     RefactoringPanel.extensionUri = context.extensionUri;
     const csharpServer = new CSharpServer(vscode.Uri.joinPath(context.extensionUri, SERVER_EXTENSION_PATH).fsPath);
-    const typeRefactorings = [EXTRACT_INTERFACE, EXTRACT_PARTIAL].map(spec => new TypeRefactoring(csharpServer, spec));
+    const typeRefactorings = [EXTRACT_INTERFACE, EXTRACT_PARTIAL, EXTRACT_SUPERCLASS].map(spec => new TypeRefactoring(csharpServer, spec));
     // The expired-token message needs the configured sources to know which feed a request went to
     setFeedSources(() => PackageBrowseService.getPackageSources());
     const testExplorer = new TestExplorer();

@@ -68,19 +68,7 @@ public sealed class ExtractPartialHandler : IExtensionDocumentMessageHandler<Ext
         }
 
         // the members leave their lines (with the comments above them)
-        foreach (var merged in PartialSupport.Merge(moved.Select(m => PartialSupport.LinesOf(text, m))))
-        {
-            var span = merged;
-            // what is left of the type ends at its closing brace: no blank line before it
-            if (span.End < text.Length && text.Lines.GetLineFromPosition(span.End).ToString().TrimStart().StartsWith('}'))
-            {
-                var first = text.Lines.GetLineFromPosition(span.Start).LineNumber;
-                if (first > 0 && text.Lines[first - 1].ToString().Trim().Length == 0) { span = TextSpan.FromBounds(text.Lines[first - 1].Start, span.End); }
-            }
-            var start = text.Lines.GetLinePosition(span.Start);
-            var end = text.Lines.GetLinePosition(span.End);
-            edits.Add(new TextEdit(start.Line, start.Character, end.Line, end.Character, ""));
-        }
+        edits.AddRange(PartialSupport.RemovalEdits(text, moved));
 
         var body = new StringBuilder();
         for (var i = 0; i < moved.Count; i++)
@@ -92,7 +80,7 @@ public sealed class ExtractPartialHandler : IExtensionDocumentMessageHandler<Ext
         var usings = PartialSupport.NeededUsings(root, model, moved, cancellationToken);
         var content = PartialSupport.NewFile(root, types, usings, body.ToString(), eol);
         var newPath = Path.Combine(Path.GetDirectoryName(path)!, $"{Path.GetFileNameWithoutExtension(path)}.{message.PartName}.cs");
-        return new ExtractInterfaceResult(edits, newPath, content);
+        return await RefactoringValidator.CheckAsync(document, new ExtractInterfaceResult(edits, newPath, content), cancellationToken).ConfigureAwait(false);
     }
 }
 
@@ -174,11 +162,50 @@ internal static class PartialSupport
         if (current is { } last) { yield return last; }
     }
 
-    /// <summary>The member as it stands in the file, its comments and the indentation of its first line dropped to the part's body indent.</summary>
-    public static string TextOf(SourceText text, MemberDeclarationSyntax member, string eol)
+    /// <summary>The member as it stands in the file, with its comments; `adjustments` (spans of the file and their new text) are applied to it.</summary>
+    public static string TextOf(SourceText text, MemberDeclarationSyntax member, string eol, IEnumerable<(TextSpan Span, string Text)>? adjustments = null)
     {
-        var span = TextSpan.FromBounds(ExtractInterfaceSupport.LineStartBefore(text, member), text.Lines.GetLineFromPosition(member.Span.End - 1).End);
-        return text.ToString(span) + eol;
+        var start = ExtractInterfaceSupport.LineStartBefore(text, member);
+        var span = TextSpan.FromBounds(start, text.Lines.GetLineFromPosition(member.Span.End - 1).End);
+        var result = text.ToString(span);
+        foreach (var (at, replacement) in (adjustments ?? []).OrderByDescending(a => a.Span.Start))
+        {
+            result = result[..(at.Start - start)] + replacement + result[(at.End - start)..];
+        }
+        return result + eol;
+    }
+
+    /// <summary>The edits that take the members out of the file: their lines, merged where neighbours leave together, without a blank line before the closing brace.</summary>
+    public static List<TextEdit> RemovalEdits(SourceText text, IEnumerable<MemberDeclarationSyntax> moved)
+    {
+        var edits = new List<TextEdit>();
+        foreach (var merged in Merge(moved.Select(m => LinesOf(text, m))))
+        {
+            var span = merged;
+            // what is left of the type ends at its closing brace: no blank line before it
+            if (span.End < text.Length && text.Lines.GetLineFromPosition(span.End).ToString().TrimStart().StartsWith('}'))
+            {
+                var first = text.Lines.GetLineFromPosition(span.Start).LineNumber;
+                if (first > 0 && text.Lines[first - 1].ToString().Trim().Length == 0) { span = TextSpan.FromBounds(text.Lines[first - 1].Start, span.End); }
+            }
+            var start = text.Lines.GetLinePosition(span.Start);
+            var end = text.Lines.GetLinePosition(span.End);
+            edits.Add(new TextEdit(start.Line, start.Character, end.Line, end.Character, ""));
+        }
+        return edits;
+    }
+
+    /// <summary>The members' text with the indentation they had cut down to `indent`: the least indented line gets it, the others keep their step.</summary>
+    public static string Reindent(string members, string indent, string eol)
+    {
+        var sb = new StringBuilder();
+        var lines = members.Replace("\r\n", "\n").TrimEnd('\n').Split('\n');
+        var common = lines.Where(l => l.Trim().Length > 0).Select(l => l.Length - l.TrimStart().Length).DefaultIfEmpty(0).Min();
+        foreach (var line in lines)
+        {
+            sb.Append(line.Trim().Length == 0 ? "" : indent + line[Math.Min(common, line.Length)..]).Append(eol);
+        }
+        return sb.ToString();
     }
 
     public static TextEdit Insert(SourceText text, int position, string newText)
@@ -188,11 +215,11 @@ internal static class PartialSupport
     }
 
     /// <summary>The usings of the original file that the moved members use.</summary>
-    public static List<UsingDirectiveSyntax> NeededUsings(CompilationUnitSyntax root, SemanticModel model, IEnumerable<MemberDeclarationSyntax> moved, CancellationToken ct)
+    public static List<UsingDirectiveSyntax> NeededUsings(CompilationUnitSyntax root, SemanticModel model, IEnumerable<SyntaxNode> moved, CancellationToken ct, IEnumerable<SyntaxNode>? more = null)
     {
         var namespaces = new HashSet<string>();
         var aliases = new HashSet<string>();
-        foreach (var node in moved.SelectMany(m => m.DescendantNodesAndSelf()).OfType<SimpleNameSyntax>())
+        foreach (var node in moved.Concat(more ?? []).SelectMany(m => m.DescendantNodesAndSelf()).OfType<SimpleNameSyntax>())
         {
             var info = model.GetSymbolInfo(node, ct);
             foreach (var symbol in info.Symbol is null ? info.CandidateSymbols : [info.Symbol])
@@ -235,14 +262,7 @@ internal static class PartialSupport
             depth++;
         }
 
-        // the members come with the indentation they had; the type's own indentation is what they should have
-        var memberIndent = new string(' ', depth * 4);
-        var lines = members.Replace("\r\n", "\n").TrimEnd('\n').Split('\n');
-        var common = lines.Where(l => l.Trim().Length > 0).Select(l => l.Length - l.TrimStart().Length).DefaultIfEmpty(0).Min();
-        foreach (var line in lines)
-        {
-            sb.Append(line.Trim().Length == 0 ? "" : memberIndent + line[Math.Min(common, line.Length)..]).Append(eol);
-        }
+        sb.Append(Reindent(members, new string(' ', depth * 4), eol));
 
         for (var i = types.Count - 1; i >= 0; i--)
         {

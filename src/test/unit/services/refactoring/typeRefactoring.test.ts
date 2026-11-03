@@ -16,7 +16,7 @@ jest.mock('vscode', () => ({
         createFile(uri: unknown) { edits.created.push(uri); }
         insert() { /* the content of the new file */ }
     },
-    window: { showInformationMessage: jest.fn(), showErrorMessage: jest.fn() },
+    window: { showInformationMessage: jest.fn(), showErrorMessage: jest.fn(), showWarningMessage: jest.fn() },
     workspace: {
         openTextDocument: async (uri: { fsPath: string }) => ({ isDirty: false, save: async () => { saved.push(uri.fsPath); } }),
         applyEdit: async () => true,
@@ -29,6 +29,7 @@ import * as vscode from 'vscode';
 import { TypeRefactoring } from '../../../../services/refactoring/typeRefactoring';
 import { EXTRACT_INTERFACE } from '../../../../services/refactoring/extractInterface';
 import { EXTRACT_PARTIAL } from '../../../../services/refactoring/extractPartial';
+import { EXTRACT_SUPERCLASS } from '../../../../services/refactoring/extractSuperclass';
 
 const uri = { fsPath: '/p/Order.cs', toString: () => 'file:///p/Order.cs' } as vscode.Uri;
 const position = new vscode.Position(4, 14);
@@ -105,5 +106,25 @@ describe('TypeRefactoring', () => {
         document.mockResolvedValueOnce(null);
         await refactoring.run(uri, position);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(expect.stringContaining('extract an interface'));
+    });
+
+    it('shows the server\'s reason instead of the form when the type cannot be refactored', async () => {
+        const refactoring = setup(EXTRACT_SUPERCLASS as never);
+        document.mockResolvedValueOnce({ typeName: 'Inner', baseName: 'InnerBase', members: [], refusal: 'Inner is a nested type' });
+        await refactoring.run(uri, position);
+        expect(picked).not.toHaveBeenCalled();
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith('Inner is a nested type');
+    });
+
+    it('does not apply edits that would add compiler errors, and lists them', async () => {
+        const refactoring = setup(EXTRACT_SUPERCLASS as never);
+        document
+            .mockResolvedValueOnce({ typeName: 'Foo', baseName: 'FooBase', members: [] })
+            .mockResolvedValueOnce({ edits: [{ startLine: 1, startCharacter: 0, endLine: 1, endCharacter: 0, newText: 'x' }], newFilePath: '/p/FooBase.cs', newFileContent: 'x', errors: ['A.cs(3,5): CS0191: boom'] });
+        picked.mockResolvedValue({ kind: 'extractSuperclass', baseName: 'FooBase', memberIds: ['1'], abstractIds: [], newFile: true });
+        await refactoring.run(uri, position);
+        expect(edits.replace).toHaveLength(0);
+        expect(saved).toHaveLength(0);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(expect.stringContaining('would not compile (1 new error)'), { modal: true, detail: 'A.cs(3,5): CS0191: boom' });
     });
 });

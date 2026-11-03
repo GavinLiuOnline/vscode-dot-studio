@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { RefactorChoice, RefactorForm, SyntaxPalette, RefactorMessage, RefactorRequest } from '../../types/refactoring';
 import { ExtractInterfaceFormView } from './ExtractInterfaceFormView';
 import { ExtractPartialFormView } from './ExtractPartialFormView';
+import { ExtractSuperclassFormView } from './ExtractSuperclassFormView';
 
 export interface RefactorApi {
     postMessage(message: RefactorRequest): void;
@@ -41,5 +42,6 @@ export const App: React.FC<{ api: RefactorApi }> = ({ api }) => {
     switch (form.kind) {
         case 'extractInterface': return <ExtractInterfaceFormView form={form} palette={palette} onSubmit={submit} onCancel={cancel} />;
         case 'extractPartial': return <ExtractPartialFormView form={form} palette={palette} onSubmit={submit} onCancel={cancel} />;
+        case 'extractSuperclass': return <ExtractSuperclassFormView form={form} palette={palette} onSubmit={submit} onCancel={cancel} />;
     }
 };

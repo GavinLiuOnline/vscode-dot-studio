@@ -10,8 +10,8 @@ Refactorings that need choices ask them in a form in the editor area, like a dia
 |---|---|---|
 | Extract Interface with a dialog (members, name, new file) | Yes | ✅ [Added](#extract-interface) |
 | Extract Members to Partial Class (pick members, they move to `Type.<Name>.cs`) | No (Rider) | ✅ [Added](#extract-members-to-partial-class) |
-| Rename, Extract Method, Extract Base Class, Generate Constructor, Encapsulate Field, Use file-scoped namespace, Use primary constructor, Move Type to File, ... | Yes | ➖ The C# server offers them in Ctrl+. already; not repeated here |
-| Extract Superclass with a member picker (per member "make abstract") | Yes (Extract Base Class) | 🔜 Planned, next: the server's own entry takes no choices |
+| Extract Superclass (pick members, per member "make abstract"; the result is compiled before it is applied) | Yes (Extract Base Class) | ✅ [Added](#extract-superclass) |
+| Rename, Extract Method, Generate Constructor, Encapsulate Field, Use file-scoped namespace, Use primary constructor, Move Type to File, ... | Yes | ➖ The C# server offers them in Ctrl+. already; not repeated here |
 | Pull Members Up (pick members and the base class or interface, with a warning for members that use what stays) | Yes | 🔜 Planned |
 | Use Base Type Where Possible (a checkbox of Extract Interface and Extract Superclass) | No (Rider) | 🔜 Planned |
 | Push Members Down (pick members and the derived types) | No (Rider) | 🔜 Planned |
@@ -43,6 +43,25 @@ Put the cursor on the name of a class, struct or record and press Ctrl+. > **Ext
 The form has the **name of the part** (`Part` by default; the file is `Order.Part.cs`, next to the type, in the same namespace and namespace style), the members to move (fields, constructors, methods, properties, events and nested types, each with its kind; **Select all** and **Deselect all**), and a preview of the new part with the bodies folded.
 
 **Move** makes the type `partial` (and the types around it when it is nested), takes the chosen members out of the file together with their comments and attributes, and writes them into the new file with the `using`s they need. Nothing else changes: no references are touched, the type is the same type. Both files are saved. The new part repeats `partial`, the keyword, the name and the type parameters of the type; accessibility, base types and constraints stay with the first part.
+
+## Extract Superclass
+
+Put the cursor on the name of a class and press Ctrl+. > **Extract superclass (choose members)...** The server's own *Extract base class...* stays in the menu; it takes no choices and can produce code that does not compile (on a partial class with an interface it rewrote a whole file with dozens of duplicate `using` lines). Prefer this one.
+
+The form has the **name of the base class** (`<Type>Base`), **Generate into** (a new file next to the type, or the same file above it), and the members to move up (none are checked at first). Methods and properties have an **abstract** box: the base class then only declares the member abstract and the type keeps its body as an `override`. A preview shows the base class.
+
+What it does:
+- the base class takes the type's old base class (`Foo : Old` becomes `Foo : FooBase` and `FooBase : Old`), the type keeps its interfaces (`Foo : FooBase, IDisposable`), type parameters and their constraints are repeated, it is `abstract` when a member is declared abstract, and the usings it needs are copied;
+- a **private** member that the type (or another part of it) still uses becomes `protected`, so do private accessors (`{ get; private set; }`); private members that only the moved members use stay private;
+- a member that uses members that stay behind (`_count` in `Inc()`) cannot reach them from the base class: the form warns and **Move them too** checks what they use, also in turn; the confirm button stays off until that is settled.
+
+What it refuses, with the reason, and never generates half of:
+- structs, records and static classes are not offered; a **nested** class is refused (the base class would have to be nested too);
+- a class that is **partial** works when no *other* part names a base class (the type keeps `: Base` on the part you extract from; members of this part only are listed, the other parts may use what moves, they are checked); otherwise the message names the part;
+- a base class without a constructor without arguments, and constructors that call `base(...)` with arguments: the new base class would need constructors that pass them on, which is not supported yet;
+- a member that uses something declared in another part of the type cannot move.
+
+**The result is compiled first** (a fork of the solution in the language server: the changed file and the new one): when the edit would add compiler errors, nothing is applied and a dialog lists the first ones. The same check runs for Extract Interface and Extract Members to Partial. Both files are saved after a successful extraction, as for the other refactorings.
 
 ## Needs
 

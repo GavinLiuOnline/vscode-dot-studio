@@ -45,6 +45,8 @@ jobs:
       # Suite-level failures (crashes, setup errors) produce no annotation from the reporter, so list them from the JSON result
       - if: failure()
         run: node scripts/ci/annotate-jest.js
+      # The refactorings' C# logic (xunit, source text in, source text out, the result must compile); needs the .NET SDK and the dotnet-tools feed
+      - run: npm run test:server-extension
       # The production build (webpack, extension and webviews), as `vsce package` runs it
       - run: npm run build
 
