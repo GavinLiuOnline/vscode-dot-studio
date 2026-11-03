@@ -37,19 +37,19 @@ describe('refactoring form: Extract Interface', () => {
     it('submits the name, the checked members and the target', () => {
         const sent = setup();
         fireEvent.click(screen.getByLabelText(/IReadOnlyList/));
-        fireEvent.change(screen.getByLabelText('New interface name'), { target: { value: 'IBasket' } });
+        fireEvent.change(screen.getByLabelText('Interface name'), { target: { value: 'IBasket' } });
         fireEvent.click(screen.getByLabelText(/The same file/));
-        fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Extract' }));
         expect(sent[sent.length - 1]).toEqual({ type: 'submit', choice: { kind: 'extractInterface', interfaceName: 'IBasket', memberIds: ['Add'], newFile: false } });
     });
 
     it('does not accept a name that is no identifier, or no member', () => {
         setup();
-        fireEvent.change(screen.getByLabelText('New interface name'), { target: { value: '1Order' } });
-        expect(screen.getByRole('button', { name: 'OK' })).toBeDisabled();
-        fireEvent.change(screen.getByLabelText('New interface name'), { target: { value: 'IOrder' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Deselect All' }));
-        expect(screen.getByRole('button', { name: 'OK' })).toBeDisabled();
+        fireEvent.change(screen.getByLabelText('Interface name'), { target: { value: '1Order' } });
+        expect(screen.getByRole('button', { name: 'Extract' })).toBeDisabled();
+        fireEvent.change(screen.getByLabelText('Interface name'), { target: { value: 'IOrder' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Deselect all' }));
+        expect(screen.getByRole('button', { name: 'Extract' })).toBeDisabled();
     });
 
     it('cancels with Cancel and with ESC', () => {

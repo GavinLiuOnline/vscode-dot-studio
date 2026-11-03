@@ -4,6 +4,7 @@ import { logger } from '../../core/logger';
 import { ExtractInterfaceChoice, ExtractInterfaceForm } from '../../types/refactoring';
 import { RefactoringPanel } from '../../webview/providers/RefactoringPanel';
 import { CSharpServer } from './csharpServer';
+import { refreshProjectForNewFile } from './newFileRefresh';
 
 const log = logger('ExtractInterface');
 
@@ -63,6 +64,8 @@ export class ExtractInterface implements vscode.CodeActionProvider {
             void vscode.window.showErrorMessage(`${result.newFilePath} already exists; pick another interface name.`);
             return;
         }
+        const document = await vscode.workspace.openTextDocument(uri);
+        const wasDirty = document.isDirty;
         const edit = new vscode.WorkspaceEdit();
         for (const change of result.edits) {
             edit.replace(uri, new vscode.Range(change.startLine, change.startCharacter, change.endLine, change.endCharacter), change.newText);
@@ -74,6 +77,17 @@ export class ExtractInterface implements vscode.CodeActionProvider {
         }
         if (!await vscode.workspace.applyEdit(edit)) {
             throw new Error('The edits could not be applied.');
+        }
+        // Saved, so a build and the language server see the new file (an unsaved one is only in the editor); the file the user
+        // was editing only when it had no other unsaved changes
+        if (result.newFilePath) {
+            await (await vscode.workspace.openTextDocument(vscode.Uri.file(result.newFilePath))).save();
+            if (refreshProjectForNewFile(result.newFilePath)) {
+                log.debug('Touched the project file: the language server does not see new files in multi-targeted projects otherwise');
+            }
+        }
+        if (!wasDirty) {
+            await document.save();
         }
         log.info(`Extracted ${choice.interfaceName} from ${uri.fsPath}`);
     }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { RefactorForm, RefactorMessage, RefactorRequest } from '../../types/refactoring';
+import { RefactorForm, SyntaxPalette, RefactorMessage, RefactorRequest } from '../../types/refactoring';
 import { ExtractInterfaceFormView } from './ExtractInterfaceFormView';
 
 export interface RefactorApi {
@@ -9,11 +9,13 @@ export interface RefactorApi {
 /** The form of a refactoring that needs choices; OK or Enter applies them, Cancel or ESC drops the refactoring */
 export const App: React.FC<{ api: RefactorApi }> = ({ api }) => {
     const [form, setForm] = useState<RefactorForm>();
+    const [palette, setPalette] = useState<SyntaxPalette>();
 
     useEffect(() => {
         const onMessage = (event: MessageEvent<RefactorMessage>) => {
             if (event.data?.type === 'form') {
                 setForm(event.data.form);
+                setPalette(event.data.palette);
             }
         };
         const onKey = (event: KeyboardEvent) => {
@@ -33,5 +35,5 @@ export const App: React.FC<{ api: RefactorApi }> = ({ api }) => {
     if (!form) {
         return <div className="empty">Loading...</div>;
     }
-    return <ExtractInterfaceFormView form={form} onSubmit={choice => api.postMessage({ type: 'submit', choice })} onCancel={() => api.postMessage({ type: 'cancel' })} />;
+    return <ExtractInterfaceFormView form={form} palette={palette} onSubmit={choice => api.postMessage({ type: 'submit', choice })} onCancel={() => api.postMessage({ type: 'cancel' })} />;
 };

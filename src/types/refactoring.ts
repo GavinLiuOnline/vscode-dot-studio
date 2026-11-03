@@ -28,6 +28,12 @@ export interface ExtractInterfaceChoice {
 export type RefactorForm = ExtractInterfaceForm;
 export type RefactorChoice = ExtractInterfaceChoice;
 
+/** What a token of the C# preview is; `plain` has no colour */
+export type TokenKind = 'keyword' | 'interface' | 'class' | 'method' | 'property' | 'parameter' | 'plain';
+
+/** The colours of the editor's theme for the kinds of tokens of the preview (CSS colours); a missing kind is the plain text colour */
+export type SyntaxPalette = Partial<Record<Exclude<TokenKind, 'plain'>, string>>;
+
 /** Webview → extension */
 export type RefactorRequest =
     | { type: 'ready' }
@@ -35,4 +41,4 @@ export type RefactorRequest =
     | { type: 'cancel' };
 
 /** Extension → webview */
-export type RefactorMessage = { type: 'form'; title: string; form: RefactorForm };
+export type RefactorMessage = { type: 'form'; title: string; form: RefactorForm; palette?: SyntaxPalette };

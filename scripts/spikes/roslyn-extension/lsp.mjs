@@ -64,6 +64,26 @@ const text = fs.readFileSync(file, 'utf8');
 const uri = pathToFileURL(file).href;
 notify('textDocument/didOpen', { textDocument: { uri, languageId: 'csharp', version: 1, text } });
 await sleep(3000);
+if (process.env.NEWFILE) {
+  // What Extract Interface does: the class gets a base type from a file that is created next to it. NEWFILE=open also opens the new file (as VS Code does for an edit that creates it)
+  const created = path.join(path.dirname(file), 'IOrder.cs');
+  const body = 'namespace Shop.Core.Orders;\n\npublic interface IOrder\n{\n    decimal Total { get; }\n}\n';
+  fs.writeFileSync(created, body);
+  const edited = text.replace('public class Order', 'public class Order : IOrder');
+  notify('textDocument/didChange', { textDocument: { uri, version: 2 }, contentChanges: [{ text: edited }] });
+  if (process.env.NEWFILE === 'open') notify('textDocument/didOpen', { textDocument: { uri: pathToFileURL(created).href, languageId: 'csharp', version: 1, text: body } });
+  notify('workspace/didChangeWatchedFiles', { changes: [{ uri: pathToFileURL(created).href, type: 1 }] });
+  if (process.env.TOUCH) {
+    const csproj = fs.readdirSync(path.join(root, 'src/Shop.Core')).find(f => f.endsWith('.csproj'));
+    const projectPath = path.join(root, 'src/Shop.Core', csproj);
+    const now = new Date(); fs.utimesSync(projectPath, now, now);
+    notify('workspace/didChangeWatchedFiles', { changes: [{ uri: pathToFileURL(projectPath).href, type: 2 }] });
+  }
+  await sleep(8000);
+  const report = await request('textDocument/diagnostic', { textDocument: { uri } });
+  console.log('NEWFILE diagnostics of Order.cs:', JSON.stringify((report.result?.items ?? report.error ?? []).map?.(d => d.code) ?? report));
+  fs.rmSync(created);
+}
 const lines = text.split('\n');
 const probes = [
   ['class name', /public class Order\b/, 'Order'],

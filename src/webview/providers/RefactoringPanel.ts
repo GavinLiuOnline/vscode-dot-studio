@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { RefactorChoice, RefactorForm, RefactorRequest, RefactorMessage } from '../../types/refactoring';
+import { activeSyntaxPalette } from '../../services/refactoring/themeColors';
 import { TemplateWizardWebview } from './views/TemplateWizardWebview';
 
 /**
@@ -38,7 +39,7 @@ export class RefactoringPanel {
         };
         const subscription = this.panel.webview.onDidReceiveMessage((request: RefactorRequest) => {
             if (request.type === 'ready') {
-                const message: RefactorMessage = { type: 'form', title, form };
+                const message: RefactorMessage = { type: 'form', title, form, palette: activeSyntaxPalette() };
                 void this.panel.webview.postMessage(message);
             } else if (request.type === 'submit') {
                 settle(request.choice);

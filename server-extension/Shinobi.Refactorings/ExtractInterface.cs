@@ -100,7 +100,7 @@ public sealed class ExtractInterfaceHandler : IExtensionDocumentMessageHandler<E
         if (message.NewFile && document.FilePath is { } path)
         {
             newFilePath = Path.Combine(Path.GetDirectoryName(path)!, interfaceName + ".cs");
-            newFileContent = ExtractInterfaceSupport.NewFileText(await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false), declaration, body.ToString(), indent, eol);
+            newFileContent = ExtractInterfaceSupport.NewFileText(await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false), declaration, members, body.ToString(), eol);
         }
         else
         {
@@ -186,14 +186,15 @@ internal static class ExtractInterfaceSupport
         return lineText[..(lineText.Length - lineText.TrimStart().Length)];
     }
 
-    /// <summary>The new file: the usings of the class's file, its namespace (as written there: file-scoped or block), the interface.</summary>
-    public static string NewFileText(SyntaxNode? root, TypeDeclarationSyntax declaration, string interfaceText, string indent, string eol)
+    /// <summary>The new file: the usings of the class's file that the chosen members need, its namespace (as written there: file-scoped or block), the interface.</summary>
+    public static string NewFileText(SyntaxNode? root, TypeDeclarationSyntax declaration, IReadOnlyList<ISymbol> members, string interfaceText, string eol)
     {
         var sb = new StringBuilder();
         if (root is CompilationUnitSyntax unit)
         {
-            foreach (var u in unit.Usings) { sb.Append(u.ToString()).Append(eol); }
-            if (unit.Usings.Count > 0) { sb.Append(eol); }
+            var needed = NeededUsings(unit, members);
+            foreach (var u in needed) { sb.Append(u.ToString()).Append(eol); }
+            if (needed.Count > 0) { sb.Append(eol); }
         }
         var ns = declaration.Ancestors().OfType<BaseNamespaceDeclarationSyntax>().FirstOrDefault();
         if (ns is FileScopedNamespaceDeclarationSyntax)
@@ -210,5 +211,52 @@ internal static class ExtractInterfaceSupport
             sb.Append(interfaceText);
         }
         return sb.ToString();
+    }
+
+    /// <summary>The usings of the class's file the interface needs: those naming a namespace that a type in a chosen signature lives in.</summary>
+    private static List<UsingDirectiveSyntax> NeededUsings(CompilationUnitSyntax unit, IReadOnlyList<ISymbol> members)
+    {
+        var namespaces = new HashSet<string>();
+        foreach (var member in members)
+        {
+            switch (member)
+            {
+                case IMethodSymbol method:
+                    Collect(method.ReturnType, namespaces);
+                    foreach (var p in method.Parameters) { Collect(p.Type, namespaces); }
+                    foreach (var t in method.TypeParameters) { foreach (var c in t.ConstraintTypes) { Collect(c, namespaces); } }
+                    break;
+                case IPropertySymbol property:
+                    Collect(property.Type, namespaces);
+                    foreach (var p in property.Parameters) { Collect(p.Type, namespaces); }
+                    break;
+                case IEventSymbol evt:
+                    Collect(evt.Type, namespaces);
+                    break;
+            }
+        }
+        var signatures = string.Join("\n", members.Select(SignatureOf));
+        return unit.Usings.Where(u =>
+        {
+            if (u.StaticKeyword != default) { return false; }
+            if (u.Alias is { } alias) { return signatures.Contains(alias.Name.Identifier.Text); }
+            return u.Name is not null && namespaces.Contains(u.Name.ToString());
+        }).ToList();
+    }
+
+    private static void Collect(ITypeSymbol? type, HashSet<string> namespaces)
+    {
+        switch (type)
+        {
+            case null: return;
+            case IArrayTypeSymbol array: Collect(array.ElementType, namespaces); return;
+            case IPointerTypeSymbol pointer: Collect(pointer.PointedAtType, namespaces); return;
+            case INamedTypeSymbol named:
+                var outer = named;
+                while (outer.ContainingType is not null) { outer = outer.ContainingType; }
+                if (outer.ContainingNamespace is { IsGlobalNamespace: false } ns) { namespaces.Add(ns.ToDisplayString()); }
+                foreach (var argument in named.TypeArguments) { Collect(argument, namespaces); }
+                return;
+        }
     }
 }
