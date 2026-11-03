@@ -195,16 +195,25 @@ export function activate(context: vscode.ExtensionContext) {
     // The view is contributed once, to the activity bar container; only "vscode.moveViews" can put it in the secondary
     // sidebar (hosts whose VS Code core has no secondary-sidebar containers, e.g. Trae, would otherwise warn about the
     // view's container not existing and fall back to the Explorer)
+    // Where a view container sits is workbench state, not something the manifest sets: a container can be left in the
+    // panel (moved there once), which hides it away from the left and right sidebars. Resetting it puts it back in its
+    // default place, the activity bar, i.e. the left sidebar; the reset also opens the container, so the editor takes
+    // the focus back afterwards.
+    const resetSolutionExplorerContainer = () => Promise.resolve(
+        vscode.commands.executeCommand('workbench.view.extension.shinobi-solution-explorer.resetViewContainerLocation')
+    ).then(() => vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup'));
     const applySolutionExplorerLocation = () => {
         const secondarySidebar = vscode.workspace.getConfiguration('shinobi.solutionExplorer').get<string>('location') === 'secondary-sidebar';
-        void Promise.resolve(vscode.commands.executeCommand('vscode.moveViews', {
-            viewIds: [SolutionWebviewProvider.viewType],
-            destinationId: secondarySidebar ? 'shinobi-solution-explorer-secondary-sidebar' : 'shinobi-solution-explorer'
-        })).catch(() => { /* unknown container: the view stays where it is */ });
+        void (secondarySidebar
+            ? Promise.resolve(vscode.commands.executeCommand('vscode.moveViews', {
+                viewIds: [SolutionWebviewProvider.viewType],
+                destinationId: 'shinobi-solution-explorer-secondary-sidebar'
+            // No right sidebar in this host: the view belongs in the left one
+            })).catch(resetSolutionExplorerContainer)
+            : resetSolutionExplorerContainer()
+        ).catch(() => { /* host without these commands: the view stays where it is */ });
     };
-    if (vscode.workspace.getConfiguration('shinobi.solutionExplorer').get<string>('location') === 'secondary-sidebar') {
-        applySolutionExplorerLocation();
-    }
+    applySolutionExplorerLocation();
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => {
         if (event.affectsConfiguration('shinobi.solutionExplorer.location')) {
             applySolutionExplorerLocation();

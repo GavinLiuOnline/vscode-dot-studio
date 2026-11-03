@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.6
+
+The Solution Explorer is in the left or right sidebar again, also when an earlier layout left it in the panel.
+
+- **Fixed, Solution Explorer:** where a view container sits is workbench state, not something a manifest can set. A container that was moved to the panel (or ended up there) is not part of either sidebar, so it can be missing from the activity bar even with the view always contributed. On activation the extension resets the container's location: it is in the activity bar (left sidebar) again; with `shinobi.solutionExplorer.location: "secondary-sidebar"` its view is moved to the right sidebar, or to the left one on hosts without that container.
+
 ## 0.2.5
 
 The Solution Explorer stays in an empty folder and offers to create a solution there, and "Create a new project" with the solution template ("Blank Solution") now writes the solution file.
