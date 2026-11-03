@@ -5,7 +5,8 @@ import { Highlighted } from './csharpHighlight';
 /** A C# identifier; the server would reject anything else */
 export const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
-const STYLE = `
+/** The look of the forms of the refactorings (a form without a member list uses it as well) */
+export const FORM_STYLE = `
 .rf { max-width: 760px; margin: 24px auto 0; }
 .rf h1 { font-size: 1.5em; font-weight: 600; margin: 0 0 2px; }
 .rf .subtitle { opacity: 0.7; margin: 0 0 20px; }
@@ -118,7 +119,7 @@ export const MembersForm: React.FC<MembersFormProps> = props => {
                 submit();
             }
         }}>
-            <style>{STYLE}</style>
+            <style>{FORM_STYLE}</style>
             <h1>{props.title}</h1>
             <p className="subtitle">from <strong>{props.typeName}</strong></p>
 

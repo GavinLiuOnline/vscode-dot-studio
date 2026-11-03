@@ -23,6 +23,10 @@ export interface TypeRefactoringSpec<Form extends RefactorForm = RefactorForm> {
     onMembers?: boolean;
     /** The entry is not offered where the server refuses the refactoring (otherwise it is, and the reason shows when it is picked) */
     hideWhenRefused?: boolean;
+    /** A second handler that adds what is too costly for the lightbulb (it looks through the solution): asked when the refactoring runs */
+    detailsHandler?: string;
+    /** What the details are called while the server works */
+    detailsProgress?: string;
     /** The form of what the server listed */
     formOf(info: Omit<Form, 'kind'>): { title: string; form: Form };
 }
@@ -78,7 +82,14 @@ export class TypeRefactoring implements vscode.CodeActionProvider {
             void vscode.window.showWarningMessage(info.refusal);
             return;
         }
-        const { title, form } = this.spec.formOf(info as never);
+        let listed = info;
+        if (this.spec.detailsHandler) {
+            const detailsHandler = this.spec.detailsHandler;
+            const details = await vscode.window.withProgress({ location: vscode.ProgressLocation.Window, title: this.spec.detailsProgress ?? 'Looking through the solution...' },
+                () => this.server.document<unknown, typeof info>(uri, detailsHandler, { position }));
+            listed = details ?? info;
+        }
+        const { title, form } = this.spec.formOf(listed as never);
         const choice = await RefactoringPanel.pick(title, form);
         if (!choice || choice.kind !== this.spec.kind) {
             return;

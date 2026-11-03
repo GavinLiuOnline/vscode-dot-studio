@@ -28,7 +28,9 @@ public sealed record ExtractInterfaceRequest(
     [property: JsonPropertyName("position")] Position Position,
     [property: JsonPropertyName("interfaceName")] string InterfaceName,
     [property: JsonPropertyName("memberIds")] IReadOnlyList<string> MemberIds,
-    [property: JsonPropertyName("newFile")] bool NewFile);
+    [property: JsonPropertyName("newFile")] bool NewFile,
+    /// <summary>Use the interface in place of the type where only its members are used.</summary>
+    [property: JsonPropertyName("useBaseType")] bool UseBaseType = false);
 
 public sealed record TextEdit(
     [property: JsonPropertyName("startLine")] int StartLine,
@@ -43,7 +45,9 @@ public sealed record ExtractInterfaceResult(
     [property: JsonPropertyName("newFileContent")] string? NewFileContent,
     [property: JsonPropertyName("errors")] IReadOnlyList<string>? Errors = null,
     /// <summary>Edits of other existing files (a refactoring that changes a base class in another file).</summary>
-    [property: JsonPropertyName("others")] IReadOnlyList<FileEdits>? Others = null);
+    [property: JsonPropertyName("others")] IReadOnlyList<FileEdits>? Others = null,
+    /// <summary>What else was done (shown after the edits are applied).</summary>
+    [property: JsonPropertyName("summary")] string? Summary = null);
 
 public sealed record FileEdits(
     [property: JsonPropertyName("path")] string Path,
@@ -113,7 +117,15 @@ public sealed class ExtractInterfaceHandler : IExtensionDocumentMessageHandler<E
         {
             edits.Add(At(text, ExtractInterfaceSupport.LineStartBefore(text, declaration), body.ToString() + eol));
         }
-        return await RefactoringValidator.CheckAsync(document, new ExtractInterfaceResult(edits, newFilePath, newFileContent), cancellationToken).ConfigureAwait(false);
+        var result = new ExtractInterfaceResult(edits, newFilePath, newFileContent);
+        if (message.UseBaseType)
+        {
+            // uses of the type in parameters, locals and private fields that only need what the interface has name the interface
+            var target = UseBaseTypeEngine.ForNewInterface(interfaceName, members);
+            var groups = await UseBaseTypeEngine.PlanAsync(document, symbol, target, cancellationToken).ConfigureAwait(false);
+            return await UseBaseTypeEngine.ChooseAsync(document, result, groups, symbol.Name, interfaceName, cancellationToken).ConfigureAwait(false);
+        }
+        return await RefactoringValidator.CheckAsync(document, result, cancellationToken).ConfigureAwait(false);
     }
 
     private static TextEdit At(SourceText text, int position, string newText)

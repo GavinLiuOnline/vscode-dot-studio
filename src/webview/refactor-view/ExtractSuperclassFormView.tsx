@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ExtractSuperclassChoice, ExtractSuperclassForm, MemberInfo, SyntaxPalette } from '../../types/refactoring';
 import { FileTargets } from './FileTargets';
 import { foldedSignature, MembersForm } from './MembersForm';
+import { UseBaseTypeOption } from './UseBaseTypeOption';
 
 /** The member as the base class will have it: the abstract declaration when it is made abstract, else as it is written */
 export function superclassLine(member: MemberInfo, isAbstract: boolean): string {
@@ -21,6 +22,7 @@ export const ExtractSuperclassFormView: React.FC<{
     onCancel: () => void;
 }> = ({ form, palette, onSubmit, onCancel }) => {
     const [newFile, setNewFile] = useState(true);
+    const [useBaseType, setUseBaseType] = useState(false);
     const [abstractIds, setAbstractIds] = useState<ReadonlySet<string>>(new Set());
     const byId = new Map(form.members.map(member => [member.id, member]));
     const toggleAbstract = (id: string) => setAbstractIds(current => {
@@ -54,7 +56,12 @@ export const ExtractSuperclassFormView: React.FC<{
             typeName={form.typeName}
             nameLabel="Name of the base class"
             initialName={form.baseName}
-            targets={name => <FileTargets newFile={newFile} onChange={setNewFile} fileName={`${name}.cs`} typeName={form.typeName} />}
+            targets={name => (
+                <>
+                    <FileTargets newFile={newFile} onChange={setNewFile} fileName={`${name}.cs`} typeName={form.typeName} />
+                    <UseBaseTypeOption checked={useBaseType} onChange={setUseBaseType} typeName={form.typeName} newName={name} />
+                </>
+            )}
             membersLabel="Members to move up"
             members={form.members}
             initiallyChecked={[]}
@@ -85,7 +92,7 @@ export const ExtractSuperclassFormView: React.FC<{
             previewOf={(name, chosen) => superclassPreview(name, chosen.map(member => superclassLine(member, abstractIds.has(member.id))), chosen.some(member => abstractIds.has(member.id)))}
             palette={palette}
             confirmLabel="Extract"
-            onSubmit={(name, memberIds) => onSubmit({ kind: 'extractSuperclass', baseName: name, memberIds, abstractIds: memberIds.filter(id => abstractIds.has(id)), newFile })}
+            onSubmit={(name, memberIds) => onSubmit({ kind: 'extractSuperclass', baseName: name, memberIds, abstractIds: memberIds.filter(id => abstractIds.has(id)), newFile, ...(useBaseType ? { useBaseType } : {}) })}
             onCancel={onCancel}
         />
     );

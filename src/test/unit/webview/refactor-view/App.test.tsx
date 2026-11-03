@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { App } from '../../../../webview/refactor-view/App';
 import { ExtractInterfaceForm, ExtractPartialForm, RefactorForm, RefactorRequest } from '../../../../types/refactoring';
 
@@ -39,8 +39,11 @@ describe('refactoring form: Extract Interface', () => {
 
     it('lists every member checked, with the interface as a preview', () => {
         setup();
-        expect(screen.getAllByRole('checkbox')).toHaveLength(2);
-        screen.getAllByRole('checkbox').forEach(box => expect(box).toBeChecked());
+        // the members, and the option to use the interface in place of the type (off)
+        const members = within(screen.getByRole('group', { name: 'Members' })).getAllByRole('checkbox');
+        expect(members).toHaveLength(2);
+        members.forEach(box => expect(box).toBeChecked());
+        expect(screen.getByRole('checkbox', { name: /Use IOrder instead of Order where possible/ })).not.toBeChecked();
         expect(screen.getByLabelText('Preview').textContent).toBe(
             'public interface IOrder\n{\n    IReadOnlyList<OrderLine> Lines { get; }\n    void Add(string product);\n}');
     });

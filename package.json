@@ -409,6 +409,11 @@
         "category": ".NET"
       },
       {
+        "command": "shinobi.refactor.useBaseType",
+        "title": "Use Base Type Where Possible...",
+        "category": ".NET"
+      },
+      {
         "command": "shinobi.refactor.extractSuperclass",
         "title": "Extract Superclass...",
         "category": ".NET"
@@ -1431,6 +1436,10 @@
         },
         {
           "command": "shinobi.refactor.pullUp",
+          "when": "false"
+        },
+        {
+          "command": "shinobi.refactor.useBaseType",
           "when": "false"
         },
         {

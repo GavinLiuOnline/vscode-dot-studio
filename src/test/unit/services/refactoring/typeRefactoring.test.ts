@@ -16,7 +16,11 @@ jest.mock('vscode', () => ({
         createFile(uri: unknown) { edits.created.push(uri); }
         insert() { /* the content of the new file */ }
     },
-    window: { showInformationMessage: jest.fn(), showErrorMessage: jest.fn(), showWarningMessage: jest.fn() },
+    ProgressLocation: { Window: 10 },
+    window: {
+        showInformationMessage: jest.fn(), showErrorMessage: jest.fn(), showWarningMessage: jest.fn(),
+        withProgress: async (_options: unknown, task: () => Promise<unknown>) => task(),
+    },
     workspace: {
         openTextDocument: async (uri: { fsPath: string }) => ({ uri, isDirty: false, save: async () => { saved.push(uri.fsPath); } }),
         applyEdit: async () => true,
@@ -31,6 +35,7 @@ import { EXTRACT_INTERFACE } from '../../../../services/refactoring/extractInter
 import { EXTRACT_PARTIAL } from '../../../../services/refactoring/extractPartial';
 import { EXTRACT_SUPERCLASS } from '../../../../services/refactoring/extractSuperclass';
 import { PULL_UP } from '../../../../services/refactoring/pullUp';
+import { USE_BASE_TYPE } from '../../../../services/refactoring/useBaseType';
 
 const uri = { fsPath: '/p/Order.cs', toString: () => 'file:///p/Order.cs' } as vscode.Uri;
 const position = new vscode.Position(4, 14);
@@ -158,5 +163,26 @@ describe('TypeRefactoring', () => {
         expect(document.mock.calls[1][2]).toMatchObject({ kind: 'pullUp', targetId: 'A', memberIds: ['1:A'], position });
         expect(edits.replace).toHaveLength(2);
         expect(saved).toEqual(['/p/Order.cs', '/p/Animal.cs']);
+    });
+
+    it('Use Base Type asks the cheap list for the lightbulb and the counting one when it runs, and says what it did', async () => {
+        const refactoring = setup(USE_BASE_TYPE as never);
+        document.mockResolvedValueOnce({ typeName: 'Dog', targets: [{ id: 'A', name: 'Animal', kind: 'class', where: '', count: -1, publicCount: 0 }] });
+        const [action] = await refactoring.provideCodeActions(lineOf('public class Dog : Animal'), at(4, 14));
+        expect(action.title).toBe('Use base type where possible...');
+        expect(document.mock.calls[0][1]).toBe('Shinobi.Refactorings.UseBaseTypeInfoHandler');
+
+        document.mockReset();
+        document
+            .mockResolvedValueOnce({ typeName: 'Dog', targets: [{ id: 'A', name: 'Animal', kind: 'class', where: '', count: -1, publicCount: 0 }] })
+            .mockResolvedValueOnce({ typeName: 'Dog', targets: [{ id: 'A', name: 'Animal', kind: 'class', where: '', count: 3, publicCount: 1 }] })
+            .mockResolvedValueOnce({ edits: [{ startLine: 1, startCharacter: 1, endLine: 1, endCharacter: 4, newText: 'Animal' }], summary: 'Animal is used instead of Dog in 3 places.' });
+        picked.mockResolvedValue({ kind: 'useBaseType', targetId: 'A' });
+        await refactoring.run(uri, position);
+        expect(document.mock.calls.map(call => call[1])).toEqual([
+            'Shinobi.Refactorings.UseBaseTypeInfoHandler', 'Shinobi.Refactorings.UseBaseTypeCountsHandler', 'Shinobi.Refactorings.UseBaseTypeHandler',
+        ]);
+        expect(picked.mock.calls[0][1]).toMatchObject({ kind: 'useBaseType', targets: [{ count: 3, publicCount: 1 }] });
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith('Animal is used instead of Dog in 3 places.');
     });
 });

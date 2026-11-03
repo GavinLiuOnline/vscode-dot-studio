@@ -34,7 +34,9 @@ public sealed record ExtractSuperclassRequest(
     [property: JsonPropertyName("baseName")] string BaseName,
     [property: JsonPropertyName("memberIds")] IReadOnlyList<string> MemberIds,
     [property: JsonPropertyName("abstractIds")] IReadOnlyList<string> AbstractIds,
-    [property: JsonPropertyName("newFile")] bool NewFile);
+    [property: JsonPropertyName("newFile")] bool NewFile,
+    /// <summary>Use the base class in place of the type where only its members (and what the type inherits) are used.</summary>
+    [property: JsonPropertyName("useBaseType")] bool UseBaseType = false);
 
 /// <summary>The members of the class under the cursor that can go into a new base class, with what they depend on.</summary>
 public sealed class ExtractSuperclassInfoHandler : IExtensionDocumentMessageHandler<TypeAt, ExtractSuperclassInfo?>
@@ -187,7 +189,15 @@ public static class ExtractSuperclassEngine
             var typeText = BaseTypeText(context, baseName, oldBase, isAbstract, bodies, indent, eol);
             edits.Add(PartialSupport.Insert(text, ExtractInterfaceSupport.LineStartBefore(text, declaration), typeText + eol));
         }
-        return await RefactoringValidator.CheckAsync(document, new ExtractInterfaceResult(edits, newPath, newContent), ct).ConfigureAwait(false);
+        var result = new ExtractInterfaceResult(edits, newPath, newContent);
+        if (request.UseBaseType)
+        {
+            var chosenSymbols = nodes.OfType<MemberDeclarationSyntax>().SelectMany(m => DeclaredSymbols(context.Model, m));
+            var target = UseBaseTypeEngine.ForNewBaseClass(baseName, context.Symbol, chosenSymbols);
+            var groups = await UseBaseTypeEngine.PlanAsync(document, context.Symbol, target, ct).ConfigureAwait(false);
+            return await UseBaseTypeEngine.ChooseAsync(document, result, groups, context.Symbol.Name, baseName, ct).ConfigureAwait(false);
+        }
+        return await RefactoringValidator.CheckAsync(document, result, ct).ConfigureAwait(false);
     }
 
     private static string BaseNameOf(SuperclassContext context) => context.Symbol.Name + "Base";

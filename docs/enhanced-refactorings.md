@@ -14,7 +14,7 @@ Refactorings that need choices ask them in a form in the editor area, like a dia
 | Extract Method / Extract Local Function with the compiler's check (the server's own makes uncompilable `out` parameters) | Yes | ✅ [Added](#extract-method-checked) |
 | Rename, Generate Constructor, Encapsulate Field, Use file-scoped namespace, Use primary constructor, Move Type to File, ... | Yes | ➖ The C# server offers them in Ctrl+. already; not repeated here |
 | Pull Members Up (pick members and the base class or interface, with a warning for members that use what stays) | Yes | ✅ [Added](#pull-members-up) |
-| Use Base Type Where Possible (a checkbox of Extract Interface and Extract Superclass) | No (Rider) | 🔜 Planned |
+| Use Base Type Where Possible (a checkbox of Extract Interface and Extract Superclass, and an action on a type's name) | No (Rider) | ✅ [Added](#use-base-type-where-possible) |
 | Push Members Down (pick members and the derived types) | No (Rider) | 🔜 Planned |
 | Convert Abstract Class ↔ Interface | No (Rider) | 🔜 Planned |
 | Extract Class (members go to a new class the type delegates to) | No (Rider) | 🔜 Planned, last: it rewrites references |
@@ -99,6 +99,20 @@ What it refuses, with the reason, and never half-applies:
 **The result is compiled first**, in the projects it touches (the class's, the target's): an edit that adds compiler errors is not applied and a dialog lists the first ones. That is also how the cases the refactoring does not rewrite show up: pulling an abstract member while another class derives from the base class without implementing it lists "does not implement inherited abstract member" for each (CS0534), and making a base class abstract where it is created with `new` lists CS0144; implement the member there first, or pull it up as a normal member. The changed files are saved when they had no other unsaved changes, so a build sees them at once.
 
 Not covered yet: generating `throw new NotImplementedException()` stubs in the other derived classes, moving a member between classes in two projects when the base project does not reference what the member uses (the compile check then refuses it).
+
+## Use Base Type Where Possible
+
+Rider's refactoring: parameters, local variables and private fields that name a type use one of its base classes or interfaces instead, where everything done with them exists there. It is a checkbox in the forms of **Extract Interface** and **Extract Superclass** ("Use IOrder instead of Order where possible", off by default), and an action of its own: put the cursor on the name of a class, struct, record or interface and press Ctrl+. > **Use base type where possible...**. The action is offered for types that have a base class or an interface declared in this solution's source. The form lists them with how many declarations each would be used in ("4 places, 2 in the parameters of public methods"); a target that would change nothing is off.
+
+What it changes: the type name in the declaration of a **parameter** (of a method, constructor or local function), a **local variable** (`Order x = ...`, not `var`) or a **private field**. It leaves the code alone where the value is used in a way the base type does not allow:
+- a member only the type has is used (`order.Count` when the interface lacks it), or an extension method on the type;
+- the value is cast, tested with `is` or `as`, passed by `ref`, `out` or `in`, returned, enumerated, locked or awaited;
+- it is passed on to a parameter or variable of the type, unless that one changes as well (a chain `A(o) → B(o)` changes together or not at all);
+- the type defines operators or conversions, or is generic (the standalone action says so).
+
+Methods that cannot change their signature are skipped: overrides, virtual and abstract methods, interface implementations, extension methods and partial methods. Properties, return types, generic arguments (`List<Order>`) and lambda parameters are not changed. A parameter of a method other code can call changes its signature (a caller still compiles; a library that other assemblies were built against needs them rebuilt): the summary says how many.
+
+**The result is compiled first.** What the analysis accepted but does not compile (an overload that now has the same signature, a conversion it did not see) is found by compiling halves of the changes on a copy of the solution; the offending ones are left out, and when none compiles nothing is changed. After it ran, a message says how many places use the new type now.
 
 ## Needs
 

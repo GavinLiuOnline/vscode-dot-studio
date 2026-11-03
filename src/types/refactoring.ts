@@ -32,6 +32,8 @@ export interface ExtractInterfaceChoice {
     memberIds: string[];
     /** The interface goes into its own file next to the type (otherwise above the type) */
     newFile: boolean;
+    /** Name the interface instead of the type where only its members are used (in parameters, locals and private fields) */
+    useBaseType?: boolean;
 }
 
 /** What Extract Members to Partial asks: the members that go to another part of the type, and the name of that part (its file `Type.<name>.cs`) */
@@ -64,6 +66,8 @@ export interface ExtractSuperclassChoice {
     /** The members of `memberIds` that stay in the type as overrides of an abstract declaration */
     abstractIds: string[];
     newFile: boolean;
+    /** Name the base class instead of the type where only what it has is used */
+    useBaseType?: boolean;
 }
 
 /** A base class or interface of the solution's source that members can be pulled up to */
@@ -93,9 +97,33 @@ export interface PullUpChoice {
     abstractIds: string[];
 }
 
+/** A base class or interface a type's uses could name instead */
+export interface UseBaseTypeTarget {
+    id: string;
+    name: string;
+    kind: 'class' | 'interface';
+    where: string;
+    /** How many declarations (parameters, locals, private fields) would name it; -1 when not counted */
+    count: number;
+    /** ... of them parameters of methods other code can call */
+    publicCount: number;
+}
+
+/** What Use Base Type Where Possible asks: which base type to use instead of the type */
+export interface UseBaseTypeForm {
+    kind: 'useBaseType';
+    typeName: string;
+    targets: UseBaseTypeTarget[];
+}
+
+export interface UseBaseTypeChoice {
+    kind: 'useBaseType';
+    targetId: string;
+}
+
 /** The forms the tab can show; every refactoring that needs choices adds one */
-export type RefactorForm = ExtractInterfaceForm | ExtractPartialForm | ExtractSuperclassForm | PullUpForm;
-export type RefactorChoice = ExtractInterfaceChoice | ExtractPartialChoice | ExtractSuperclassChoice | PullUpChoice;
+export type RefactorForm = ExtractInterfaceForm | ExtractPartialForm | ExtractSuperclassForm | PullUpForm | UseBaseTypeForm;
+export type RefactorChoice = ExtractInterfaceChoice | ExtractPartialChoice | ExtractSuperclassChoice | PullUpChoice | UseBaseTypeChoice;
 
 /** What a token of the C# preview is; `plain` has no colour */
 export type TokenKind = 'keyword' | 'interface' | 'class' | 'method' | 'property' | 'parameter' | 'plain';

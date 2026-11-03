@@ -7,7 +7,7 @@ const log = logger('ApplyResult');
 
 export interface ServerEdit { startLine: number; startCharacter: number; endLine: number; endCharacter: number; newText: string }
 /** What the server's handlers answer: edits of the file and a new file */
-export interface ServerResult { edits: ServerEdit[]; newFilePath?: string; newFileContent?: string; errors?: string[]; others?: { path: string; edits: ServerEdit[] }[] }
+export interface ServerResult { edits: ServerEdit[]; newFilePath?: string; newFileContent?: string; errors?: string[]; others?: { path: string; edits: ServerEdit[] }[]; summary?: string }
 
 /**
  * Applies what a handler answered: the edits of the file and the new file, saved so a build and the language server see them.
@@ -67,5 +67,8 @@ export async function applyServerResult(uri: vscode.Uri, result: ServerResult, t
         await other.document.save();
     }
     log.info(`${title} on ${uri.fsPath}`);
+    if (result.summary) {
+        void vscode.window.showInformationMessage(result.summary);
+    }
     return true;
 }
