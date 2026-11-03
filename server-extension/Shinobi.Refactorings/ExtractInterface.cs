@@ -41,7 +41,13 @@ public sealed record ExtractInterfaceResult(
     [property: JsonPropertyName("edits")] IReadOnlyList<TextEdit> Edits,
     [property: JsonPropertyName("newFilePath")] string? NewFilePath,
     [property: JsonPropertyName("newFileContent")] string? NewFileContent,
-    [property: JsonPropertyName("errors")] IReadOnlyList<string>? Errors = null);
+    [property: JsonPropertyName("errors")] IReadOnlyList<string>? Errors = null,
+    /// <summary>Edits of other existing files (a refactoring that changes a base class in another file).</summary>
+    [property: JsonPropertyName("others")] IReadOnlyList<FileEdits>? Others = null);
+
+public sealed record FileEdits(
+    [property: JsonPropertyName("path")] string Path,
+    [property: JsonPropertyName("edits")] IReadOnlyList<TextEdit> Edits);
 
 /// <summary>What the Extract Interface dialog lists: the type under the cursor and its members that can go into an interface.</summary>
 public sealed class ExtractInterfaceInfoHandler : IExtensionDocumentMessageHandler<TypeAt, ExtractInterfaceInfo?>

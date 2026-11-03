@@ -60,6 +60,11 @@ internal sealed class Harness
         {
             solution = solution.AddDocument(DocumentId.CreateNewId(Project.Id), Path.GetFileName(path), SourceText.From(result.NewFileContent!), filePath: path);
         }
+        foreach (var other in result.Others ?? [])
+        {
+            var target = Project.Documents.Single(d => d.FilePath == other.Path);
+            solution = solution.WithDocumentText(target.Id, SourceText.From(Apply((await target.GetTextAsync()).ToString(), new ExtractInterfaceResult(other.Edits, null, null))));
+        }
         var compilation = (await solution.GetProject(Project.Id)!.GetCompilationAsync())!;
         return compilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).Select(d => d.ToString()).ToList();
     }

@@ -18,7 +18,7 @@ jest.mock('vscode', () => ({
     },
     window: { showInformationMessage: jest.fn(), showErrorMessage: jest.fn(), showWarningMessage: jest.fn() },
     workspace: {
-        openTextDocument: async (uri: { fsPath: string }) => ({ isDirty: false, save: async () => { saved.push(uri.fsPath); } }),
+        openTextDocument: async (uri: { fsPath: string }) => ({ uri, isDirty: false, save: async () => { saved.push(uri.fsPath); } }),
         applyEdit: async () => true,
     },
 }), { virtual: true });
@@ -30,6 +30,7 @@ import { TypeRefactoring } from '../../../../services/refactoring/typeRefactorin
 import { EXTRACT_INTERFACE } from '../../../../services/refactoring/extractInterface';
 import { EXTRACT_PARTIAL } from '../../../../services/refactoring/extractPartial';
 import { EXTRACT_SUPERCLASS } from '../../../../services/refactoring/extractSuperclass';
+import { PULL_UP } from '../../../../services/refactoring/pullUp';
 
 const uri = { fsPath: '/p/Order.cs', toString: () => 'file:///p/Order.cs' } as vscode.Uri;
 const position = new vscode.Position(4, 14);
@@ -126,5 +127,36 @@ describe('TypeRefactoring', () => {
         expect(edits.replace).toHaveLength(0);
         expect(saved).toHaveLength(0);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(expect.stringContaining('would not compile (1 new error)'), { modal: true, detail: 'A.cs(3,5): CS0191: boom' });
+    });
+
+    it('Pull Members Up is offered on a member line and on a type line, but not where the server refuses', async () => {
+        const refactoring = setup(PULL_UP as never);
+        document.mockResolvedValueOnce({ typeName: 'Dog', targets: [{ id: 'A' }], members: [], selected: [] });
+        const [action] = await refactoring.provideCodeActions(lineOf('    public void Fetch() { }'), at(10, 20));
+        expect(action.title).toBe('Pull members up...');
+        expect(document.mock.calls[0][1]).toBe('Shinobi.Refactorings.PullUpInfoHandler');
+
+        document.mockResolvedValueOnce({ typeName: 'Loner', targets: [], members: [], selected: [], refusal: 'Loner has no base class' });
+        expect(await refactoring.provideCodeActions(lineOf('public class Loner'), at(4, 14))).toEqual([]);
+        // a comment, an empty or a brace-only line is not asked at all
+        expect(await refactoring.provideCodeActions(lineOf('    // a comment'), at(3, 8))).toEqual([]);
+        expect(await refactoring.provideCodeActions(lineOf('    }'), at(5, 4))).toEqual([]);
+        expect(document).toHaveBeenCalledTimes(2);
+    });
+
+    it('applies the edits of other files too, and saves them', async () => {
+        const refactoring = setup(PULL_UP as never);
+        document
+            .mockResolvedValueOnce({ typeName: 'Dog', targets: [{ id: 'A', name: 'Animal', kind: 'class', where: '', isAbstract: false }], members: [], selected: [] })
+            .mockResolvedValueOnce({
+                edits: [{ startLine: 8, startCharacter: 0, endLine: 10, endCharacter: 0, newText: '' }],
+                others: [{ path: '/p/Animal.cs', edits: [{ startLine: 5, startCharacter: 0, endLine: 5, endCharacter: 0, newText: 'int x;\n' }] }],
+            });
+        picked.mockResolvedValue({ kind: 'pullUp', targetId: 'A', memberIds: ['1:A'], abstractIds: [] });
+        await refactoring.run(uri, position);
+        expect(document.mock.calls[1][1]).toBe('Shinobi.Refactorings.PullUpHandler');
+        expect(document.mock.calls[1][2]).toMatchObject({ kind: 'pullUp', targetId: 'A', memberIds: ['1:A'], position });
+        expect(edits.replace).toHaveLength(2);
+        expect(saved).toEqual(['/p/Order.cs', '/p/Animal.cs']);
     });
 });

@@ -192,7 +192,7 @@ public static class ExtractSuperclassEngine
 
     private static string BaseNameOf(SuperclassContext context) => context.Symbol.Name + "Base";
 
-    private static TextEdit Replace(SourceText text, TextSpan span, string newText)
+    internal static TextEdit Replace(SourceText text, TextSpan span, string newText)
     {
         var start = text.Lines.GetLinePosition(span.Start);
         var end = text.Lines.GetLinePosition(span.End);
@@ -256,7 +256,7 @@ public static class ExtractSuperclassEngine
         return null;
     }
 
-    private static bool IsListable(MemberDeclarationSyntax member) => member switch
+    internal static bool IsListable(MemberDeclarationSyntax member) => member switch
     {
         MethodDeclarationSyntax m => m.ExplicitInterfaceSpecifier is null,
         PropertyDeclarationSyntax p => p.ExplicitInterfaceSpecifier is null,
@@ -266,7 +266,7 @@ public static class ExtractSuperclassEngine
         _ => false,
     };
 
-    private static IEnumerable<ISymbol> DeclaredSymbols(SemanticModel model, MemberDeclarationSyntax member)
+    internal static IEnumerable<ISymbol> DeclaredSymbols(SemanticModel model, MemberDeclarationSyntax member)
     {
         if (member is BaseFieldDeclarationSyntax field)
         {
@@ -296,7 +296,7 @@ public static class ExtractSuperclassEngine
         };
 
     /// <summary>The members of this part that `member` uses by their plain name, and the reason it cannot move when it uses one of another part.</summary>
-    private static (IReadOnlyList<string> Deps, string? Blocked) DependenciesOf(SuperclassContext context, MemberDeclarationSyntax member)
+    internal static (IReadOnlyList<string> Deps, string? Blocked) DependenciesOf(SuperclassContext context, MemberDeclarationSyntax member)
     {
         var own = new Dictionary<ISymbol, string>(SymbolEqualityComparer.Default);
         foreach (var (syntax, id) in context.Members)
@@ -324,7 +324,7 @@ public static class ExtractSuperclassEngine
     }
 
     /// <summary>The moved members that what stays uses (the rest of this part, other parts), and so must stay reachable from the type.</summary>
-    private static HashSet<MemberDeclarationSyntax> MovedMembersUsedElsewhere(SuperclassContext context, IReadOnlyList<MemberDeclarationSyntax> moved, CancellationToken ct)
+    internal static HashSet<MemberDeclarationSyntax> MovedMembersUsedElsewhere(SuperclassContext context, IReadOnlyList<MemberDeclarationSyntax> moved, CancellationToken ct)
     {
         var movedSymbols = new Dictionary<ISymbol, MemberDeclarationSyntax>(SymbolEqualityComparer.Default);
         foreach (var member in moved)
@@ -364,7 +364,7 @@ public static class ExtractSuperclassEngine
     /// What a member needs to be reachable from the type once it is in the base class: `private` (or nothing) becomes `protected`, and so do
     /// private accessors (`{ get; private set; }`), unless the property is protected itself, where the accessor needs no modifier.
     /// </summary>
-    private static List<(TextSpan Span, string Text)> AccessibilityEdits(SemanticModel model, MemberDeclarationSyntax member)
+    internal static List<(TextSpan Span, string Text)> AccessibilityEdits(SemanticModel model, MemberDeclarationSyntax member)
     {
         var edits = new List<(TextSpan, string)>();
         var access = member.Modifiers.Where(m => AccessKinds.Contains(m.Kind())).ToList();
@@ -391,7 +391,7 @@ public static class ExtractSuperclassEngine
     }
 
     /// <summary>A member that stays as the override of an abstract declaration: `override` instead of `virtual`, at least protected.</summary>
-    private static IEnumerable<TextEdit> OverrideEdits(SourceText text, MemberDeclarationSyntax member)
+    internal static IEnumerable<TextEdit> OverrideEdits(SourceText text, MemberDeclarationSyntax member)
     {
         var modifiers = member.Modifiers.ToList();
         var access = modifiers.Where(m => AccessKinds.Contains(m.Kind())).Select(m => m.Text).ToList();

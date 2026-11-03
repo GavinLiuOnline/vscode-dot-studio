@@ -14,6 +14,8 @@ export interface MemberInfo {
     deps?: string[];
     /** Extract Superclass: why the member cannot move */
     blocked?: string;
+    /** Pull Members Up: the declaration an interface gets for the member; missing when an interface cannot have it */
+    interfaceSignature?: string;
 }
 
 /** What Extract Interface asks: the members of the type and a name for the interface */
@@ -64,9 +66,36 @@ export interface ExtractSuperclassChoice {
     newFile: boolean;
 }
 
+/** A base class or interface of the solution's source that members can be pulled up to */
+export interface PullUpTarget {
+    id: string;
+    name: string;
+    kind: 'class' | 'interface';
+    /** "Animal.cs (Shop.Core)" */
+    where: string;
+    isAbstract: boolean;
+}
+
+/** What Pull Members Up asks: where to, and which members; the members in `selected` (the one under the cursor) are checked at the start */
+export interface PullUpForm {
+    kind: 'pullUp';
+    typeName: string;
+    targets: PullUpTarget[];
+    members: MemberInfo[];
+    selected: string[];
+}
+
+export interface PullUpChoice {
+    kind: 'pullUp';
+    targetId: string;
+    memberIds: string[];
+    /** The members of `memberIds` that the target only declares abstract (the class keeps its body as an override) */
+    abstractIds: string[];
+}
+
 /** The forms the tab can show; every refactoring that needs choices adds one */
-export type RefactorForm = ExtractInterfaceForm | ExtractPartialForm | ExtractSuperclassForm;
-export type RefactorChoice = ExtractInterfaceChoice | ExtractPartialChoice | ExtractSuperclassChoice;
+export type RefactorForm = ExtractInterfaceForm | ExtractPartialForm | ExtractSuperclassForm | PullUpForm;
+export type RefactorChoice = ExtractInterfaceChoice | ExtractPartialChoice | ExtractSuperclassChoice | PullUpChoice;
 
 /** What a token of the C# preview is; `plain` has no colour */
 export type TokenKind = 'keyword' | 'interface' | 'class' | 'method' | 'property' | 'parameter' | 'plain';

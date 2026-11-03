@@ -404,6 +404,11 @@
         "category": ".NET"
       },
       {
+        "command": "shinobi.refactor.pullUp",
+        "title": "Pull Members Up...",
+        "category": ".NET"
+      },
+      {
         "command": "shinobi.refactor.extractSuperclass",
         "title": "Extract Superclass...",
         "category": ".NET"
@@ -1422,6 +1427,10 @@
         },
         {
           "command": "shinobi.refactor.extractLocalFunctionChecked",
+          "when": "false"
+        },
+        {
+          "command": "shinobi.refactor.pullUp",
           "when": "false"
         },
         {

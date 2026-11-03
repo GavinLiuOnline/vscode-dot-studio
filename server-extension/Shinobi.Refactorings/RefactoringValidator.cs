@@ -20,36 +20,51 @@ public static class RefactoringValidator
     public static async Task<IReadOnlyList<string>> NewErrorsAsync(Document document, ExtractInterfaceResult result, CancellationToken ct)
         => (await NewDiagnosticsAsync(document, result, ct).ConfigureAwait(false)).Added.Select(Describe).ToList();
 
-    /// <summary>The document with the result applied (in its forked solution) and the errors the result adds to the project.</summary>
+    /// <summary>The document with the result applied (in its forked solution) and the errors the result adds to the projects it touches.</summary>
     public static async Task<(Document? After, IReadOnlyList<Diagnostic> Added)> NewDiagnosticsAsync(Document document, ExtractInterfaceResult result, CancellationToken ct)
     {
         var project = document.Project;
-        var before = await project.GetCompilationAsync(ct).ConfigureAwait(false);
-        if (before is null) { return (null, []); }
-
+        var original = project.Solution;
         var text = await document.GetTextAsync(ct).ConfigureAwait(false);
-        var changes = result.Edits
-            .Select(e => new TextChange(TextSpan.FromBounds(text.Lines[e.StartLine].Start + e.StartCharacter, text.Lines[e.EndLine].Start + e.EndCharacter), e.NewText))
-            .OrderBy(c => c.Span.Start)
-            .ToList();
-        var solution = project.Solution.WithDocumentText(document.Id, text.WithChanges(changes));
+        var solution = original.WithDocumentText(document.Id, text.WithChanges(Changes(text, result.Edits)));
+        var projects = new HashSet<ProjectId> { project.Id };
+        foreach (var other in result.Others ?? [])
+        {
+            // every document of that path (a file linked into several projects is one file)
+            foreach (var target in original.Projects.SelectMany(p => p.Documents).Where(d => string.Equals(d.FilePath, other.Path, StringComparison.OrdinalIgnoreCase)))
+            {
+                var otherText = await target.GetTextAsync(ct).ConfigureAwait(false);
+                solution = solution.WithDocumentText(target.Id, otherText.WithChanges(Changes(otherText, other.Edits)));
+                projects.Add(target.Project.Id);
+            }
+        }
         if (result.NewFilePath is { } path && result.NewFileContent is { } content && project.Documents.All(d => !string.Equals(d.FilePath, path, StringComparison.OrdinalIgnoreCase)))
         {
             solution = solution.AddDocument(DocumentId.CreateNewId(project.Id), Path.GetFileName(path), SourceText.From(content), filePath: path);
         }
-        var after = await solution.GetProject(project.Id)!.GetCompilationAsync(ct).ConfigureAwait(false);
-        if (after is null) { return (null, []); }
 
-        var known = Errors(before).GroupBy(Key).ToDictionary(g => g.Key, g => g.Count());
         var added = new List<Diagnostic>();
-        foreach (var diagnostic in Errors(after))
+        foreach (var id in projects)
         {
-            var key = Key(diagnostic);
-            if (known.TryGetValue(key, out var left) && left > 0) { known[key] = left - 1; continue; }
-            added.Add(diagnostic);
+            var before = await original.GetProject(id)!.GetCompilationAsync(ct).ConfigureAwait(false);
+            var after = await solution.GetProject(id)!.GetCompilationAsync(ct).ConfigureAwait(false);
+            if (before is null || after is null) { continue; }
+            var known = Errors(before).GroupBy(Key).ToDictionary(g => g.Key, g => g.Count());
+            foreach (var diagnostic in Errors(after))
+            {
+                var key = Key(diagnostic);
+                if (known.TryGetValue(key, out var left) && left > 0) { known[key] = left - 1; continue; }
+                added.Add(diagnostic);
+            }
         }
         return (solution.GetDocument(document.Id), added);
     }
+
+    private static List<TextChange> Changes(SourceText text, IEnumerable<TextEdit> edits)
+        => edits
+            .Select(e => new TextChange(TextSpan.FromBounds(text.Lines[e.StartLine].Start + e.StartCharacter, text.Lines[e.EndLine].Start + e.EndCharacter), e.NewText))
+            .OrderBy(c => c.Span.Start)
+            .ToList();
 
     public static string Describe(Diagnostic diagnostic)
     {

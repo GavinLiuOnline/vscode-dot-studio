@@ -52,8 +52,9 @@ export interface MembersFormProps {
     title: string;
     /** "from Order" */
     typeName: string;
-    nameLabel: string;
-    initialName: string;
+    /** Without a name label the form asks no name (Pull Members Up) */
+    nameLabel?: string;
+    initialName?: string;
     /** Shown while the name is no identifier */
     nameError?: string;
     /** The choices between the name and the members (where the code goes); it gets the current name */
@@ -86,7 +87,7 @@ export function foldedSignature(member: MemberInfo): string {
 /** The dialog of the refactorings that take members along: a name, where the code goes, the members to pick and a preview of the result */
 export const MembersForm: React.FC<MembersFormProps> = props => {
     const { members, palette, onSubmit, onCancel, disabledReason } = props;
-    const [name, setName] = useState(props.initialName);
+    const [name, setName] = useState(props.initialName ?? '');
     const [selected, setSelected] = useState(() => new Set(props.initiallyChecked ?? members.map(member => member.id)));
     const nameInput = useRef<HTMLInputElement>(null);
 
@@ -96,7 +97,8 @@ export const MembersForm: React.FC<MembersFormProps> = props => {
     }, []);
 
     const chosen = useMemo(() => members.filter(member => selected.has(member.id) && !disabledReason?.(member)), [members, selected, disabledReason]);
-    const nameValid = IDENTIFIER.test(name);
+    const asksName = props.nameLabel !== undefined;
+    const nameValid = !asksName || IDENTIFIER.test(name);
     const valid = nameValid && chosen.length > 0 && (props.canSubmit?.(selected) ?? true);
     const toggle = (id: string) => setSelected(current => {
         const next = new Set(current);
@@ -120,11 +122,13 @@ export const MembersForm: React.FC<MembersFormProps> = props => {
             <h1>{props.title}</h1>
             <p className="subtitle">from <strong>{props.typeName}</strong></p>
 
-            <section>
-                <h2><label htmlFor="rf-name">{props.nameLabel}</label></h2>
-                <input id="rf-name" ref={nameInput} type="text" value={name} onChange={event => setName(event.target.value)} aria-invalid={!nameValid} spellCheck={false} />
-                {!nameValid && <div className="error-text">{props.nameError ?? 'Not a valid C# identifier.'}</div>}
-            </section>
+            {asksName && (
+                <section>
+                    <h2><label htmlFor="rf-name">{props.nameLabel}</label></h2>
+                    <input id="rf-name" ref={nameInput} type="text" value={name} onChange={event => setName(event.target.value)} aria-invalid={!nameValid} spellCheck={false} />
+                    {!nameValid && <div className="error-text">{props.nameError ?? 'Not a valid C# identifier.'}</div>}
+                </section>
+            )}
 
             {props.targets?.(name)}
 

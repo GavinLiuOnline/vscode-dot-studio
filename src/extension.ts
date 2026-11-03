@@ -37,6 +37,7 @@ import { TypeRefactoring } from './services/refactoring/typeRefactoring';
 import { EXTRACT_INTERFACE } from './services/refactoring/extractInterface';
 import { EXTRACT_PARTIAL } from './services/refactoring/extractPartial';
 import { EXTRACT_SUPERCLASS } from './services/refactoring/extractSuperclass';
+import { PULL_UP } from './services/refactoring/pullUp';
 import { ExtractMethodChecked, EXTRACT_METHOD_CHECKED, EXTRACT_LOCAL_FUNCTION_CHECKED } from './services/refactoring/extractMethodChecked';
 import { runCodeCleanupOnActiveFile } from './services/code/codeCleanup/activeFileCleanup';
 import { TestExplorer } from './services/testing/testExplorer';
@@ -139,7 +140,7 @@ export function activate(context: vscode.ExtensionContext) {
     RefactoringPanel.extensionUri = context.extensionUri;
     const csharpServer = new CSharpServer(vscode.Uri.joinPath(context.extensionUri, SERVER_EXTENSION_PATH).fsPath);
     const checkedExtractions = [EXTRACT_METHOD_CHECKED, EXTRACT_LOCAL_FUNCTION_CHECKED].map(extraction => new ExtractMethodChecked(csharpServer, extraction));
-    const typeRefactorings = [EXTRACT_INTERFACE, EXTRACT_PARTIAL, EXTRACT_SUPERCLASS].map(spec => new TypeRefactoring(csharpServer, spec));
+    const typeRefactorings = [EXTRACT_INTERFACE, EXTRACT_PARTIAL, EXTRACT_SUPERCLASS, PULL_UP].map(spec => new TypeRefactoring(csharpServer, spec));
     // The expired-token message needs the configured sources to know which feed a request went to
     setFeedSources(() => PackageBrowseService.getPackageSources());
     const testExplorer = new TestExplorer();

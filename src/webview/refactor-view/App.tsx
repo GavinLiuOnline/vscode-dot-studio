@@ -3,6 +3,7 @@ import { RefactorChoice, RefactorForm, SyntaxPalette, RefactorMessage, RefactorR
 import { ExtractInterfaceFormView } from './ExtractInterfaceFormView';
 import { ExtractPartialFormView } from './ExtractPartialFormView';
 import { ExtractSuperclassFormView } from './ExtractSuperclassFormView';
+import { PullUpFormView } from './PullUpFormView';
 
 export interface RefactorApi {
     postMessage(message: RefactorRequest): void;
@@ -43,5 +44,6 @@ export const App: React.FC<{ api: RefactorApi }> = ({ api }) => {
         case 'extractInterface': return <ExtractInterfaceFormView form={form} palette={palette} onSubmit={submit} onCancel={cancel} />;
         case 'extractPartial': return <ExtractPartialFormView form={form} palette={palette} onSubmit={submit} onCancel={cancel} />;
         case 'extractSuperclass': return <ExtractSuperclassFormView form={form} palette={palette} onSubmit={submit} onCancel={cancel} />;
+        case 'pullUp': return <PullUpFormView form={form} palette={palette} onSubmit={submit} onCancel={cancel} />;
     }
 };

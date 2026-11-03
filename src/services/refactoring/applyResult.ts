@@ -7,7 +7,7 @@ const log = logger('ApplyResult');
 
 export interface ServerEdit { startLine: number; startCharacter: number; endLine: number; endCharacter: number; newText: string }
 /** What the server's handlers answer: edits of the file and a new file */
-export interface ServerResult { edits: ServerEdit[]; newFilePath?: string; newFileContent?: string; errors?: string[] }
+export interface ServerResult { edits: ServerEdit[]; newFilePath?: string; newFileContent?: string; errors?: string[]; others?: { path: string; edits: ServerEdit[] }[] }
 
 /**
  * Applies what a handler answered: the edits of the file and the new file, saved so a build and the language server see them.
@@ -31,8 +31,18 @@ export async function applyServerResult(uri: vscode.Uri, result: ServerResult, t
     const document = await vscode.workspace.openTextDocument(uri);
     const wasDirty = document.isDirty;
     const edit = new vscode.WorkspaceEdit();
+    const range = (change: ServerEdit) => new vscode.Range(change.startLine, change.startCharacter, change.endLine, change.endCharacter);
     for (const change of result.edits) {
-        edit.replace(uri, new vscode.Range(change.startLine, change.startCharacter, change.endLine, change.endCharacter), change.newText);
+        edit.replace(uri, range(change), change.newText);
+    }
+    // other existing files (the base class a member was pulled up to); the ones that were clean are saved afterwards
+    const others: { document: vscode.TextDocument; wasDirty: boolean }[] = [];
+    for (const other of result.others ?? []) {
+        const otherDocument = await vscode.workspace.openTextDocument(vscode.Uri.file(other.path));
+        others.push({ document: otherDocument, wasDirty: otherDocument.isDirty });
+        for (const change of other.edits) {
+            edit.replace(otherDocument.uri, range(change), change.newText);
+        }
     }
     if (result.newFilePath && result.newFileContent !== undefined) {
         const created = vscode.Uri.file(result.newFilePath);
@@ -52,6 +62,9 @@ export async function applyServerResult(uri: vscode.Uri, result: ServerResult, t
     }
     if (!wasDirty) {
         await document.save();
+    }
+    for (const other of others.filter(o => !o.wasDirty)) {
+        await other.document.save();
     }
     log.info(`${title} on ${uri.fsPath}`);
     return true;

@@ -17,14 +17,21 @@ export interface TypeRefactoringSpec<Form extends RefactorForm = RefactorForm> {
     handler: string;
     /** The kind of its form and choice */
     kind: Form['kind'];
-    /** Said when the cursor is not on the name of a type */
+    /** Said when the cursor is not where the refactoring works */
     notOnTypeMessage: string;
+    /** The entry is offered on the name of a member as well (the server decides where), not only on a line that declares a type */
+    onMembers?: boolean;
+    /** The entry is not offered where the server refuses the refactoring (otherwise it is, and the reason shows when it is picked) */
+    hideWhenRefused?: boolean;
     /** The form of what the server listed */
     formOf(info: Omit<Form, 'kind'>): { title: string; form: Form };
 }
 
 /** Matches a line that declares a type; the server decides whether the cursor is on its name */
 const TYPE_DECLARATION = /\b(class|struct|record)\s+[A-Za-z_]\w*/;
+
+/** A line that can declare a type or a member: the server decides whether the cursor is on the name of one */
+const MEMBER_DECLARATION = /[A-Za-z_]\w*\s*(\(|\{|=>|;|=|,)/;
 
 /**
  * The pattern of the refactorings that pick members: a lightbulb entry on a type's name, the server lists the members, a form
@@ -40,11 +47,13 @@ export class TypeRefactoring implements vscode.CodeActionProvider {
     }
 
     async provideCodeActions(document: vscode.TextDocument, range: vscode.Range): Promise<vscode.CodeAction[]> {
-        if (!TYPE_DECLARATION.test(document.lineAt(range.start.line).text)) {
+        const line = document.lineAt(range.start.line).text;
+        if (!TYPE_DECLARATION.test(line) && !(this.spec.onMembers && MEMBER_DECLARATION.test(line))) {
             return [];
         }
         try {
-            if (!await this.info(document.uri, range.start)) {
+            const info = await this.info(document.uri, range.start);
+            if (!info || (this.spec.hideWhenRefused && info.refusal)) {
                 return [];
             }
             const action = new vscode.CodeAction(this.spec.actionTitle, vscode.CodeActionKind.RefactorExtract);
