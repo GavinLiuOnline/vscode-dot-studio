@@ -6,6 +6,7 @@ import { promisify } from 'util';
 import { logger } from '../../core/logger';
 import { activeProjectBuild } from './activeBuild';
 import { platformProperty } from './configurationManager/configurationManager';
+import { t } from '../../core/i18n';
 
 const execFileAsync = promisify(execFile);
 const log = logger('Pack');
@@ -57,11 +58,11 @@ export async function reportPacked(projectPath: string): Promise<void> {
     const dir = await packageOutputDirectory(projectPath, configuration, platform);
     const packages = packagesWrittenSince(dir, since);
     if (packages.length === 0) {
-        vscode.window.showWarningMessage(`Pack ${projectName} wrote no package to ${dir}. Is the project packable (<IsPackable>false</IsPackable>)?`);
+        vscode.window.showWarningMessage(t('Pack {0} wrote no package to {1}. Is the project packable (<IsPackable>false</IsPackable>)?', projectName, dir));
         return;
     }
     const [main] = packages;
-    const choice = await vscode.window.showInformationMessage(`Packed ${path.basename(main)} into ${dir}`, 'Reveal in Explorer', 'Copy Path');
+    const choice = await vscode.window.showInformationMessage(t('Packed {0} into {1}', path.basename(main), dir), 'Reveal in Explorer', 'Copy Path');
     if (choice === 'Reveal in Explorer') {
         await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(main));
     } else if (choice === 'Copy Path') {

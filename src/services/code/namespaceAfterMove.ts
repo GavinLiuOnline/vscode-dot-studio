@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { logger } from '../../core/logger';
 import { NamespaceService } from './namespaceService';
+import { t } from '../../core/i18n';
 
 const log = logger('NamespaceAfterMove');
 
@@ -38,7 +39,8 @@ export async function namespaceChangesAfterMove(movedPaths: readonly string[]): 
 }
 
 const fileQuestion = (operation: string, change: NamespaceChange) =>
-    `${operation}: Update namespace in '${path.basename(change.filePath)}'?\n\nFrom: ${change.currentNamespace}\nTo: ${change.expectedNamespace}`;
+    t('{0}: Update namespace in \'{1}\'?\n\nFrom: {2}\nTo: {3}',
+        operation, path.basename(change.filePath), change.currentNamespace, change.expectedNamespace);
 
 /**
  * One question for the whole move: Update All, Review Each or Skip; a single file gets the single-file question.
@@ -53,9 +55,7 @@ export async function offerNamespaceUpdates(changes: readonly NamespaceChange[],
     } finally {
         const declarationOnly = NamespaceService.takeDeclarationOnly();
         if (declarationOnly.length > 0) {
-            vscode.window.showWarningMessage(
-                `The namespace was changed in ${declarationOnly.length} file(s), but the files that use them were not updated: the C# language server's "Change namespace" action was not available `
-                + '(it needs the C# extension with the project loaded and IDE0130 reporting in .editorconfig, see Sync Namespaces). Build to find the references.');
+            vscode.window.showWarningMessage(t('The namespace was changed in {0} file(s), but the files that use them were not updated: the C# language server\'s "Change namespace" action was not available (it needs the C# extension with the project loaded and IDE0130 reporting in .editorconfig, see Sync Namespaces). Build to find the references.', declarationOnly.length));
         }
     }
 }
@@ -66,12 +66,12 @@ async function offerOrUpdate(changes: readonly NamespaceChange[], operation: str
         const choice = await vscode.window.showInformationMessage(fileQuestion(operation, change), { modal: true }, 'Update Namespace', 'Skip');
         if (choice === 'Update Namespace'
             && !await NamespaceService.updateNamespaceViaRename(change.filePath, change.currentNamespace, change.expectedNamespace)) {
-            vscode.window.showWarningMessage(`Failed to update namespace in '${path.basename(change.filePath)}'`);
+            vscode.window.showWarningMessage(t('Failed to update namespace in \'{0}\'', path.basename(change.filePath)));
         }
         return;
     }
     const choice = await vscode.window.showInformationMessage(
-        `${operation}: ${changes.length} C# files have a namespace that does not match their new folder. Update them?`,
+        t('{0}: {1} C# files have a namespace that does not match their new folder. Update them?', operation, changes.length),
         { modal: true }, 'Update All', 'Review Each', 'Skip');
     if (choice !== 'Update All' && choice !== 'Review Each') {
         return;
@@ -97,7 +97,7 @@ async function offerOrUpdate(changes: readonly NamespaceChange[], operation: str
             skipped++;
         }
     }
-    vscode.window.showInformationMessage(`Namespace updates: updated ${updated} file(s)${skipped > 0 ? `, skipped ${skipped}` : ''}`);
+    vscode.window.showInformationMessage(t('Namespace updates: updated {0} file(s){1}', updated, skipped > 0 ? `, skipped ${skipped}` : ''));
 }
 
 /** After a move (not a copy): finds what needs a new namespace and asks once */

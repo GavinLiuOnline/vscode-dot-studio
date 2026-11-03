@@ -4,6 +4,7 @@ import { ProjectFileEditor } from '../../../parsers/projectFileEditor';
 import { BUILD_OUTPUT_FOLDERS } from './folderLayout';
 import { ProjectItems } from './projectItems';
 import { NewItem, newItemFor } from './defaultItems';
+import { t } from '../../../core/i18n';
 import { isBelow } from './itemPaths';
 
 
@@ -33,7 +34,7 @@ export function escapeMsbuild(value: string): string {
  */
 export function membershipRefusal(target: string, isFolder: boolean, solutionProjects: readonly string[]): string | undefined {
     if (isFolder && holdsProject(target, solutionProjects)) {
-        return 'This folder is a project of its own; use Remove or Delete on the project.';
+        return t('This folder is a project of its own; use Remove or Delete on the project.');
     }
     return undefined;
 }

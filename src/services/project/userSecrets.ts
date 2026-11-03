@@ -7,6 +7,7 @@ import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { ProjectFileEditor } from '../../parsers/projectFileEditor';
 import { logger } from '../../core/logger';
+import { t } from '../../core/i18n';
 
 const execFileAsync = promisify(execFile);
 const log = logger('UserSecrets');
@@ -33,7 +34,7 @@ async function evaluatedUserSecretsId(projectPath: string): Promise<{ id?: strin
 /** ASP.NET Core refuses ids that are not valid folder names: `../x` would put secrets.json outside the secrets folder */
 export function userSecretsIdProblem(id: string): string | undefined {
     return /[\\/:*?"<>|\u0000-\u001f]/.test(id) || id === '.' || id === '..' || id.startsWith('..')
-        ? `The UserSecretsId "${id}" is not a valid folder name.`
+        ? t('The UserSecretsId "{0}" is not a valid folder name.', id)
         : undefined;
 }
 
@@ -49,7 +50,7 @@ export async function manageUserSecrets(projectPath: string): Promise<void> {
             const evaluated = await evaluatedUserSecretsId(projectPath);
             if (evaluated.failed) {
                 // The id may be set in a Directory.Build.props we could not read: a new one would shadow it
-                vscode.window.showErrorMessage('Could not read the UserSecretsId of the project (MSBuild failed to evaluate it, see the Output). No new id was added.');
+                vscode.window.showErrorMessage(t('Could not read the UserSecretsId of the project (MSBuild failed to evaluate it, see the Output). No new id was added.'));
                 return;
             }
             id = evaluated.id;
@@ -73,6 +74,6 @@ export async function manageUserSecrets(projectPath: string): Promise<void> {
         await vscode.window.showTextDocument(vscode.Uri.file(secretsPath));
     } catch (error) {
         log.error('Managing user secrets failed:', error);
-        vscode.window.showErrorMessage(`Could not open the user secrets: ${error instanceof Error ? error.message : error}`);
+        vscode.window.showErrorMessage(t('Could not open the user secrets: {0}', error instanceof Error ? error.message : error));
     }
 }

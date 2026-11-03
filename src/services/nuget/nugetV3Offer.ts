@@ -5,6 +5,7 @@ import { logger } from '../../core/logger';
 import { Settings } from '../shared/settings';
 import { nugetConfigFiles } from './nugetCredentials';
 import { isInWorkspace } from './feedAuth';
+import { t } from '../../core/i18n';
 
 const log = logger('NuGetV3Offer');
 const DECLINED_KEY = 'shinobi.nugetV3Migration.declined';
@@ -141,9 +142,9 @@ export async function offerNuGetV3Migration(solutionPath: string, deps: NuGetV3O
             fs.writeFileSync(file, upgradeNuGetOrgSources(fs.readFileSync(file, 'utf8')));
         }
         log.info(`nuget.org changed to the V3 address in ${names}`);
-        vscode.window.showInformationMessage(`nuget.org now uses the V3 address in ${names}.`);
+        vscode.window.showInformationMessage(t('nuget.org now uses the V3 address in {0}.', names));
     } catch (error) {
         log.error('Changing the NuGet.Config failed:', error);
-        vscode.window.showErrorMessage(`Could not change the NuGet.Config: ${error instanceof Error ? error.message : error}`);
+        vscode.window.showErrorMessage(t('Could not change the NuGet.Config: {0}', error instanceof Error ? error.message : error));
     }
 }

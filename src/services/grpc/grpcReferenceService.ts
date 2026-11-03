@@ -17,6 +17,7 @@ import {
     GrpcServices, grpcPackages, isExistingReference, notListedMessage, protobufReferenceFor, protoFileName, PROTOS_FOLDER, rangeMinimum,
     removeProtobufReference, servicesOf, sourceUrlInProjectFile,
 } from './protobufReferences';
+import { t } from '../../core/i18n';
 
 export type GrpcSource = { readonly kind: 'file'; readonly path: string } | { readonly kind: 'url'; readonly url: string };
 
@@ -348,7 +349,7 @@ const SERVICE_DESCRIPTIONS: Record<GrpcServices, string> = {
 
 export const vscodeGrpcHost: GrpcHost = {
     pickSource: async () => {
-        const choice = await vscode.window.showQuickPick([PICK_FILE, ENTER_URL], { placeHolder: 'Where is the service description (.proto)?' });
+        const choice = await vscode.window.showQuickPick([PICK_FILE, ENTER_URL], { placeHolder: t('Where is the service description (.proto)?') });
         if (choice === PICK_FILE) {
             const picked = await vscode.window.showOpenDialog({
                 canSelectMany: false, openLabel: 'Add gRPC Reference', filters: { 'Protocol Buffers': ['proto'], 'All files': ['*'] },
@@ -357,7 +358,7 @@ export const vscodeGrpcHost: GrpcHost = {
         }
         if (choice === ENTER_URL) {
             const url = await vscode.window.showInputBox({
-                prompt: 'Address of the .proto file, e.g. https://raw.githubusercontent.com/.../greet.proto', ignoreFocusOut: true,
+                prompt: t('Address of the .proto file, e.g. https://raw.githubusercontent.com/.../greet.proto'), ignoreFocusOut: true,
                 validateInput: value => /^https?:\/\/\S+$/i.test(value.trim()) ? undefined : 'Enter an http(s) URL',
             });
             return url ? { kind: 'url', url: url.trim() } : undefined;
@@ -368,7 +369,7 @@ export const vscodeGrpcHost: GrpcHost = {
         const order: GrpcServices[] = [preselected, ...(['Client', 'Server', 'Both'] as const).filter(services => services !== preselected)];
         const choice = await vscode.window.showQuickPick(
             order.map(services => ({ label: services, description: SERVICE_DESCRIPTIONS[services], services })),
-            { placeHolder: 'What to generate?' });
+            { placeHolder: t('What to generate?') });
         return choice?.services;
     },
     ask: async (message, detail, button) => await vscode.window.showWarningMessage(message, { modal: true, detail }, button) === button,

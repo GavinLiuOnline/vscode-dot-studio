@@ -6,6 +6,7 @@ import { VersionUtils } from '../../../services/shared/versionUtils';
 import { isGlobal, versionLabel } from '../versionLabels';
 import { advisoryBadges } from '../advisoryView';
 import { PackageAdvisory } from '../../../services/nuget/types';
+import { t } from '../../shared/i18n';
 
 
 
@@ -43,7 +44,7 @@ export const PackageList: React.FC<PackageListProps> = ({
     loading = false,
     includePrerelease = false,
     emptyMessage,
-    loadingMessage = "Loading packages...",
+    loadingMessage = t("Loading packages..."),
     searchTerm = '',
     hasSearched = false,
     selectedIndex,
@@ -144,7 +145,7 @@ export const PackageList: React.FC<PackageListProps> = ({
                                     return iconUrl ? (
                                         <img
                                             src={iconUrl}
-                                            alt={`${pkg.id} icon`}
+                                            alt={t('{0} icon', pkg.id)}
                                             style={{
                                                 width: '20px',
                                                 height: '20px',
@@ -178,7 +179,7 @@ export const PackageList: React.FC<PackageListProps> = ({
                                             </span>
                                             {isGlobal(pkg, pkg.projects) && (
                                                 <span
-                                                    title="GlobalPackageReference: every project gets it"
+                                                    title={t('GlobalPackageReference: every project gets it')}
                                                     style={{
                                                         marginLeft: '6px',
                                                         padding: '0 4px',
@@ -188,7 +189,7 @@ export const PackageList: React.FC<PackageListProps> = ({
                                                         color: 'var(--vscode-badge-foreground)'
                                                     }}
                                                 >
-                                                    global
+                                                    {t('global')}
                                                 </span>
                                             )}
                                             {advisoryBadges(getAdvisory?.(pkg)).map(badge => (
@@ -214,7 +215,7 @@ export const PackageList: React.FC<PackageListProps> = ({
                                                     color: 'var(--vscode-descriptionForeground)',
                                                     marginLeft: '8px'
                                                 }}>
-                                                    by {formatAuthors(pkg.authors)}
+                                                    {t('by {0}', formatAuthors(pkg.authors))}
                                                 </span>
                                             )}
                                         </div>

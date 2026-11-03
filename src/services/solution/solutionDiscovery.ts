@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { sln } from '../../core/utils';
 import { shouldSkipDirectory } from '../../core/constants';
+import { t } from '../../core/i18n';
 
 export interface SolutionDiscoveryResult {
     type: 'none' | 'single' | 'multiple';
@@ -72,8 +73,8 @@ export class SolutionDiscovery {
         }));
 
         const selected = await vscode.window.showQuickPick(items, {
-            placeHolder: 'Select a solution to open',
-            title: 'Multiple Solution Files Found'
+            placeHolder: t('Select a solution to open'),
+            title: t('Multiple Solution Files Found')
         });
 
         return selected?.solutionPath || null;
@@ -83,7 +84,7 @@ export class SolutionDiscovery {
     static async offerSolution(): Promise<null> {
         const open = 'Open Solution...';
         const create = 'Create New Project...';
-        const choice = await vscode.window.showInformationMessage('No solution found in this folder or the three folder levels below it.', open, create);
+        const choice = await vscode.window.showInformationMessage(t('No solution found in this folder or the three folder levels below it.'), open, create);
         if (choice === open) {
             await vscode.commands.executeCommand('shinobi.solution.open');
         } else if (choice === create) {

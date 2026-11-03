@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ConfigurationManagerRequest } from '../../types/configurationManager';
 import { Select } from '../shared/Select';
+import { t } from '../shared/i18n';
 
 interface Props {
     kind: 'configuration' | 'platform';
@@ -16,7 +17,7 @@ export const ConfigurationList: React.FC<Props> = ({ kind, names, active, post }
     const [newName, setNewName] = useState('');
     const [chosenCopy, setChosenCopy] = useState<string>();
     const copyFrom = chosenCopy && names.includes(chosenCopy) ? chosenCopy : active;
-    const noun = kind === 'configuration' ? 'configuration' : 'platform';
+    const noun = kind === 'configuration' ? t('configuration') : t('platform');
 
     const commitRename = (from: string) => {
         const to = draft.trim();
@@ -36,12 +37,12 @@ export const ConfigurationList: React.FC<Props> = ({ kind, names, active, post }
 
     return (
         <section>
-            <h2>{kind === 'configuration' ? 'Solution configurations' : 'Solution platforms'}</h2>
+            <h2>{kind === 'configuration' ? t('Solution configurations') : t('Solution platforms')}</h2>
             <ul className="names">
                 {names.map(name => (
                     <li key={name}>
                         {renaming === name ? (
-                            <input type="text" aria-label={`New name for ${name}`} value={draft} autoFocus
+                            <input type="text" aria-label={t('New name for {0}', name)} value={draft} autoFocus
                                 onChange={e => setDraft(e.target.value)}
                                 onBlur={() => setRenaming(undefined)}
                                 onKeyDown={e => {
@@ -53,20 +54,20 @@ export const ConfigurationList: React.FC<Props> = ({ kind, names, active, post }
                                     }
                                 }} />
                         ) : <span className="name">{name}</span>}
-                        <button className="action" aria-label={`Rename ${name}`} onClick={() => { setDraft(name); setRenaming(name); }}>Rename</button>
-                        <button className="action" aria-label={`Remove ${name}`} disabled={names.length <= 1}
-                            onClick={() => post(kind === 'configuration' ? { type: 'removeConfiguration', name } : { type: 'removePlatform', name })}>Remove</button>
+                        <button className="action" aria-label={t('Rename {0}', name)} onClick={() => { setDraft(name); setRenaming(name); }}>{t('Rename')}</button>
+                        <button className="action" aria-label={t('Remove {0}', name)} disabled={names.length <= 1}
+                            onClick={() => post(kind === 'configuration' ? { type: 'removeConfiguration', name } : { type: 'removePlatform', name })}>{t('Remove')}</button>
                     </li>
                 ))}
             </ul>
             <div className="toolbar add-row">
-                <input type="text" aria-label={`New ${noun} name`} placeholder={`New ${noun}`} value={newName}
+                <input type="text" aria-label={t('New {0} name', noun)} placeholder={t('New {0}', noun)} value={newName}
                     onChange={e => setNewName(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { add(); } }} />
-                <label>Copy settings from</label>
-                <Select aria-label="Copy settings from" value={copyFrom} onChange={setChosenCopy}
+                <label>{t('Copy settings from')}</label>
+                <Select aria-label={t('Copy settings from')} value={copyFrom} onChange={setChosenCopy}
                     options={names.map(name => ({ value: name, label: name }))} />
-                <button className="action primary" disabled={!newName.trim()} onClick={add}>Add</button>
+                <button className="action primary" disabled={!newName.trim()} onClick={add}>{t('Add')}</button>
             </div>
         </section>
     );

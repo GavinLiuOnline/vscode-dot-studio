@@ -1,5 +1,6 @@
 import type { InstalledPackage, PackageVersionSource, ProjectInfo } from '../../services/nuget/types';
 import type { LocalNuGetPackage } from './shared';
+import { t } from '../shared/i18n';
 
 /**
  * How the NuGet manager shows versions under Central Package Management. Browser-safe: types only, no Node modules
@@ -14,9 +15,9 @@ interface Versioned {
 /** `v3.1.1`, `v13.0.2 (override)`, `v8.0.0 (global)`; an unknown version (no evaluation) is said to be unknown */
 export function versionLabel(pkg: Versioned): string {
     if (!pkg.currentVersion) {
-        return 'version not known';
+        return t('version not known');
     }
-    const source = pkg.versionSource === 'override' || pkg.versionSource === 'global' ? ` (${pkg.versionSource})` : '';
+    const source = pkg.versionSource === 'override' || pkg.versionSource === 'global' ? t(' ({0})', pkg.versionSource) : '';
     return `v${pkg.currentVersion}${source}`;
 }
 
@@ -43,7 +44,7 @@ export function centralNote(pkg: LocalNuGetPackage, projects: readonly ProjectIn
     const found = entries(pkg, projects);
     const global = found.find(({ entry }) => entry.versionSource === 'global');
     if (global) {
-        return `Global package (GlobalPackageReference in ${fileName(global.entry.versionFile)}): every project gets it. Uninstall removes it for all projects or for the selected ones only.`;
+        return t('Global package (GlobalPackageReference in {0}): every project gets it. Uninstall removes it for all projects or for the selected ones only.', fileName(global.entry.versionFile));
     }
     const central = found.filter(({ entry }) => entry.versionSource === 'central');
     const overrides = found.filter(({ entry }) => entry.versionSource === 'override');
@@ -53,11 +54,11 @@ export function centralNote(pkg: LocalNuGetPackage, projects: readonly ProjectIn
     const parts: string[] = [];
     if (central.length > 0) {
         const shared = found.length > 1 || (projects?.length ?? 0) > 1;
-        parts.push(`Version set centrally in ${fileName(central[0].entry.versionFile)}${shared ? `, used by ${central.map(({ project }) => project.name).join(', ')}` : ''}.`
-            + ' A new version changes it for every project that uses it (you are asked first); Set for This Project Only writes a VersionOverride instead.');
+        parts.push(t('Version set centrally in {0}{1}.', fileName(central[0].entry.versionFile), shared ? t(', used by {0}', central.map(({ project }) => project.name).join(', ')) : '')
+            + t(' A new version changes it for every project that uses it (you are asked first); Set for This Project Only writes a VersionOverride instead.'));
     }
     if (overrides.length > 0) {
-        parts.push(`${overrides.map(({ project }) => project.name).join(', ')} ${overrides.length === 1 ? 'sets its' : 'set their'} own version (VersionOverride).`);
+        parts.push(t('{0} {1} own version (VersionOverride).', overrides.map(({ project }) => project.name).join(', '), overrides.length === 1 ? 'sets its' : 'set their'));
     }
     return parts.join(' ');
 }

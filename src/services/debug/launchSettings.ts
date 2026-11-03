@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { isWebProject } from '../../parsers/projectKind';
 import { logger } from '../../core/logger';
+import { t } from '../../core/i18n';
 
 const log = logger('LaunchSettings');
 
@@ -59,6 +60,6 @@ export async function openLaunchSettings(projectPath: string): Promise<void> {
         await vscode.window.showTextDocument(vscode.Uri.file(await ensureLaunchSettings(projectPath)));
     } catch (error) {
         log.error('Opening the launch settings failed:', error);
-        vscode.window.showErrorMessage(`Could not open the launch settings: ${error instanceof Error ? error.message : error}`);
+        vscode.window.showErrorMessage(t('Could not open the launch settings: {0}', error instanceof Error ? error.message : error));
     }
 }

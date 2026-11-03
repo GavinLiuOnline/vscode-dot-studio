@@ -1,4 +1,5 @@
 import { logger } from '../../../core/logger';
+import { t } from '../../../core/i18n';
 
 const log = logger('NamespaceSync');
 
@@ -107,19 +108,20 @@ export const IDE0130_HINT = [
 export function syncSummary(result: SyncResult, total: number): { text: string; level: 'info' | 'warning'; details: boolean } {
     const failed = result.failed.length;
     const changed = result.changed.length;
-    const done = result.cancelled ? ` (cancelled after ${changed + result.unchanged + failed} of ${total} files)` : '';
+    const done = result.cancelled ? t(' (cancelled after {0} of {1} files)', changed + result.unchanged + failed, total) : '';
 
     if (changed === 0 && failed === 0) {
         if (result.mismatches > 0) {
             return {
-                text: `The language server offered no fix for ${result.mismatches} ${result.mismatches === 1 ? 'file whose namespace differs' : 'files whose namespaces differ'} from their folder. ` +
-                    `It only does when IDE0130 is reported: add to .editorconfig "${IDE0130_HINT.join('" and "')}".${done}`,
+                text: result.mismatches === 1
+                    ? t('The language server offered no fix for one file whose namespace differs from its folder. It only does when IDE0130 is reported: add to .editorconfig "{0}".{1}', IDE0130_HINT.join('" and "'), done)
+                    : t('The language server offered no fix for {0} files whose namespaces differ from their folder. It only does when IDE0130 is reported: add to .editorconfig "{1}".{2}', result.mismatches, IDE0130_HINT.join('" and "'), done),
                 level: 'warning',
                 details: false,
             };
         }
-        return { text: result.cancelled ? `Sync Namespaces cancelled, nothing changed${done}` : 'All namespaces already match', level: 'info', details: false };
+        return { text: result.cancelled ? t('Sync Namespaces cancelled, nothing changed{0}', done) : t('All namespaces already match'), level: 'info', details: false };
     }
-    const text = `Synced namespaces in ${changed} of ${total} files` + (failed ? `, ${failed} failed` : '') + done;
+    const text = t('Synced namespaces in {0} of {1} files', changed, total) + (failed ? t(', {0} failed', failed) : '') + done;
     return { text, level: failed ? 'warning' : 'info', details: true };
 }

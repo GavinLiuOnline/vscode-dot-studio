@@ -7,6 +7,7 @@ import { PackageSource } from './types';
 import { feedHelp } from './feedHelp';
 import { matchSource, nugetConfigFiles, readSourceCredential, setClearTextPassword, SourceCredential, userConfigDir } from './nugetCredentials';
 import { solutionWorkspaceFolder } from '../solution/workspaceFolders';
+import { t } from '../../core/i18n';
 
 const log = logger('FeedAuth');
 
@@ -52,10 +53,10 @@ export async function reportRejectedCredentials(requestUrl: string, status: numb
     const help = feedHelp(source.url);
     const where = credential.kind === 'none' ? '' : `${credential.file}:${credential.line}`;
     const message = credential.kind === 'clearText'
-        ? `NuGet feed '${source.name}' rejected its credentials (${plainStatus(status)}): the token in ${path.basename(credential.file)} has probably expired.`
+        ? t('NuGet feed \'{0}\' rejected its credentials ({1}): the token in {2} has probably expired.', source.name, plainStatus(status), path.basename(credential.file))
         : credential.kind === 'encrypted'
-            ? `NuGet feed '${source.name}' needs credentials (${plainStatus(status)}): its password in ${path.basename(credential.file)} is encrypted with Windows DPAPI, which only works on Windows.`
-            : `NuGet feed '${source.name}' needs credentials (${plainStatus(status)}), but no NuGet.Config has any for it.`;
+            ? t('NuGet feed \'{0}\' needs credentials ({1}): its password in {2} is encrypted with Windows DPAPI, which only works on Windows.', source.name, plainStatus(status), path.basename(credential.file))
+            : t('NuGet feed \'{0}\' needs credentials ({1}), but no NuGet.Config has any for it.', source.name, plainStatus(status));
 
     const enterToken = credential.kind === 'none' ? 'Enter Token...' : 'Enter New Token...';
     const openConfig = 'Open NuGet.Config';
@@ -126,7 +127,7 @@ async function enterNewToken(source: PackageSource, credential: SourceCredential
     if (credential.kind !== 'none' && isInWorkspace(file)) {
         const userConfig = 'Save to user NuGet.Config';
         const choice = await vscode.window.showWarningMessage(
-            `The credentials for '${source.name}' are in ${file}, which is part of your workspace. A token saved there can end up in source control.`,
+            t('The credentials for \'{0}\' are in {1}, which is part of your workspace. A token saved there can end up in source control.', source.name, file),
             { modal: true }, userConfig, 'Save Here Anyway');
         if (!choice) {
             return;
@@ -139,10 +140,10 @@ async function enterNewToken(source: PackageSource, credential: SourceCredential
         const content = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
         fs.mkdirSync(path.dirname(file), { recursive: true });
         fs.writeFileSync(file, setClearTextPassword(content, source.name, username.trim(), token));
-        vscode.window.showInformationMessage(`Saved the token for '${source.name}' in ${file}. Search or install again.`);
+        vscode.window.showInformationMessage(t('Saved the token for \'{0}\' in {1}. Search or install again.', source.name, file));
     } catch (error) {
         log.error('Saving the token failed:', error);
-        vscode.window.showErrorMessage(`Could not save the token in ${file}: ${error}`);
+        vscode.window.showErrorMessage(t('Could not save the token in {0}: {1}', file, error));
     }
 }
 

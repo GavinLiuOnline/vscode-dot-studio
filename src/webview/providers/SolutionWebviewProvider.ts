@@ -30,6 +30,7 @@ import { Settings } from '../../services/shared/settings';
 import { solutionWorkspaceFolder } from '../../services/solution/workspaceFolders';
 
 import { handleAddNewItemAction, handleAddFileAction, handleAddFolderAction, handleCreateFileAction, handleCreateFolderAction, NewItemHost } from './solution/newItemHandlers';
+import { t } from '../../core/i18n';
 
 const log = logger('SolutionWebviewProvider');
 
@@ -250,7 +251,7 @@ export class SolutionWebviewProvider implements vscode.WebviewViewProvider {
         const nodeId = await SolutionExpansionService.revealPath(uri.fsPath, this._cachedSolutionData, this._context);
         if (!nodeId) {
             if (!track) {
-                vscode.window.showInformationMessage(`${path.basename(uri.fsPath)} is not part of the solution.`);
+                vscode.window.showInformationMessage(t('{0} is not part of the solution.', path.basename(uri.fsPath)));
             }
             return;
         }

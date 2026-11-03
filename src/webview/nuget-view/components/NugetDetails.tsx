@@ -3,6 +3,7 @@ import { LocalNuGetPackage } from "../shared";
 import { PackageAdvisory } from "../../../services/nuget/types";
 import NugetReadme from "./NugetReadme";
 import NugetDetail from "./NugetDetail";
+import { t } from "../../shared/i18n";
 
 interface NugetDetailProps {
     selectedPackage: LocalNuGetPackage;
@@ -42,7 +43,7 @@ export default function NugetDetails({ selectedPackage, packageReadmes, advisory
                         fontWeight: detailsTab === 'details' ? 600 : 400,
                     }}
                 >
-                    Package Details
+                    {t('Package Details')}
                 </button>
                 <button
                     onClick={() => setDetailsTab('readme')}

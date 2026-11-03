@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ErrorListFilter, ErrorListMessage, ErrorListRequest, ErrorListRow, ErrorListSummary } from '../../types/errorList';
+import { plural, t } from '../shared/i18n';
 
 export interface ErrorListApi {
     postMessage(message: ErrorListRequest): void;
@@ -38,8 +39,6 @@ export function visibleRows(
     return result;
 }
 
-const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
-
 const ColumnFilter: React.FC<{
     column: FilterColumn; values: string[]; excluded: Set<string> | undefined; onChange(excluded: Set<string>): void;
 }> = ({ column, values, excluded, onChange }) => {
@@ -56,12 +55,12 @@ const ColumnFilter: React.FC<{
     const active = !!excluded?.size;
     return (
         <span ref={ref}>
-            <button className={`filter codicon codicon-filter${active ? '-filled active' : ''}`} aria-label={`Filter ${column}`} onClick={() => setOpen(!open)} />
+            <button className={`filter codicon codicon-filter${active ? '-filled active' : ''}`} aria-label={t('Filter {0}', column)} onClick={() => setOpen(!open)} />
             {open && (
                 <div className="menu" role="menu">
                     <label>
                         <input type="checkbox" checked={!active} onChange={() => onChange(new Set(active ? [] : values))} />
-                        (Select all)
+                        {t('(Select all)')}
                     </label>
                     <hr />
                     {values.map(value => (
@@ -79,7 +78,7 @@ const ColumnFilter: React.FC<{
                                     onChange(next);
                                 }}
                             />
-                            {value || '(none)'}
+                            {value || t('(none)')}
                         </label>
                     ))}
                 </div>
@@ -90,11 +89,11 @@ const ColumnFilter: React.FC<{
 
 const COLUMNS: { column: Column; label: string; width: string; filter?: FilterColumn }[] = [
     { column: 'severity', label: '', width: '28px' },
-    { column: 'code', label: 'Code', width: '110px', filter: 'code' },
-    { column: 'message', label: 'Description', width: 'auto' },
-    { column: 'project', label: 'Project', width: '150px', filter: 'project' },
-    { column: 'file', label: 'File', width: '200px', filter: 'file' },
-    { column: 'line', label: 'Line', width: '60px' },
+    { column: 'code', label: t('Code'), width: '110px', filter: 'code' },
+    { column: 'message', label: t('Description'), width: 'auto' },
+    { column: 'project', label: t('Project'), width: '150px', filter: 'project' },
+    { column: 'file', label: t('File'), width: '200px', filter: 'file' },
+    { column: 'line', label: t('Line'), width: '60px' },
 ];
 
 const MIN_COLUMN_WIDTH = 30;
@@ -130,8 +129,8 @@ export const App: React.FC<{ api: ErrorListApi }> = ({ api }) => {
     const { filter, summary } = data;
     const toggle = (severity: keyof ErrorListFilter, icon: string, count: number, word: string) => (
         <button className="toggle" aria-pressed={filter[severity]} onClick={() => api.postMessage({ type: 'toggle', severity })}
-            title={`${filter[severity] ? 'Hide' : 'Show'} ${word}s, also in the Solution Explorer`}>
-            <span className={`codicon codicon-${icon} ${icon}`} />{plural(count, word)}
+            title={t('{0} {1}s, also in the Solution Explorer', filter[severity] ? t('Hide') : t('Show'), t(word))}>
+            <span className={`codicon codicon-${icon} ${icon}`} />{plural(count, t(word))}
         </button>
     );
     const open = (row: ErrorListRow) => api.postMessage({ type: 'open', filePath: row.filePath, line: row.line, column: row.column });
@@ -156,9 +155,11 @@ export const App: React.FC<{ api: ErrorListApi }> = ({ api }) => {
 
     const hiddenBySeverity = data.rows.filter(row => !filter[SHOWN[row.severity]]).length;
     const empty = data.rows.length === 0
-        ? data.scope !== undefined ? `No errors, warnings or messages in ${data.scope}.` : 'No errors, warnings or messages. Build the solution to check every file.'
+        ? data.scope !== undefined ? t('No errors, warnings or messages in {0}.', data.scope) : t('No errors, warnings or messages. Build the solution to check every file.')
         : rows.length === 0
-            ? hiddenBySeverity === data.rows.length ? `${hiddenBySeverity} ${hiddenBySeverity === 1 ? 'entry' : 'entries'} hidden by the toggles.` : 'No entries match the search or the filters.'
+            ? hiddenBySeverity === data.rows.length
+                ? (hiddenBySeverity === 1 ? t('{0} entry hidden by the toggles.', hiddenBySeverity) : t('{0} entries hidden by the toggles.', hiddenBySeverity))
+                : t('No entries match the search or the filters.')
             : undefined;
 
     return (
@@ -168,12 +169,12 @@ export const App: React.FC<{ api: ErrorListApi }> = ({ api }) => {
                 {toggle('warnings', 'warning', summary.warnings, 'Warning')}
                 {toggle('infos', 'info', summary.infos, 'Message')}
                 {data.scope !== undefined && (
-                    <button className="toggle scope" onClick={() => api.postMessage({ type: 'clearScope' })} title="Show the whole solution again">
+                    <button className="toggle scope" onClick={() => api.postMessage({ type: 'clearScope' })} title={t('Show the whole solution again')}>
                         {data.scope}<span className="codicon codicon-close" />
                     </button>
                 )}
                 <span className="search">
-                    <input type="text" placeholder="Search Error List" aria-label="Search Error List" value={search} onChange={e => setSearch(e.target.value)} />
+                    <input type="text" placeholder={t('Search Error List')} aria-label={t('Search Error List')} value={search} onChange={e => setSearch(e.target.value)} />
                 </span>
             </div>
             <table>
@@ -182,12 +183,12 @@ export const App: React.FC<{ api: ErrorListApi }> = ({ api }) => {
                     <tr>
                         {COLUMNS.map(c => (
                             <th key={c.column} aria-sort={sort?.column === c.column ? (sort.descending ? 'descending' : 'ascending') : undefined}>
-                                <span className="sort" onClick={() => sortBy(c.column)} role="button" aria-label={`Sort by ${c.label || 'severity'}`}>
+                                <span className="sort" onClick={() => sortBy(c.column)} role="button" aria-label={t('Sort by {0}', c.label || t('severity'))}>
                                     {c.label}
                                     {sort?.column === c.column && <span className={`codicon codicon-chevron-${sort.descending ? 'down' : 'up'}`} />}
                                 </span>
-                                <span className="resizer" role="separator" aria-orientation="vertical" aria-label={`Resize ${c.label || 'severity'} column`}
-                                    title="Drag to resize, double-click to reset" onMouseDown={e => startResize(c.column, e)} onDoubleClick={() => resetWidth(c.column)} />
+                                <span className="resizer" role="separator" aria-orientation="vertical" aria-label={t('Resize {0} column', c.label || t('severity'))}
+                                    title={t('Drag to resize, double-click to reset')} onMouseDown={e => startResize(c.column, e)} onDoubleClick={() => resetWidth(c.column)} />
                                 {c.filter && (
                                     <ColumnFilter column={c.filter} values={valuesOf(c.filter)} excluded={excluded[c.filter]}
                                         onChange={next => setExcluded(current => ({ ...current, [c.filter!]: next }))} />

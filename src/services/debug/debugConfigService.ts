@@ -16,6 +16,7 @@ import { compoundConfigurationNames, hasStartupProfileConfiguration, launchJsonH
 import { determineTargetFramework, extractTargetFrameworks, resolveTargetPath } from './launch/targetFramework';
 import { Settings } from '../shared/settings';
 import { browserAction, LaunchProfile, readLaunchProfiles } from './launch/launchProfiles';
+import { t } from '../../core/i18n';
 export type { LaunchProfile } from './launch/launchProfiles';
 
 const log = logger('DebugConfigService');
@@ -158,7 +159,7 @@ export class DebugConfigService {
 
             // A launch.json with syntax errors is not changed: switching only tasks.json would make F5 build one project and run another
             if (launchJsonHasSyntaxErrors(launchJsonPath)) {
-                vscode.window.showWarningMessage('.vscode/launch.json has syntax errors and was not updated. Fix them and select the startup project again.');
+                vscode.window.showWarningMessage(t('.vscode/launch.json has syntax errors and was not updated. Fix them and select the startup project again.'));
                 return false;
             }
 
@@ -240,7 +241,7 @@ export class DebugConfigService {
             const { value, errors } = parseJsonc(original);
             if (errors.length > 0) {
                 log.error(`Not updating ${launchJsonPath}, it has syntax errors:`, errors);
-                vscode.window.showWarningMessage('.vscode/launch.json has syntax errors and was not updated. Fix them and select the startup profile again.');
+                vscode.window.showWarningMessage(t('.vscode/launch.json has syntax errors and was not updated. Fix them and select the startup profile again.'));
                 return;
             }
 
@@ -348,7 +349,7 @@ export class DebugConfigService {
 
         const exitCode = await runTask(createDotnetTask({ type: DOTNET_TASK_TYPE, action: 'build', target: projectPath }));
         if (exitCode !== 0) {
-            vscode.window.showErrorMessage(`${projectName} was not started, its build failed. See the Problems panel.`);
+            vscode.window.showErrorMessage(t('{0} was not started, its build failed. See the Problems panel.', projectName));
             return;
         }
 
@@ -389,7 +390,7 @@ export class DebugConfigService {
             return;
         }
         if (!workspaceFolder || !this.getStartupProject()) {
-            vscode.window.showInformationMessage('There is no startup project. Right-click a project in the Solution Explorer and choose "Set as Startup Project".');
+            vscode.window.showInformationMessage(t('There is no startup project. Right-click a project in the Solution Explorer and choose "Set as Startup Project".'));
             return;
         }
         const startupConfig = readStartupConfig(path.join(workspaceFolder.uri.fsPath, '.vscode', 'launch.json'));
@@ -411,7 +412,7 @@ export class DebugConfigService {
         }
         const names = compoundConfigurationNames({ compounds: [compound] });
         if (names.length === 0) {
-            vscode.window.showInformationMessage('The startup profile starts no project. Set the Action of a project to Start or Start Without Debugging.');
+            vscode.window.showInformationMessage(t('The startup profile starts no project. Set the Action of a project to Start or Start Without Debugging.'));
             return true;
         }
         const { value } = parseJsonc(fs.readFileSync(launchJsonPath, 'utf8'));

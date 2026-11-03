@@ -10,6 +10,7 @@ import { BackendCmd, BulkConsolidatePackagesCmd, BulkUpdatePackagesCmd, InstallP
 import { NuGetViewData } from '../../../types/commands/ui';
 import { VersionUtils } from '../../../services/shared/versionUtils';
 import { solutionWorkspaceFolder } from '../../../services/solution/workspaceFolders';
+import { t } from '../../../core/i18n';
 
 const log = logger('nugetMessageHandlers');
 
@@ -52,7 +53,7 @@ export async function handleSources(message: BackendCmd, webview: vscode.Webview
             }
             case 'removeSource': {
                 const answer = await vscode.window.showWarningMessage(
-                    `Remove the package source ${message.payload.name}? It is deleted from the NuGet.Config that adds it.`, { modal: true }, 'Remove');
+                    t('Remove the package source {0}? It is deleted from the NuGet.Config that adds it.', message.payload.name), { modal: true }, 'Remove');
                 if (answer === 'Remove') {
                     await removeSource(message.payload.name);
                 }
@@ -189,7 +190,7 @@ export async function handleInstallPackage(message: InstallPackageCmd, webview: 
         const installVersion = installData.version;
 
         if (!installPackage || !installProjects.length) {
-            vscode.window.showErrorMessage('No projects selected for installation');
+            vscode.window.showErrorMessage(t('No projects selected for installation'));
             return;
         }
 
@@ -212,15 +213,15 @@ export async function handleInstallPackage(message: InstallPackageCmd, webview: 
 
         if (successful.length > 0) {
             vscode.window.showInformationMessage(failed.length === 0
-                ? `Successfully installed ${installPackage.id}@${installVersion} in ${installProjects.length} project(s)`
-                : `Installed ${installPackage.id}@${installVersion}, with errors`
+                ? t('Successfully installed {0}@{1} in {2} project(s)', installPackage.id, installVersion, installProjects.length)
+                : t('Installed {0}@{1}, with errors', installPackage.id, installVersion)
             );
         }
 
         if (failed.length > 0) {
             log.error('Failed installations:', failed);
             vscode.window.showErrorMessage(
-                `Failed to install ${installPackage.id} in ${failed.length} project(s). Check logs for details.`
+                t('Failed to install {0} in {1} project(s). Check logs for details.', installPackage.id, failed.length)
             );
         }
 
@@ -237,7 +238,7 @@ export async function handleInstallPackage(message: InstallPackageCmd, webview: 
         });
     } catch (error) {
         log.error('Error installing package:', error);
-        vscode.window.showErrorMessage(`Failed to install package: ${error}`);
+        vscode.window.showErrorMessage(t('Failed to install package: {0}', error));
         sendToUi(webview, {
             type: 'installComplete',
             payload: {
@@ -256,7 +257,7 @@ export async function handleUninstallPackage(message: UnInstallPackageCmd, webvi
         const uninstallProjects = uninstallData.projects || [];
 
         if (!uninstallPackage || !uninstallProjects.length) {
-            vscode.window.showErrorMessage('No projects selected for uninstallation');
+            vscode.window.showErrorMessage(t('No projects selected for uninstallation'));
             return;
         }
 
@@ -275,14 +276,14 @@ export async function handleUninstallPackage(message: UnInstallPackageCmd, webvi
 
         if (successful.length > 0) {
             vscode.window.showInformationMessage(
-                `Successfully uninstalled ${uninstallPackage.id} from ${successful.length} project(s)`
+                t('Successfully uninstalled {0} from {1} project(s)', uninstallPackage.id, successful.length)
             );
         }
 
         if (failed.length > 0) {
             log.error('Failed uninstallations:', failed);
             vscode.window.showErrorMessage(
-                `Failed to uninstall ${uninstallPackage.id} from ${failed.length} project(s). Check logs for details.`
+                t('Failed to uninstall {0} from {1} project(s). Check logs for details.', uninstallPackage.id, failed.length)
             );
         }
 
@@ -299,7 +300,7 @@ export async function handleUninstallPackage(message: UnInstallPackageCmd, webvi
         });
     } catch (error) {
         log.error('Error uninstalling package:', error);
-        vscode.window.showErrorMessage(`Failed to uninstall package: ${error}`);
+        vscode.window.showErrorMessage(t('Failed to uninstall package: {0}', error));
         // Send completion message even on error
         sendToUi(webview, {
             type: 'uninstallComplete',
@@ -317,7 +318,7 @@ export async function handleBulkUpdatePackages(message: BulkUpdatePackagesCmd, w
         const packages: LocalNuGetPackage[] = message.payload.packages;
 
         if (!packages || !Array.isArray(packages) || packages.length === 0) {
-            vscode.window.showWarningMessage('No packages selected for update');
+            vscode.window.showWarningMessage(t('No packages selected for update'));
             return;
         }
 
@@ -345,11 +346,11 @@ export async function handleBulkUpdatePackages(message: BulkUpdatePackagesCmd, w
             const failed = results.length - successful;
 
             if (failed === 0) {
-                vscode.window.showInformationMessage(`Successfully updated ${successful} packages`);
+                vscode.window.showInformationMessage(t('Successfully updated {0} packages', successful));
             } else if (successful === 0) {
-                vscode.window.showErrorMessage(`Failed to update all ${failed} packages`);
+                vscode.window.showErrorMessage(t('Failed to update all {0} packages', failed));
             } else {
-                vscode.window.showWarningMessage(`Updated ${successful} packages, ${failed} failed`);
+                vscode.window.showWarningMessage(t('Updated {0} packages, {1} failed', successful, failed));
             }
             return false;
         });
@@ -369,7 +370,7 @@ export async function handleBulkUpdatePackages(message: BulkUpdatePackagesCmd, w
 
     } catch (error) {
         log.error('Error performing bulk package updates:', error);
-        vscode.window.showErrorMessage(`Error updating packages: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        vscode.window.showErrorMessage(t('Error updating packages: {0}', error instanceof Error ? error.message : 'Unknown error'));
 
         // Send failure completion message
         sendToUi(webview, {
@@ -388,14 +389,14 @@ export async function handleBulkConsolidatePackages(message: BulkConsolidatePack
         const packages: LocalNuGetPackage[] = message.payload.packages;
 
         if (!packages || !Array.isArray(packages) || packages.length === 0) {
-            vscode.window.showWarningMessage('No packages selected for consolidation');
+            vscode.window.showWarningMessage(t('No packages selected for consolidation'));
             return;
         }
 
         log.debug(`Bulk consolidating ${packages.length} packages`);
 
         if (context.type !== 'solution') {
-            vscode.window.showWarningMessage('Consolidation needs the solution, not a single project');
+            vscode.window.showWarningMessage(t('Consolidation needs the solution, not a single project'));
             sendToUi(webview, { type: 'bulkConsolidateComplete', payload: { success: false } });
             return;
         }
@@ -422,11 +423,11 @@ export async function handleBulkConsolidatePackages(message: BulkConsolidatePack
             const failed = results.length - successful;
 
             if (failed === 0) {
-                vscode.window.showInformationMessage(`Successfully consolidated ${successful} packages`);
+                vscode.window.showInformationMessage(t('Successfully consolidated {0} packages', successful));
             } else if (successful === 0) {
-                vscode.window.showErrorMessage(`Failed to consolidate all ${failed} packages`);
+                vscode.window.showErrorMessage(t('Failed to consolidate all {0} packages', failed));
             } else {
-                vscode.window.showWarningMessage(`Consolidated ${successful} packages, ${failed} failed`);
+                vscode.window.showWarningMessage(t('Consolidated {0} packages, {1} failed', successful, failed));
             }
             return false;
         });
@@ -447,7 +448,7 @@ export async function handleBulkConsolidatePackages(message: BulkConsolidatePack
 
     } catch (error) {
         log.error('Error performing bulk package consolidation:', error);
-        vscode.window.showErrorMessage(`Error consolidating packages: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        vscode.window.showErrorMessage(t('Error consolidating packages: {0}', error instanceof Error ? error.message : 'Unknown error'));
 
         // Send failure completion message
         sendToUi(webview, {

@@ -9,6 +9,7 @@ import { NodeIdString } from '../../../types/nodeId';
 import { sendToUi } from '../../nuget-view/shared';
 import { projectForPath } from '../../../services/templates/templateService';
 import { openNewItemWizard } from '.././TemplateWizardPanel';
+import { t } from '../../../core/i18n';
 
 const log = logger('newItemHandlers');
 
@@ -50,7 +51,7 @@ export async function handleAddFileAction(parentNodeId: NodeIdString, host: NewI
         const parentDir = getContainerDirectory(parentNodeId);
         if (!parentDir) {
             log.error('Invalid parent node ID, cannot extract path:', parentNodeId);
-            vscode.window.showErrorMessage(`Error adding file: invalid parent path`);
+            vscode.window.showErrorMessage(t('Error adding file: invalid parent path'));
             return;
         }
 
@@ -69,7 +70,7 @@ export async function handleAddFileAction(parentNodeId: NodeIdString, host: NewI
         log.info(`Sent addTemporaryNode message to webview`);
     } catch (error) {
         log.error('Error handling add file action:', error);
-        vscode.window.showErrorMessage(`Error adding file: ${error}`);
+        vscode.window.showErrorMessage(t('Error adding file: {0}', error));
     }
 }
 
@@ -81,7 +82,7 @@ export async function handleAddFolderAction(parentNodeId: NodeIdString, host: Ne
         const parentDir = getContainerDirectory(parentNodeId);
         if (!parentDir) {
             log.error('Invalid parent node ID, cannot extract path:', parentNodeId);
-            vscode.window.showErrorMessage(`Error adding folder: invalid parent path`);
+            vscode.window.showErrorMessage(t('Error adding folder: invalid parent path'));
             return;
         }
 
@@ -100,7 +101,7 @@ export async function handleAddFolderAction(parentNodeId: NodeIdString, host: Ne
         log.info(`Sent addTemporaryNode message to webview for folder`);
     } catch (error) {
         log.error('Error handling add folder action:', error);
-        vscode.window.showErrorMessage(`Error adding folder: ${error}`);
+        vscode.window.showErrorMessage(t('Error adding folder: {0}', error));
     }
 }
 
@@ -114,13 +115,13 @@ export async function handleCreateFileAction(parentNodeId: NodeIdString, fileNam
 
         if (!parentPath) {
             log.error('Invalid node ID, cannot extract parent path:', nodeId);
-            vscode.window.showErrorMessage(`Error creating file: invalid parent path`);
+            vscode.window.showErrorMessage(t('Error creating file: invalid parent path'));
             return;
         }
 
         const problem = itemNameProblem(fileName);
         if (problem) {
-            vscode.window.showErrorMessage(`Cannot create "${fileName}": ${problem}`);
+            vscode.window.showErrorMessage(t('Cannot create "{0}": {1}', fileName, problem));
             return;
         }
 
@@ -151,7 +152,7 @@ export async function handleCreateFileAction(parentNodeId: NodeIdString, fileNam
         //return host.refreshTree(`File created: ${fileName}`);
     } catch (error) {
         log.error('Error creating file:', error);
-        vscode.window.showErrorMessage(`Error creating file: ${error}`);
+        vscode.window.showErrorMessage(t('Error creating file: {0}', error));
     }
 }
 
@@ -164,13 +165,13 @@ export async function handleCreateFolderAction(parentNodeId: NodeIdString, folde
         const parentPath = nodeId.path;
         if (!parentPath) {
             log.error('Invalid node ID, cannot extract parent path:', nodeId);
-            vscode.window.showErrorMessage(`Error creating folder: invalid parent path`);
+            vscode.window.showErrorMessage(t('Error creating folder: invalid parent path'));
             return;
         }
 
         const problem = itemNameProblem(folderName);
         if (problem) {
-            vscode.window.showErrorMessage(`Cannot create "${folderName}": ${problem}`);
+            vscode.window.showErrorMessage(t('Cannot create "{0}": {1}', folderName, problem));
             return;
         }
 
@@ -205,6 +206,6 @@ export async function handleCreateFolderAction(parentNodeId: NodeIdString, folde
         }
     } catch (error) {
         log.error('Error creating folder:', error);
-        vscode.window.showErrorMessage(`Error creating folder: ${error}`);
+        vscode.window.showErrorMessage(t('Error creating folder: {0}', error));
     }
 }

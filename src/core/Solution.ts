@@ -17,6 +17,7 @@ import { workspaceFolderOf } from '../services/solution/workspaceFolders';
 import { UnloadedProjects } from '../services/solution/unloadedProjects';
 import { pathKey } from '../services/project/items/projectItems';
 import { FrameworkChoice } from '../services/project/frameworkChoice';
+import { t } from './i18n';
 
 export interface SolutionFileTreeNode {
     name: string;
@@ -238,7 +239,7 @@ export class Solution {
         } catch (error) {
             log.error('Error handling solution file change:', error);
             const reason = error instanceof Error ? error.message : String(error);
-            vscode.window.showWarningMessage(`Could not reload ${path.basename(this._solutionPath)}: ${reason}`);
+            vscode.window.showWarningMessage(t('Could not reload {0}: {1}', path.basename(this._solutionPath), reason));
         }
     }
 

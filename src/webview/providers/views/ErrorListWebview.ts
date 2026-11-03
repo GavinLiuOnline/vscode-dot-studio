@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getNonce } from './nonce';
 import { allScrollbarsCss } from './scrollbar';
+import { t, webviewLanguage } from '../../../core/i18n';
 
 export class ErrorListWebview {
 
@@ -10,11 +11,12 @@ export class ErrorListWebview {
         const nonce = getNonce();
 
         return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${webviewLanguage()}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' ${webview.cspSource}; script-src 'nonce-${nonce}'; font-src ${webview.cspSource}; form-action 'none'; base-uri 'none';">
+    <title>${t('Error List')}</title>
     <link href="${codiconsCss}" rel="stylesheet">
     <style>
         ${allScrollbarsCss()}

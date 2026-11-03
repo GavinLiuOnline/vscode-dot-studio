@@ -9,6 +9,7 @@ import { SolutionService } from '../../solution/solutionService';
 import { UnloadedProjects } from '../../solution/unloadedProjects';
 import { hotReloadArgs, hotReloadTerminalName } from './hotReloadCommand';
 import { isNetFrameworkTarget } from '../../../parsers/targetFrameworks';
+import { t } from '../../../core/i18n';
 
 const log = logger('HotReload');
 
@@ -37,7 +38,7 @@ export async function startWithHotReload(projectPath?: string): Promise<void> {
     const framework = await DebugConfigService.startFramework(target);
     if (isNetFrameworkTarget(framework)) {
         vscode.window.showWarningMessage(
-            `${projectName} targets .NET Framework (${framework}), which dotnet watch cannot hot reload. Use Start Without Debugging instead.`);
+            t('{0} targets .NET Framework ({1}), which dotnet watch cannot hot reload. Use Start Without Debugging instead.', projectName, framework));
         return;
     }
 
@@ -103,11 +104,11 @@ async function pickProject(): Promise<string | undefined> {
             .sort((a, b) => a.name.localeCompare(b.name))
         : [];
     if (projects.length === 0) {
-        vscode.window.showInformationMessage('There is no project to start. Open a solution with a project that can be started.');
+        vscode.window.showInformationMessage(t('There is no project to start. Open a solution with a project that can be started.'));
         return undefined;
     }
     const picked = await vscode.window.showQuickPick(
         projects.map(project => ({ label: project.name, description: path.dirname(project.projectPath), projectPath: project.projectPath })),
-        { placeHolder: 'Project to start with Hot Reload' });
+        { placeHolder: t('Project to start with Hot Reload') });
     return picked?.projectPath;
 }

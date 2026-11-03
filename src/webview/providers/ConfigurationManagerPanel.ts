@@ -10,6 +10,7 @@ import { readConfigurationModel, renderConfigurationModel } from '../../services
 import { applyRequest } from '../../services/build/configurationManager/requests';
 import { ConfigurationManagerMessage, ConfigurationManagerProject, ConfigurationManagerRequest, ConfigurationManagerState } from '../../types/configurationManager';
 import { TemplateWizardWebview } from './views/TemplateWizardWebview';
+import { t } from '../../core/i18n';
 
 const log = logger('ConfigurationManagerPanel');
 
@@ -21,7 +22,7 @@ export class ConfigurationManagerPanel {
     /** Opens (or shows) the Configuration Manager tab */
     static show(): void {
         if (!SolutionService.getActiveSolution()) {
-            vscode.window.showInformationMessage('Open a solution to use the Configuration Manager.');
+            vscode.window.showInformationMessage(t('Open a solution to use the Configuration Manager.'));
             return;
         }
         if (this.current) {
@@ -40,7 +41,7 @@ export class ConfigurationManagerPanel {
     private solution: Solution | undefined;
 
     private constructor(extensionUri: vscode.Uri) {
-        const title = 'Configuration Manager';
+        const title = t('Configuration Manager');
         this.panel = vscode.window.createWebviewPanel('shinobi.configurationManager', title, vscode.ViewColumn.Active, {
             enableScripts: true,
             retainContextWhenHidden: true,

@@ -3,6 +3,7 @@ import { Panels, TextField, Button, Checkbox, Icon } from 'vscrui';
 import { Select } from '../shared/Select';
 import { logger } from '../shared/logger';
 import { LoadingBar } from '../shared/LoadingBar';
+import { t } from '../shared/i18n';
 import { ensureArray, formatAuthors, LocalNuGetPackage, sendToBackend } from './shared';
 import NugetDetails from './components/NugetDetails';
 import NugetHeader from './components/NugetHeader';
@@ -207,7 +208,7 @@ export const App: React.FC = () => {
                     setLoading(false);
                     setHasSearched(true);
                     // A failed search arrives as an empty list with the reason: say so instead of "No results found"
-                    setErrorMessage(message.payload?.error ? `Search failed: ${message.payload.error}` : null);
+                    setErrorMessage(message.payload?.error ? t('Search failed: {0}', message.payload.error) : null);
                     break;
                 case 'error':
                     // Nothing is waiting any more: the loading bar stops and the buttons work again
@@ -711,19 +712,19 @@ export const App: React.FC = () => {
         }
     };
     const refreshButton = (
-        <span title="Refresh" style={{ marginLeft: 'auto', display: 'inline-flex' }}>
+        <span title={t('Refresh')} style={{ marginLeft: 'auto', display: 'inline-flex' }}>
             <Button onClick={refresh} disabled={loading || initializing} appearance="secondary">
                 <Icon name="refresh" />
             </Button>
         </span>
     );
-    const sourceOptions = [{ value: '', label: 'All' }, ...[...(data.sources ?? [])].map(source => ({ value: source.name, label: source.name }))];
+    const sourceOptions = [{ value: '', label: t('All') }, ...[...(data.sources ?? [])].map(source => ({ value: source.name, label: source.name }))];
 
     // Package source for Updates and Consolidate: filters the lists to the packages that feed gives (no new search)
     const listSourceSelect = (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <label htmlFor="nuget-list-source" style={{ fontSize: '13px', color: 'var(--vscode-foreground)' }}>Package source:</label>
-            <Select id="nuget-list-source" aria-label="Package source filter" value={listSource} options={sourceOptions} disabled={initializing}
+            <label htmlFor="nuget-list-source" style={{ fontSize: '13px', color: 'var(--vscode-foreground)' }}>{t('Package source:')}</label>
+            <Select id="nuget-list-source" aria-label={t('Package source filter')} value={listSource} options={sourceOptions} disabled={initializing}
                 onChange={setListSource} />
         </span>
     );
@@ -738,7 +739,7 @@ export const App: React.FC = () => {
             }}>
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                     <TextField
-                        placeholder={initializing ? "Initializing..." : "Search for packages..."}
+                        placeholder={initializing ? t('Initializing...') : t('Search for packages...')}
                         value={searchTerm}
                         onChange={setSearchTerm}
                         onKeyDown={(e) => {
@@ -758,11 +759,11 @@ export const App: React.FC = () => {
                     </Button>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                    <label htmlFor="nuget-source" style={{ fontSize: '13px', color: 'var(--vscode-foreground)' }}>Package source:</label>
-                    <Select id="nuget-source" aria-label="Package source" value={selectedSource} options={sourceOptions} disabled={initializing}
+                    <label htmlFor="nuget-source" style={{ fontSize: '13px', color: 'var(--vscode-foreground)' }}>{t('Package source:')}</label>
+                    <Select id="nuget-source" aria-label={t('Package source')} value={selectedSource} options={sourceOptions} disabled={initializing}
                         onChange={source => { setSelectedSource(source); handleSearch(source); }} />
                     <span style={{ width: '8px' }} />
-                    <LabelledCheckbox checked={includePrerelease} onChange={setIncludePrerelease} disabled={initializing}>Include prerelease</LabelledCheckbox>
+                    <LabelledCheckbox checked={includePrerelease} onChange={setIncludePrerelease} disabled={initializing}>{t('Include prerelease')}</LabelledCheckbox>
                     {refreshButton}
                 </div>
             </div>
@@ -776,8 +777,8 @@ export const App: React.FC = () => {
                     includePrerelease={includePrerelease}
                     packages={enhancedSearchResults}
                     loading={loading}
-                    emptyMessage="Search for packages to browse"
-                    loadingMessage="Searching for packages..."
+                    emptyMessage={t('Search for packages to browse')}
+                    loadingMessage={t('Searching for packages...')}
                     searchTerm={searchTerm}
                     hasSearched={hasSearched}
                     selectedIndex={selectedIndex}
@@ -785,7 +786,7 @@ export const App: React.FC = () => {
                     selectedItemRef={selectedItemRef}
                     onPackageSelect={selectPackageWithDetails}
                     getPackageIconUrl={getPackageIconUrl}
-                    title="Browse"
+                    title={t('Browse')}
                 />
                 )}
             >
@@ -813,7 +814,7 @@ export const App: React.FC = () => {
                         onInstallUpdate={handleInstallPackage}
                         onUninstall={handleUninstallPackage}
                         getVersionOptions={getVersionOptions}
-                        installButtonText="Install"
+                        installButtonText={t('Install')}
                     />
 
                     {selectedProjects.size === 0 && (
@@ -823,7 +824,7 @@ export const App: React.FC = () => {
                             marginBottom: '16px',
                             fontStyle: 'italic'
                         }}>
-                            Select one or more projects to install to
+                            {t('Select one or more projects to install to')}
                         </div>
                     )}
 
@@ -851,15 +852,15 @@ export const App: React.FC = () => {
                     <TextField
                         value={filterTerm}
                         onChange={setFilterTerm}
-                        placeholder={initializing ? "Initializing..." : "Filter installed packages..."}
+                        placeholder={initializing ? t('Initializing...') : t('Filter installed packages...')}
                         disabled={initializing}
                         style={{ flex: 1 }}
                     />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <LabelledCheckbox checked={includePrerelease} onChange={setIncludePrerelease} disabled={initializing}>Include prerelease</LabelledCheckbox>
-                    <LabelledCheckbox checked={advisoryFilter.vulnerable} onChange={vulnerable => setAdvisoryFilter(prev => ({ ...prev, vulnerable }))} disabled={initializing}>Vulnerable</LabelledCheckbox>
-                    <LabelledCheckbox checked={advisoryFilter.deprecated} onChange={deprecated => setAdvisoryFilter(prev => ({ ...prev, deprecated }))} disabled={initializing}>Deprecated</LabelledCheckbox>
+                    <LabelledCheckbox checked={includePrerelease} onChange={setIncludePrerelease} disabled={initializing}>{t('Include prerelease')}</LabelledCheckbox>
+                    <LabelledCheckbox checked={advisoryFilter.vulnerable} onChange={vulnerable => setAdvisoryFilter(prev => ({ ...prev, vulnerable }))} disabled={initializing}>{t('Vulnerable')}</LabelledCheckbox>
+                    <LabelledCheckbox checked={advisoryFilter.deprecated} onChange={deprecated => setAdvisoryFilter(prev => ({ ...prev, deprecated }))} disabled={initializing}>{t('Deprecated')}</LabelledCheckbox>
                     {refreshButton}
                 </div>
             </div>
@@ -874,14 +875,14 @@ export const App: React.FC = () => {
                     includePrerelease={includePrerelease}
                     packages={filteredPackages}
                     loading={loading}
-                    emptyMessage="No packages installed"
-                    loadingMessage="Loading installed packages..."
+                    emptyMessage={t('No packages installed')}
+                    loadingMessage={t('Loading installed packages...')}
                     selectedIndex={selectedIndex}
                     selectedPackage={selectedPackage}
                     selectedItemRef={selectedItemRef}
                     onPackageSelect={selectPackageWithDetails}
                     getPackageIconUrl={getPackageIconUrl}
-                    title="Top-level packages"
+                    title={t('Top-level packages')}
                 />
                 {filteredTransitive.length > 0 && (
                     <PackageList
@@ -894,11 +895,11 @@ export const App: React.FC = () => {
                         selectedItemRef={selectedItemRef}
                         onPackageSelect={selectPackageWithDetails}
                         getPackageIconUrl={getPackageIconUrl}
-                        title="Transitive packages"
+                        title={t('Transitive packages')}
                         collapsed={!transitiveShown}
                         onToggleCollapsed={() => setTransitiveExpanded(expanded => !expanded)}
                         indexOffset={filteredPackages.length}
-                        getNote={pkg => pkg.projects && `Transitive, in ${pkg.projects.length} project${pkg.projects.length === 1 ? '' : 's'}`}
+                        getNote={pkg => pkg.projects && t(pkg.projects.length === 1 ? 'Transitive, in {0} project' : 'Transitive, in {0} projects', pkg.projects.length)}
                     />
                 )}
                     </>
@@ -909,8 +910,7 @@ export const App: React.FC = () => {
                     <NugetHeader selectedPackage={selectedPackage} />
                     {selectedPackage.transitiveReferencedBy && (
                         <div style={{ fontSize: '12px', color: 'var(--vscode-descriptionForeground)', marginBottom: '12px' }}>
-                            Only referenced through other packages. Hover the version of a project below to see how it gets it.
-                            Install it to reference it directly, e.g. to use a newer version.
+                            {t('Only referenced through other packages. Hover the version of a project below to see how it gets it.\nInstall it to reference it directly, e.g. to use a newer version.')}
                         </div>
                     )}
                     {centralNoteBlock(selectedPackage)}
@@ -961,7 +961,7 @@ export const App: React.FC = () => {
                     <TextField
                         value={filterTerm}
                         onChange={setFilterTerm}
-                        placeholder={initializing ? "Initializing..." : "Filter packages with updates..."}
+                        placeholder={initializing ? t('Initializing...') : t('Filter packages with updates...')}
                         disabled={initializing}
                         style={{ flex: 1 }}
                     />
@@ -974,13 +974,13 @@ export const App: React.FC = () => {
                         }
                         appearance="primary"
                     >
-                        Update Selected
+                        {t('Update Selected')}
                     </Button>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {listSourceSelect}
-                        <LabelledCheckbox checked={includePrerelease} onChange={setIncludePrerelease} disabled={initializing}>Include prerelease</LabelledCheckbox>
+                        <LabelledCheckbox checked={includePrerelease} onChange={setIncludePrerelease} disabled={initializing}>{t('Include prerelease')}</LabelledCheckbox>
                     {refreshButton}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -994,7 +994,7 @@ export const App: React.FC = () => {
                             color: 'var(--vscode-foreground)',
                             cursor: (initializing || filteredUpdates.length === 0) ? 'default' : 'pointer'
                         }} onClick={() => !initializing && filteredUpdates.length > 0 && handleSelectAllUpdates(!getSelectAllState())}>
-                            Select all
+                            {t('Select all')}
                         </label>
                     </div>
                 </div>
@@ -1009,8 +1009,8 @@ export const App: React.FC = () => {
                     includePrerelease={includePrerelease}
                     packages={filteredUpdates}
                     loading={loading}
-                    emptyMessage="No updates available"
-                    loadingMessage="Checking for updates..."
+                    emptyMessage={t('No updates available')}
+                    loadingMessage={t('Checking for updates...')}
                     selectedIndex={selectedIndex}
                     selectedPackage={selectedPackage}
                     selectedItemRef={selectedItemRef}
@@ -1018,7 +1018,7 @@ export const App: React.FC = () => {
                     getPackageIconUrl={getPackageIconUrl}
                     showUpdateInfo={true}
                     getVersionChangeText={getVersionChangeText}
-                    title="Updates"
+                    title={t('Updates')}
                     showCheckboxes={true}
                     onPackageToggle={handlePackageToggle}
                 />
@@ -1049,7 +1049,7 @@ export const App: React.FC = () => {
                         onInstallUpdate={handleInstallPackage}
                         onUninstall={handleUninstallPackage}
                         getVersionOptions={getVersionOptions}
-                        installButtonText="Install"
+                        installButtonText={t('Install')}
                         onSetForProjectOnly={canSetForProjectOnly(selectedPackage, data.projects, selectedProjects) ? handleSetForProjectOnly : undefined}
                     />
 
@@ -1060,7 +1060,7 @@ export const App: React.FC = () => {
                             marginBottom: '16px',
                             fontStyle: 'italic'
                         }}>
-                            Select one or more projects to install to
+                            {t('Select one or more projects to install to')}
                         </div>
                     )}
 
@@ -1080,11 +1080,11 @@ export const App: React.FC = () => {
     const shouldShowConsolidate = (data.projects?.length || 0) > 1;
 
     const tabs = [
-        { id: 'browse', label: 'Browse' },
-        { id: 'installed', label: 'Installed' },
-        { id: 'updates', label: 'Updates' },
-        ...(shouldShowConsolidate ? [{ id: 'consolidate', label: 'Consolidate' }] : []),
-        ...(data.manageSources ? [{ id: 'sources', label: 'Sources' }] : [])
+        { id: 'browse', label: t('Browse') },
+        { id: 'installed', label: t('Installed') },
+        { id: 'updates', label: t('Updates') },
+        ...(shouldShowConsolidate ? [{ id: 'consolidate', label: t('Consolidate') }] : []),
+        ...(data.manageSources ? [{ id: 'sources', label: t('Sources') }] : [])
     ];
 
     // Switch to installed tab if currently on consolidate but it's hidden
@@ -1138,7 +1138,7 @@ export const App: React.FC = () => {
                         onInstallUpdate={handleInstallPackage}
                         onUninstall={handleUninstallPackage}
                         getVersionOptions={getVersionOptions}
-                        installButtonText="Install"
+                        installButtonText={t('Install')}
                     />
 
                     {selectedProjects.size === 0 && (
@@ -1148,7 +1148,7 @@ export const App: React.FC = () => {
                             marginBottom: '16px',
                             fontStyle: 'italic'
                         }}>
-                            Select one or more projects to install to
+                            {t('Select one or more projects to install to')}
                         </div>
                     )}
 
@@ -1168,7 +1168,7 @@ export const App: React.FC = () => {
                     color: 'var(--vscode-descriptionForeground)',
                     fontStyle: 'italic'
                 }}>
-                    Select a package to view details
+                    {t('Select a package to view details')}
                 </div>
             )}
         </div>
@@ -1186,7 +1186,7 @@ export const App: React.FC = () => {
                     <TextField
                         value={filterTerm}
                         onChange={setFilterTerm}
-                        placeholder={initializing ? "Initializing..." : "Filter packages to consolidate..."}
+                        placeholder={initializing ? t('Initializing...') : t('Filter packages to consolidate...')}
                         disabled={initializing}
                         style={{ flex: 1 }}
                     />
@@ -1201,7 +1201,7 @@ export const App: React.FC = () => {
                         }
                         appearance="primary"
                     >
-                        Consolidate
+                        {t('Consolidate')}
                     </Button>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -1217,7 +1217,7 @@ export const App: React.FC = () => {
                             color: 'var(--vscode-foreground)',
                             cursor: (initializing || consolidateLoading || filteredConsolidate.length === 0) ? 'default' : 'pointer'
                         }} onClick={() => !initializing && !consolidateLoading && filteredConsolidate.length > 0 && handleSelectAllConsolidate(!getSelectAllConsolidateState())}>
-                            Select all
+                            {t('Select all')}
                         </label>
                     </div>
                 </div>
@@ -1246,8 +1246,8 @@ export const App: React.FC = () => {
                         includePrerelease={includePrerelease}
                         packages={filteredConsolidate}
                         loading={consolidateLoading}
-                        emptyMessage={consolidateLoaded ? "No packages need consolidation" : "Loading consolidation data..."}
-                        loadingMessage="Loading consolidation data..."
+                        emptyMessage={consolidateLoaded ? t('No packages need consolidation') : t('Loading consolidation data...')}
+                        loadingMessage={t('Loading consolidation data...')}
                         selectedIndex={selectedIndex}
                         selectedPackage={selectedPackage}
                         selectedItemRef={selectedItemRef}
@@ -1255,7 +1255,7 @@ export const App: React.FC = () => {
                         getPackageIconUrl={getPackageIconUrl}
                         showCheckboxes={true}
                         onPackageToggle={handleConsolidatePackageToggle}
-                        title="Consolidate"
+                        title={t('Consolidate')}
                     />
                 </div>
 
@@ -1318,7 +1318,7 @@ export const App: React.FC = () => {
             <LoadingBar visible={shouldShowLoadingBar} />
             {stale && (
                 <div role="status" style={{ padding: '4px 12px', fontSize: '12px', color: 'var(--vscode-descriptionForeground)' }}>
-                    Showing the last result while the lists are read again...
+                    {t('Showing the last result while the lists are read again...')}
                 </div>
             )}
             {errorMessage && (
@@ -1328,7 +1328,7 @@ export const App: React.FC = () => {
                     color: 'var(--vscode-foreground)'
                 }}>
                     <span style={{ flex: 1 }}>{errorMessage}</span>
-                    <Button onClick={() => setErrorMessage(null)} appearance="secondary">Dismiss</Button>
+                    <Button onClick={() => setErrorMessage(null)} appearance="secondary">{t('Dismiss')}</Button>
                 </div>
             )}
             <Panels

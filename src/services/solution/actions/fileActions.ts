@@ -13,6 +13,7 @@ import { itemsWithoutExcludes } from '../../project/items/defaultItems';
 import { linkedDeleteDetail, removeLinkedItem } from '../../project/items/linkedItems';
 import { pathKey } from '../../project/items/projectItems';
 import type { Project } from '../../../core/Project';
+import { t } from '../../../core/i18n';
 
 const log = logger('fileActions');
 
@@ -23,7 +24,7 @@ export async function handleOpenFile(nodeId: NodeId): Promise<void> {
         const filePath = nodeId.path;
         if (!filePath) {
             log.error('Cannot extract file path from nodeId:', nodeId);
-            vscode.window.showErrorMessage('Error: Cannot determine file path to open');
+            vscode.window.showErrorMessage(t('Error: Cannot determine file path to open'));
             return;
         }
 
@@ -35,7 +36,7 @@ export async function handleOpenFile(nodeId: NodeId): Promise<void> {
         }
     } catch (error) {
         log.error('Error opening file:', error);
-        vscode.window.showErrorMessage(`Error opening file: ${error}`);
+        vscode.window.showErrorMessage(t('Error opening file: {0}', error));
     }
 }
 
@@ -45,7 +46,7 @@ export async function handleDeleteFile(nodeId: NodeId): Promise<void> {
         const filePath = nodeId.path;
         if (!filePath) {
             log.error('Cannot extract file path from nodeId:', nodeId);
-            vscode.window.showErrorMessage('Error: Cannot determine file path for deletion');
+            vscode.window.showErrorMessage(t('Error: Cannot determine file path for deletion'));
             return;
         }
 
@@ -57,7 +58,7 @@ export async function handleDeleteFile(nodeId: NodeId): Promise<void> {
         // A linked file lives outside the project: say that the real file goes, and offer to remove only the link
         const linking = isDirectory ? [] : projectsLinking(filePath);
         if (linking.length > 0) {
-            const choice = await vscode.window.showWarningMessage(`Delete the linked file '${path.basename(filePath)}'?`,
+            const choice = await vscode.window.showWarningMessage(t('Delete the linked file \'{0}\'?', path.basename(filePath)),
                 { modal: true, detail: linkedDeleteDetail(filePath, linking.map(project => project.name)) }, 'Remove Link', 'Delete');
             if (choice === 'Remove Link') {
                 await handleRemoveLink(nodeId);
@@ -69,7 +70,9 @@ export async function handleDeleteFile(nodeId: NodeId): Promise<void> {
         }
 
         const answer = await vscode.window.showWarningMessage(
-            `Delete the ${itemType} '${path.basename(filePath)}'?${isDirectory ? ' Everything in it' : ' It'} is moved to the trash.`,
+            isDirectory
+                ? t('Delete the folder \'{0}\'? Everything in it is moved to the trash.', path.basename(filePath))
+                : t('Delete the file \'{0}\'? It is moved to the trash.', path.basename(filePath)),
             { modal: true },
             'Delete'
         );
@@ -82,7 +85,7 @@ export async function handleDeleteFile(nodeId: NodeId): Promise<void> {
         }
     } catch (error) {
         log.error('Error deleting file/folder:', error);
-        vscode.window.showErrorMessage(`Error deleting: ${error}`);
+        vscode.window.showErrorMessage(t('Error deleting: {0}', error));
     }
 }
 
@@ -99,7 +102,7 @@ export async function handleRemoveLink(nodeId: NodeId): Promise<void> {
     const name = path.basename(filePath);
     const linking = projectsLinking(filePath);
     if (linking.length === 0) {
-        vscode.window.showWarningMessage(`${name} is not a linked file of a project.`);
+        vscode.window.showWarningMessage(t('{0} is not a linked file of a project.', name));
         return;
     }
     // A file id can name the project whose tree shows it (a nested project's folder): that one, without asking
@@ -122,15 +125,14 @@ export async function handleRemoveLink(nodeId: NodeId): Promise<void> {
         const content = await fs.promises.readFile(projectPath, 'utf8');
         const edit = removeLinkedItem(content, path.dirname(projectPath), filePath, itemTypes);
         if (!edit.removed) {
-            vscode.window.showWarningMessage(`The link to ${name} is not an item of its own in ${path.basename(projectPath)}: `
-                + 'a wildcard or another file (Directory.Build.props, an import) adds it. Remove it there.');
+            vscode.window.showWarningMessage(t('The link to {0} is not an item of its own in {1}: a wildcard or another file (Directory.Build.props, an import) adds it. Remove it there.', name, path.basename(projectPath)));
             return;
         }
         await fs.promises.writeFile(projectPath, edit.content, 'utf8');
         await project.reevaluateItems();
     } catch (error) {
         log.error(`Remove Link failed for ${filePath}:`, error);
-        vscode.window.showErrorMessage(`Could not remove the link to ${name}: ${error instanceof Error ? error.message : error}`);
+        vscode.window.showErrorMessage(t('Could not remove the link to {0}: {1}', name, error instanceof Error ? error.message : error));
     }
 }
 
@@ -139,7 +141,7 @@ export async function handleRevealInExplorer(nodeId: NodeId): Promise<void> {
         const itemPath = nodeId.path;
         if (!itemPath) {
             log.error('Cannot extract path from nodeId:', nodeId);
-            vscode.window.showErrorMessage('Error: Cannot determine path to reveal in explorer');
+            vscode.window.showErrorMessage(t('Error: Cannot determine path to reveal in explorer'));
             return;
         }
 
@@ -147,7 +149,7 @@ export async function handleRevealInExplorer(nodeId: NodeId): Promise<void> {
         await vscode.commands.executeCommand('revealFileInOS', uri);
     } catch (error) {
         log.error('Error revealing in explorer:', error);
-        vscode.window.showErrorMessage(`Error revealing in explorer: ${error}`);
+        vscode.window.showErrorMessage(t('Error revealing in explorer: {0}', error));
     }
 }
 
@@ -168,7 +170,7 @@ export async function handleAddExistingItem(nodeId: NodeId): Promise<void> {
     try {
         await copyExistingItems(files.map(file => file.fsPath), targetDir, async fileName => {
             const replace = await vscode.window.showWarningMessage(
-                `A file with the name '${fileName}' already exists. Do you want to replace it?`,
+                t('A file with the name \'{0}\' already exists. Do you want to replace it?', fileName),
                 { modal: true },
                 'Replace'
             );
@@ -176,7 +178,7 @@ export async function handleAddExistingItem(nodeId: NodeId): Promise<void> {
         });
     } catch (error) {
         log.error('Error adding existing items:', error);
-        vscode.window.showErrorMessage(`Error adding existing items: ${error instanceof Error ? error.message : error}`);
+        vscode.window.showErrorMessage(t('Error adding existing items: {0}', error instanceof Error ? error.message : error));
     }
 }
 
@@ -238,13 +240,13 @@ export async function handleItemMembership(nodeId: NodeId, exclude: boolean): Pr
     const projectPath = shownIn ?? projectForPath(target);
     const project = projectPath ? solution?.projects.get(projectPath) : undefined;
     if (!projectPath || !project) {
-        vscode.window.showWarningMessage('The item is not in a project.');
+        vscode.window.showWarningMessage(t('The item is not in a project.'));
         return;
     }
     try {
         const items = await ProjectItemsService.instance.evaluate(projectPath);
         if (exclude && !items) {
-            vscode.window.showErrorMessage('Could not read the project items (is the .NET SDK installed?).');
+            vscode.window.showErrorMessage(t('Could not read the project items (is the .NET SDK installed?).'));
             return;
         }
         const projectDir = path.dirname(projectPath);
@@ -252,7 +254,7 @@ export async function handleItemMembership(nodeId: NodeId, exclude: boolean): Pr
         const filesUnder = !exclude && isFolder ? await listFilesUnder(target) : [];
         const adding = exclude ? 0 : includeItemCount(content, projectDir, target, isFolder, filesUnder);
         if (adding > INCLUDE_CONFIRM_LIMIT) {
-            const choice = await vscode.window.showWarningMessage(`Include ${adding} files?`, {
+            const choice = await vscode.window.showWarningMessage(t('Include {0} files?', adding), {
                 modal: true,
                 detail: `${path.basename(target)} is not excluded by a Remove item, so each file under it gets an Include item in the project file.`,
             }, 'Include');
@@ -271,12 +273,15 @@ export async function handleItemMembership(nodeId: NodeId, exclude: boolean): Pr
         await project.reevaluateItems();
         const after = await ProjectItemsService.instance.evaluate(projectPath);
         if (after && !membershipApplied(after, target, isFolder, exclude)) {
-            vscode.window.showWarningMessage(`${path.basename(target)} is still ${exclude ? 'in' : 'not in'} the project: `
-                + 'other items decide it (an explicit Include or Remove, Directory.Build.props or .targets, an imported file). Check the project file.');
+            vscode.window.showWarningMessage(exclude
+                ? t('{0} is still in the project: other items decide it (an explicit Include or Remove, Directory.Build.props or .targets, an imported file). Check the project file.', path.basename(target))
+                : t('{0} is still not in the project: other items decide it (an explicit Include or Remove, Directory.Build.props or .targets, an imported file). Check the project file.', path.basename(target)));
         }
     } catch (error) {
         log.error(`${exclude ? 'Exclude' : 'Include'} failed for ${target}:`, error);
-        vscode.window.showErrorMessage(`Could not ${exclude ? 'exclude' : 'include'} ${path.basename(target)}: ${error instanceof Error ? error.message : error}`);
+        vscode.window.showErrorMessage(exclude
+            ? t('Could not exclude {0}: {1}', path.basename(target), error instanceof Error ? error.message : error)
+            : t('Could not include {0}: {1}', path.basename(target), error instanceof Error ? error.message : error));
     }
 }
 
@@ -288,7 +293,7 @@ export async function handleCopy(nodeId: NodeId): Promise<void> {
         const itemPath = nodeId.path;
         if (!itemPath) {
             log.error('Cannot extract path from nodeId:', nodeId);
-            vscode.window.showErrorMessage('Error: Cannot determine item path');
+            vscode.window.showErrorMessage(t('Error: Cannot determine item path'));
             return;
         }
 
@@ -297,7 +302,7 @@ export async function handleCopy(nodeId: NodeId): Promise<void> {
         log.info(`Copied to clipboard: ${itemPath}`);
     } catch (error) {
         log.error('Error copying item:', error);
-        vscode.window.showErrorMessage(`Error copying item: ${error}`);
+        vscode.window.showErrorMessage(t('Error copying item: {0}', error));
     }
 }
 
@@ -309,7 +314,7 @@ export async function handleCut(nodeId: NodeId): Promise<void> {
         const itemPath = nodeId.path;
         if (!itemPath) {
             log.error('Cannot extract path from nodeId:', nodeId);
-            vscode.window.showErrorMessage('Error: Cannot determine item path');
+            vscode.window.showErrorMessage(t('Error: Cannot determine item path'));
             return;
         }
 
@@ -318,7 +323,7 @@ export async function handleCut(nodeId: NodeId): Promise<void> {
         log.info(`Cut to clipboard: ${itemPath}`);
     } catch (error) {
         log.error('Error cutting item:', error);
-        vscode.window.showErrorMessage(`Error cutting item: ${error}`);
+        vscode.window.showErrorMessage(t('Error cutting item: {0}', error));
     }
 }
 
@@ -334,7 +339,7 @@ export async function pasteOne(sourcePath: string, pasteTargetPath: string, oper
     try {
         await vscode.workspace.fs.stat(sourceUri);
     } catch {
-        vscode.window.showErrorMessage('Source item no longer exists');
+        vscode.window.showErrorMessage(t('Source item no longer exists'));
         return undefined;
     }
 
@@ -349,7 +354,7 @@ export async function pasteOne(sourcePath: string, pasteTargetPath: string, oper
 
     if (destinationExists) {
         const choice = await vscode.window.showWarningMessage(
-            `A file or folder with the name '${sourceName}' already exists in the destination folder. Do you want to replace it?`,
+            t('A file or folder with the name \'{0}\' already exists in the destination folder. Do you want to replace it?', sourceName),
             { modal: true },
             'Replace',
             'Cancel'
@@ -386,13 +391,13 @@ export async function handlePaste(nodeId: NodeId): Promise<void> {
         log.debug(`handlePaste: nodeId=${nodeId}, clipboard=${JSON.stringify(clipboard.current)}`);
 
         if (!clipboard.current) {
-            vscode.window.showWarningMessage('Nothing to paste');
+            vscode.window.showWarningMessage(t('Nothing to paste'));
             return;
         }
         const targetPath = nodeId.path;
         if (!targetPath) {
             log.error('Cannot extract target path from nodeId:', nodeId);
-            vscode.window.showErrorMessage('Error: Cannot determine target path');
+            vscode.window.showErrorMessage(t('Error: Cannot determine target path'));
             return;
         }
 
@@ -407,11 +412,11 @@ export async function handlePaste(nodeId: NodeId): Promise<void> {
                 pasteTargetPath = path.dirname(targetPath);
                 log.info(`Target is a file, pasting into parent directory: ${pasteTargetPath}`);
             } else if (stat.type !== vscode.FileType.Directory) {
-                vscode.window.showErrorMessage('Cannot paste to this location');
+                vscode.window.showErrorMessage(t('Cannot paste to this location'));
                 return;
             }
         } catch {
-            vscode.window.showErrorMessage('Target path does not exist');
+            vscode.window.showErrorMessage(t('Target path does not exist'));
             return;
         }
 
@@ -430,6 +435,6 @@ export async function handlePaste(nodeId: NodeId): Promise<void> {
         }
     } catch (error) {
         log.error('Error pasting item:', error);
-        vscode.window.showErrorMessage(`Error pasting item: ${error}`);
+        vscode.window.showErrorMessage(t('Error pasting item: {0}', error));
     }
 }

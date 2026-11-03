@@ -11,6 +11,7 @@ import { BuildConfiguration } from '../../services/build/buildConfiguration';
 import { DebugConfigService } from '../../services/debug/debugConfigService';
 import { createDotnetTask, DOTNET_TASK_TYPE } from '../../services/build/dotnetTaskProvider';
 import { runTask } from '../../services/build/runTask';
+import { t } from '../../core/i18n';
 
 const log = logger('PublishPanel');
 
@@ -50,7 +51,7 @@ export class PublishPanel {
 
     private constructor(private readonly projectPath: string, extensionUri: vscode.Uri) {
         this.projectName = path.basename(projectPath, path.extname(projectPath));
-        const title = `Publish: ${this.projectName}`;
+        const title = t('Publish: {0}', this.projectName);
         this.panel = vscode.window.createWebviewPanel('shinobi.publish', title, vscode.ViewColumn.Active, {
             enableScripts: true,
             retainContextWhenHidden: true,
@@ -144,7 +145,7 @@ export class PublishPanel {
                 const profile = this.profile(request.profile);
                 const taken = listProfiles(this.projectPath).map(p => p.name.toLowerCase());
                 const name = await vscode.window.showInputBox({
-                    title: 'Rename publish profile',
+                    title: t('Rename publish profile'),
                     value: profile.name,
                     validateInput: value => profileNameProblem(value, profile.name, taken),
                 });
@@ -163,7 +164,7 @@ export class PublishPanel {
 
             case 'deleteProfile': {
                 const profile = this.profile(request.profile);
-                const choice = await vscode.window.showWarningMessage(`Delete the publish profile '${profile.name}'?`, { modal: true }, 'Delete');
+                const choice = await vscode.window.showWarningMessage(t('Delete the publish profile \'{0}\'?', profile.name), { modal: true }, 'Delete');
                 if (choice !== 'Delete') {
                     break;
                 }
@@ -180,7 +181,7 @@ export class PublishPanel {
             case 'openFolder': {
                 const folder = publishDirOf(this.projectPath, this.profile(request.profile).settings.publishDir);
                 if (!fs.existsSync(folder)) {
-                    vscode.window.showInformationMessage(`${folder} doesn't exist yet. Publish first.`);
+                    vscode.window.showInformationMessage(t('{0} doesn\'t exist yet. Publish first.', folder));
                     break;
                 }
                 await vscode.env.openExternal(vscode.Uri.file(folder));

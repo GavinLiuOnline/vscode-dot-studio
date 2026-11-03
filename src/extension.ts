@@ -44,6 +44,7 @@ import { startWithHotReload } from './services/debug/hotReload/startWithHotReloa
 import { initDevCertCheck, trustDevCertificate } from './services/debug/devCert/devCertCheck';
 import { StartupChoice } from './services/debug/startupProfiles/startupChoice';
 import { refreshStartup, selectStartupProfile, startupProfilesChanged } from './services/debug/startupProfiles/startProfile';
+import { t } from './core/i18n';
 
 const logger = loggerFn('Extensions');
 
@@ -53,7 +54,7 @@ async function startDebugWithStartupProject(): Promise<void> {
         await vscode.commands.executeCommand('workbench.action.debug.start');
     } catch (error) {
         logger.error('Error starting debug:', error);
-        vscode.window.showErrorMessage(`Error starting debug: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        vscode.window.showErrorMessage(t('Error starting debug: {0}', error instanceof Error ? error.message : 'Unknown error'));
     }
 }
 
@@ -241,7 +242,7 @@ export function activate(context: vscode.ExtensionContext) {
             }));
 
             const selection = await vscode.window.showQuickPick(quickPickItems, {
-                placeHolder: 'Select target framework'
+                placeHolder: t('Select target framework')
             });
 
             if (selection) {
@@ -258,7 +259,7 @@ export function activate(context: vscode.ExtensionContext) {
             const active = BuildConfiguration.active;
             const picked = await vscode.window.showQuickPick(
                 BuildConfiguration.available.map(name => ({ label: name, description: name === active ? '(current)' : undefined })),
-                { placeHolder: 'Solution configuration' }
+                { placeHolder: t('Solution configuration') }
             );
             if (picked) {
                 await BuildConfiguration.set(picked.label);
@@ -268,7 +269,7 @@ export function activate(context: vscode.ExtensionContext) {
             const active = BuildConfiguration.activePlatform;
             const picked = await vscode.window.showQuickPick(
                 BuildConfiguration.availablePlatforms.map(name => ({ label: name, description: name === active ? '(current)' : undefined })),
-                { placeHolder: 'Solution platform' }
+                { placeHolder: t('Solution platform') }
             );
             if (picked) {
                 await BuildConfiguration.setPlatform(picked.label);
@@ -337,7 +338,7 @@ export function activate(context: vscode.ExtensionContext) {
                     solutionPath: solutionPath as string | undefined,
                 })),
                 browse,
-            ], { title: 'Open Solution', placeHolder: 'Pick a solution' });
+            ], { title: t('Open Solution'), placeHolder: t('Pick a solution') });
             let solutionPath = picked?.solutionPath;
             if (picked === browse) {
                 const [file] = await vscode.window.showOpenDialog({

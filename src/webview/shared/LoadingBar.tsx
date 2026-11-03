@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from './i18n';
 
 interface LoadingBarProps {
     visible: boolean;
@@ -63,8 +64,8 @@ interface LoadingMessageProps {
  */
 export const LoadingMessage: React.FC<LoadingMessageProps> = ({
     loading,
-    message = "Loading...",
-    emptyMessage = "No items to display",
+    message = t("Loading..."),
+    emptyMessage = t("No items to display"),
     noResultsMessage,
     searchTerm,
     hasResults,
@@ -74,7 +75,7 @@ export const LoadingMessage: React.FC<LoadingMessageProps> = ({
         if (loading) return message;
 
         if (searchTerm && !hasResults) {
-            return noResultsMessage || `No results found for "${searchTerm}"`;
+            return noResultsMessage || t('No results found for "{0}"', searchTerm);
         }
 
         return emptyMessage;

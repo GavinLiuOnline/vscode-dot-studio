@@ -7,6 +7,7 @@ import { platformProperty } from '../../build/configurationManager/configuration
 import { EMIT_GENERATED_FILES } from '../../diagnostics/analyzers';
 import { Settings } from '../../shared/settings';
 import { solutionWorkspaceFolder } from '../../solution/workspaceFolders';
+import { t } from '../../../core/i18n';
 
 const log = logger('launchFiles');
 
@@ -119,7 +120,7 @@ export function upsertJsoncArrayItem(
     const { errors } = parseJsonc(text);
     if (errors.length > 0) {
         log.error(`Not updating ${filePath}, it has syntax errors:`, errors);
-        vscode.window.showWarningMessage(`.vscode/${fileName} has syntax errors and was not updated. Fix them and select the startup project again.`);
+        vscode.window.showWarningMessage(t('.vscode/{0} has syntax errors and was not updated. Fix them and select the startup project again.', fileName));
         return;
     }
 

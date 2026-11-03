@@ -1,6 +1,7 @@
 import React from 'react';
 import { ConfigurationManagerProject, ConfigurationManagerRequest, ConfigurationManagerState } from '../../types/configurationManager';
 import { Select } from '../shared/Select';
+import { t } from '../shared/i18n';
 
 type Mapping = ConfigurationManagerState['mappings'][string];
 
@@ -25,7 +26,7 @@ export const ProjectGrid: React.FC<Props> = ({ state, post }) => {
     return (
         <table className="grid">
             <thead>
-                <tr><th>Project</th><th>Configuration</th><th>Platform</th><th>Build</th></tr>
+                <tr><th>{t('Project')}</th><th>{t('Configuration')}</th><th>{t('Platform')}</th><th>{t('Build')}</th></tr>
             </thead>
             <tbody>
                 {state.projects.map(project => {
@@ -33,13 +34,13 @@ export const ProjectGrid: React.FC<Props> = ({ state, post }) => {
                     return (
                         <tr key={project.path}>
                             <td title={project.path}>{project.name}</td>
-                            <td><Select aria-label={`${project.name} configuration`} value={mapping.configuration}
+                            <td><Select aria-label={t('{0} configuration', project.name)} value={mapping.configuration}
                                 options={optionsFor(project.configurations, mapping.configuration)}
                                 onChange={configuration => change(project, { ...mapping, configuration })} /></td>
-                            <td><Select aria-label={`${project.name} platform`} value={mapping.platform}
+                            <td><Select aria-label={t('{0} platform', project.name)} value={mapping.platform}
                                 options={optionsFor(project.platforms, mapping.platform)}
                                 onChange={platform => change(project, { ...mapping, platform })} /></td>
-                            <td><input type="checkbox" aria-label={`${project.name} build`} checked={mapping.build}
+                            <td><input type="checkbox" aria-label={t('{0} build', project.name)} checked={mapping.build}
                                 onChange={e => change(project, { ...mapping, build: e.target.checked })} /></td>
                         </tr>
                     );

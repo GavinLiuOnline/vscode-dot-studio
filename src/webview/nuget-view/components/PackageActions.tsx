@@ -2,6 +2,7 @@ import React from 'react';
 import { LocalNuGetPackage } from '../shared';
 import { Button, Dropdown } from 'vscrui';
 import { logger } from '../../shared/logger';
+import { t } from '../../shared/i18n';
 
 const log = logger('PackageActions');
 
@@ -33,7 +34,7 @@ export const PackageActions: React.FC<PackageActionsProps> = ({
     onInstallUpdate,
     onUninstall,
     getVersionOptions,
-    installButtonText = "Install",
+    installButtonText = t('Install'),
     totalProjects = 1,
     canUninstall = true,
     onSetForProjectOnly
@@ -61,7 +62,7 @@ export const PackageActions: React.FC<PackageActionsProps> = ({
                     whiteSpace: 'nowrap',
                     flex: 1,
                 }}>
-                    Version:
+                    {t('Version:')}
                 </div>
                 <Dropdown
                     value={selectedVersion || selectedPackage.currentVersion}
@@ -87,7 +88,7 @@ export const PackageActions: React.FC<PackageActionsProps> = ({
                         }
                     }}
                 >
-                    {loading ? 'Installing...' : installButtonText}
+                    {loading ? t('Installing...') : installButtonText}
                 </Button>
             </div>
 
@@ -108,7 +109,7 @@ export const PackageActions: React.FC<PackageActionsProps> = ({
                         }
                     }}
                 >
-                    {selectedProjects.size > 1 ? 'Set for Selected Projects Only' : 'Set for This Project Only'}
+                    {selectedProjects.size > 1 ? t('Set for Selected Projects Only') : t('Set for This Project Only')}
                 </Button>
             </div>}
 
@@ -123,7 +124,7 @@ export const PackageActions: React.FC<PackageActionsProps> = ({
                     fontSize: '14px',
                     flex: 1,
                 }}>
-                    {totalProjects > 1 ? 'Remove package from selected projects:' : ''}
+                    {totalProjects > 1 ? t('Remove package from selected projects:') : ''}
                 </div>
                 <Button
                     style={{ width: '120px', justifyContent: 'center' }}
@@ -140,7 +141,7 @@ export const PackageActions: React.FC<PackageActionsProps> = ({
                         }
                     }}
                 >
-                    {loading ? 'Uninstalling...' : 'Uninstall'}
+                    {loading ? t('Uninstalling...') : t('Uninstall')}
                 </Button>
             </div>}
         </div>

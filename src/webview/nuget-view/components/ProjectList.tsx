@@ -5,6 +5,7 @@ import { Checkbox } from "vscrui";
 import { logger } from "../../shared/logger";
 import { advisoryKey, PackageAdvisories, ProjectInfo as BackendProjectInfo } from "../../../services/nuget/types";
 import { versionLabel } from "../versionLabels";
+import { t } from '../../shared/i18n';
 
 const log = logger('ProjectList');
 
@@ -58,7 +59,7 @@ export default function ProjectList({
         const vulnerabilities = advisories?.[advisoryKey(selectedPackage.id, version)]?.vulnerabilities;
         return vulnerabilities?.length
             ? <span key={version} style={{ color: 'var(--vscode-errorForeground)', fontWeight: 600 }}
-                title={`Known vulnerabilities: ${[...new Set(vulnerabilities.map(v => v.severity))].join(', ')}`} aria-label={`${text}, vulnerable`}>{text}</span>
+                title={t('Known vulnerabilities: {0}', [...new Set(vulnerabilities.map(v => v.severity))].join(', '))} aria-label={`${text}, ${t('vulnerable')}`}>{text}</span>
             : <span key={version}>{text}</span>;
     };
 
@@ -159,8 +160,8 @@ export default function ProjectList({
                                     }
                                     const transitive = transitiveVersionsOf(project);
                                     return transitive
-                                        ? <>{transitive.map((version, index) => <span key={version}>{index > 0 ? ', ' : ''}{versionText(version, version)}</span>)} (transitive)</>
-                                        : 'Not installed';
+                                        ? <>{transitive.map((version, index) => <span key={version}>{index > 0 ? ', ' : ''}{versionText(version, version)}</span>)} {t('(transitive)')}</>
+                                        : t('Not installed');
                                 })()}
                             </div>
                         </div>
@@ -181,8 +182,8 @@ function DependencyPaths({ project, anchor, paths }: { project: string; anchor: 
             background: 'var(--vscode-editorHoverWidget-background)', color: 'var(--vscode-editorHoverWidget-foreground)',
             border: '1px solid var(--vscode-editorHoverWidget-border)', boxShadow: '0 2px 8px var(--vscode-widget-shadow)', fontSize: '12px'
         }}>
-            {!paths && 'Loading...'}
-            {paths && paths.length === 0 && 'Not found in the last restore.'}
+            {!paths && t('Loading...')}
+            {paths && paths.length === 0 && t('Not found in the last restore.')}
             {paths?.map((path, index) => (
                 <div key={index} style={{ marginBottom: index < paths.length - 1 ? '6px' : 0 }}>
                     <div style={{ opacity: 0.7 }}>{path.framework}</div>

@@ -9,6 +9,7 @@ import { renameFileAndType } from '../../code/typeRename';
 import { itemNameProblem } from '../../project/itemNames';
 import { DebugConfigService } from '../../debug/debugConfigService';
 import { dependentRenames } from '../../templates/dependentRenames';
+import { t } from '../../../core/i18n';
 
 const log = logger('renameActions');
 
@@ -51,7 +52,7 @@ export async function handleRename(nodeId: NodeId, newName: string, itemType?: s
         if (nodeId.type === 'file' || nodeId.type === 'folder' || nodeId.type === 'project' || nodeId.type === 'solutionItem') {
             const problem = itemNameProblem(newName);
             if (problem) {
-                vscode.window.showErrorMessage(`Cannot rename to "${newName}": ${problem}`);
+                vscode.window.showErrorMessage(t('Cannot rename to "{0}": {1}', newName, problem));
                 return;
             }
         }
@@ -75,7 +76,7 @@ export async function handleRename(nodeId: NodeId, newName: string, itemType?: s
 
             if (!oldPath) {
                 log.error('Cannot extract file path from nodeId:', nodeId);
-                vscode.window.showErrorMessage('Error: Cannot determine file path for rename');
+                vscode.window.showErrorMessage(t('Error: Cannot determine file path for rename'));
                 return;
             }
 
@@ -107,7 +108,7 @@ export async function handleRename(nodeId: NodeId, newName: string, itemType?: s
         }
     } catch (error) {
         log.error('Error renaming item:', error);
-        vscode.window.showErrorMessage(`Error renaming: ${error}`);
+        vscode.window.showErrorMessage(t('Error renaming: {0}', error));
     }
 }
 
@@ -117,11 +118,11 @@ export async function handleRename(nodeId: NodeId, newName: string, itemType?: s
 export async function renameSolutionItem(folderGuid: string, oldPath: string, newName: string): Promise<void> {
     const solution = SolutionService.getActiveSolution();
     if (!solution) {
-        vscode.window.showErrorMessage('No active solution found');
+        vscode.window.showErrorMessage(t('No active solution found'));
         return;
     }
     if (!newName.trim() || /[\\/]/.test(newName)) {
-        vscode.window.showErrorMessage(`Invalid file name '${newName}'`);
+        vscode.window.showErrorMessage(t('Invalid file name \'{0}\'', newName));
         return;
     }
 

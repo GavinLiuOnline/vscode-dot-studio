@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { execFile } from 'child_process';
+import { t } from '../../core/i18n';
 import { promisify } from 'util';
 import { ProjectFileEditor } from '../../parsers/projectFileEditor';
 import { pathKey } from './items/projectItems';
@@ -34,10 +35,10 @@ export function projectReferencesOf(projectPath: string): string[] {
 export function referenceRefusal(project: string, reference: string, referencesOf: (projectPath: string) => readonly string[] = projectReferencesOf): string | undefined {
     const name = (file: string) => path.basename(file, path.extname(file));
     if (key(project) === key(reference)) {
-        return `${name(project)} cannot reference itself.`;
+        return t('{0} cannot reference itself.', name(project));
     }
     if (referencesOf(project).some(existing => key(existing) === key(reference))) {
-        return `${name(project)} already references ${name(reference)}.`;
+        return t('{0} already references {1}.', name(project), name(reference));
     }
     const seen = new Set<string>();
     const pending = [reference];
@@ -49,7 +50,7 @@ export function referenceRefusal(project: string, reference: string, referencesO
         seen.add(key(current));
         for (const next of referencesOf(current)) {
             if (key(next) === key(project)) {
-                return `A reference from ${name(project)} to ${name(reference)} would cause a circular dependency.`;
+                return t('A reference from {0} to {1} would cause a circular dependency.', name(project), name(reference));
             }
             pending.push(next);
         }

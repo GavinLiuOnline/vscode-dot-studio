@@ -15,6 +15,7 @@ import type { NuGetViewData } from '../../types/commands/ui';
 import { ProjectItemsService } from '../../services/project/items/projectItemsService';
 
 import { ensureActiveSolution, handleSources, handleSearchPackages, getNuGetData, handleGetConsolidatePackages, handleInstallPackage, handleUninstallPackage, handleBulkUpdatePackages, handleBulkConsolidatePackages, getPackageIcon, getPackageReadme, NuGetHost } from './nuget/nugetMessageHandlers';
+import { t } from '../../core/i18n';
 
 const log = logger('NuGetCustomEditorProvider');
 
@@ -323,7 +324,7 @@ export class NuGetCustomEditorProvider implements vscode.CustomTextEditorProvide
             await vscode.commands.executeCommand('vscode.openWith', uri, NuGetCustomEditorProvider.viewType);
 
         } catch (error) {
-            vscode.window.showErrorMessage(`Error opening NuGet Package Manager: ${error}`);
+            vscode.window.showErrorMessage(t('Error opening NuGet Package Manager: {0}', error));
         }
     }
 
@@ -345,7 +346,7 @@ export class NuGetCustomEditorProvider implements vscode.CustomTextEditorProvide
             await vscode.commands.executeCommand('vscode.openWith', uri, NuGetCustomEditorProvider.viewType);
 
         } catch (error) {
-            vscode.window.showErrorMessage(`Error opening NuGet Package Manager for Solution: ${error}`);
+            vscode.window.showErrorMessage(t('Error opening NuGet Package Manager for Solution: {0}', error));
         }
     }
 

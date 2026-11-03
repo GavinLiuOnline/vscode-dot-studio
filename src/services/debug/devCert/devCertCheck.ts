@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { execFile } from 'child_process';
 import { logger } from '../../../core/logger';
 import { DevCertStatus, parseDevCertStatus, shouldCheck } from './devCertStatus';
+import { t } from '../../../core/i18n';
 
 const log = logger('DevCert');
 
@@ -107,9 +108,9 @@ export async function trustDevCertificate(): Promise<void> {
         return;
     }
     if (status.state === 'trusted') {
-        vscode.window.showInformationMessage('The HTTPS development certificate is trusted.');
+        vscode.window.showInformationMessage(t('The HTTPS development certificate is trusted.'));
     } else if (status.state === 'partial') {
-        vscode.window.showInformationMessage(`The HTTPS development certificate is trusted by some stores only (partial).${linuxNote()}`);
+        vscode.window.showInformationMessage(t('The HTTPS development certificate is trusted by some stores only (partial).{0}', linuxNote()));
     } else {
         runTrust();
     }

@@ -1,4 +1,5 @@
 import { advisoryKey, PackageAdvisories, PackageAdvisory } from '../../services/nuget/types';
+import { t } from '../shared/i18n';
 
 const SEVERITIES = ['Critical', 'High', 'Moderate', 'Low'] as const;
 
@@ -23,14 +24,20 @@ export function advisoryBadges(advisory: PackageAdvisory | undefined): AdvisoryB
     const severity = worstSeverity(advisory);
     if (advisory?.vulnerabilities?.length && severity) {
         const count = advisory.vulnerabilities.length;
-        badges.push({ kind: 'vulnerable', text: `vulnerable: ${severity.toLowerCase()}`, title: `${count} known ${count === 1 ? 'vulnerability' : 'vulnerabilities'} in this version` });
+        badges.push({
+            kind: 'vulnerable',
+            text: t('vulnerable: {0}', severity.toLowerCase()),
+            title: count === 1
+                ? t('{0} known vulnerability in this version', count)
+                : t('{0} known vulnerabilities in this version', count),
+        });
     }
     if (advisory?.deprecation) {
         const alternative = advisory.deprecation.alternative;
         badges.push({
             kind: 'deprecated',
-            text: 'deprecated',
-            title: `Deprecated (${advisory.deprecation.reasons.join(', ')})${alternative ? `; use ${alternative.id} instead` : ''}`,
+            text: t('deprecated'),
+            title: t('Deprecated ({0})', advisory.deprecation.reasons.join(', ')) + (alternative ? t('; use {0} instead', alternative.id) : ''),
         });
     }
     return badges;

@@ -5,6 +5,7 @@ import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { logger } from '../../core/logger';
 import { Settings } from '../shared/settings';
+import { t } from '../../core/i18n';
 
 const execFileAsync = promisify(execFile);
 const log = logger('SlnxMigration');
@@ -58,7 +59,7 @@ export async function offerSlnxMigration(solutionPath: string, deps: Partial<Sln
     const notNow = 'Not Now';
     const never = "Don't Ask Again";
     const choice = await vscode.window.showInformationMessage(
-        `${name} uses the old solution format. Convert it to .slnx, the format of Visual Studio 2022 17.13 and later and the .NET 10 SDK?`,
+        t('{0} uses the old solution format. Convert it to .slnx, the format of Visual Studio 2022 17.13 and later and the .NET 10 SDK?', name),
         convert, notNow, never);
     if (choice === never) {
         await SlnxMigration.decline(solutionPath);
@@ -72,15 +73,15 @@ export async function offerSlnxMigration(solutionPath: string, deps: Partial<Sln
     } catch (error) {
         log.error(`Converting ${solutionPath} failed:`, error);
         const reason = error instanceof Error ? error.message : String(error);
-        vscode.window.showErrorMessage(`Converting ${name} failed (dotnet sln migrate needs the .NET SDK 9.0.200 or later): ${reason}`);
+        vscode.window.showErrorMessage(t('Converting {0} failed (dotnet sln migrate needs the .NET SDK 9.0.200 or later): {1}', name, reason));
         return;
     }
 
     const remove = `Delete ${name}`;
     const keep = 'Keep Both';
     const answer = await vscode.window.showWarningMessage(
-        `Created ${path.basename(slnxPath)}. Delete ${name}? Teammates on older Visual Studio versions (before 2022 17.13) still need it; ` +
-        'with both files you are asked which solution to open each time.',
+        t('Created {0}. Delete {1}? Teammates on older Visual Studio versions (before 2022 17.13) still need it; with both files you are asked which solution to open each time.',
+            path.basename(slnxPath), name),
         { modal: true }, remove, keep);
     if (answer === remove) {
         await fs.promises.rm(solutionPath, { force: true });

@@ -4,6 +4,7 @@ import { logger } from '../../../core/logger';
 import { SolutionService } from '../solutionService';
 import { NodeId } from '../nodeIdService';
 import { deleteProjectPlan } from '../../project/deleteProject';
+import { t } from '../../../core/i18n';
 
 const log = logger('solutionFileActions');
 
@@ -12,20 +13,20 @@ export async function handleRemoveSolutionItem(nodeId: NodeId): Promise<void> {
         const itemPath = nodeId.path;
         if (!itemPath) {
             log.error('Cannot extract path from nodeId:', nodeId);
-            vscode.window.showErrorMessage('Error: Cannot determine path to remove solution item');
+            vscode.window.showErrorMessage(t('Error: Cannot determine path to remove solution item'));
             return;
         }
 
         const solution = SolutionService.getActiveSolution();
         if (!solution) {
-            vscode.window.showErrorMessage('No active solution found');
+            vscode.window.showErrorMessage(t('No active solution found'));
             return;
         }
 
         const itemName = path.basename(itemPath);
 
         const answer = await vscode.window.showWarningMessage(
-            `Are you sure you want to remove solution item '${itemName}' from the solution?\n\nNote: The file will not be deleted from disk.`,
+            t('Are you sure you want to remove solution item \'{0}\' from the solution?\n\nNote: The file will not be deleted from disk.', itemName),
             { modal: true },
             'Remove'
         );
@@ -36,7 +37,7 @@ export async function handleRemoveSolutionItem(nodeId: NodeId): Promise<void> {
         }
     } catch (error) {
         log.error('Error removing solution item:', error);
-        vscode.window.showErrorMessage(`Error removing solution item: ${error}`);
+        vscode.window.showErrorMessage(t('Error removing solution item: {0}', error));
     }
 }
 
@@ -54,7 +55,7 @@ export async function handleAddExistingProject(nodeId: NodeId): Promise<void> {
     try {
         const solution = SolutionService.getActiveSolution();
         if (!solution) {
-            vscode.window.showErrorMessage('No active solution found');
+            vscode.window.showErrorMessage(t('No active solution found'));
             return;
         }
 
@@ -74,7 +75,7 @@ export async function handleAddExistingProject(nodeId: NodeId): Promise<void> {
         }
     } catch (error) {
         log.error('Error adding existing project:', error);
-        vscode.window.showErrorMessage(`Error adding existing project: ${error}`);
+        vscode.window.showErrorMessage(t('Error adding existing project: {0}', error));
     }
 }
 
@@ -82,13 +83,13 @@ export async function handleAddSolutionFolder(nodeId: NodeId): Promise<void> {
     try {
         const solution = SolutionService.getActiveSolution();
         if (!solution) {
-            vscode.window.showErrorMessage('No active solution found');
+            vscode.window.showErrorMessage(t('No active solution found'));
             return;
         }
 
         const folderName = await vscode.window.showInputBox({
-            prompt: 'Enter solution folder name',
-            placeHolder: 'Solution folder name'
+            prompt: t('Enter solution folder name'),
+            placeHolder: t('Solution folder name')
         });
 
         if (folderName) {
@@ -97,7 +98,7 @@ export async function handleAddSolutionFolder(nodeId: NodeId): Promise<void> {
         }
     } catch (error) {
         log.error('Error adding solution folder:', error);
-        vscode.window.showErrorMessage(`Error adding solution folder: ${error}`);
+        vscode.window.showErrorMessage(t('Error adding solution folder: {0}', error));
     }
 }
 
@@ -106,13 +107,13 @@ export async function handleRemoveSolutionFolder(nodeId: NodeId): Promise<void> 
         const folderPath = nodeId.path;
         if (!folderPath || nodeId.type !== 'solutionFolder') {
             log.error('Cannot extract solution folder path from nodeId:', nodeId);
-            vscode.window.showErrorMessage('Error: Cannot determine solution folder path for removal');
+            vscode.window.showErrorMessage(t('Error: Cannot determine solution folder path for removal'));
             return;
         }
 
         const solution = SolutionService.getActiveSolution();
         if (!solution) {
-            vscode.window.showErrorMessage('No active solution found');
+            vscode.window.showErrorMessage(t('No active solution found'));
             return;
         }
 
@@ -120,7 +121,7 @@ export async function handleRemoveSolutionFolder(nodeId: NodeId): Promise<void> 
         log.info(`Removing solution folder: name="${folderName}", guid="${nodeId.guid}"`);
 
         const answer = await vscode.window.showWarningMessage(
-            `Are you sure you want to remove solution folder '${folderName}'?`,
+            t('Are you sure you want to remove solution folder \'{0}\'?', folderName),
             { modal: true },
             'Remove'
         );
@@ -131,7 +132,7 @@ export async function handleRemoveSolutionFolder(nodeId: NodeId): Promise<void> 
         }
     } catch (error) {
         log.error('Error removing solution folder:', error);
-        vscode.window.showErrorMessage(`Error removing solution folder: ${error}`);
+        vscode.window.showErrorMessage(t('Error removing solution folder: {0}', error));
     }
 }
 
@@ -145,7 +146,7 @@ export async function handleAddSolutionItem(nodeId: NodeId): Promise<void> {
 
         const solution = SolutionService.getActiveSolution();
         if (!solution) {
-            vscode.window.showErrorMessage('No active solution found');
+            vscode.window.showErrorMessage(t('No active solution found'));
             return;
         }
 
@@ -190,7 +191,7 @@ export async function handleAddSolutionItem(nodeId: NodeId): Promise<void> {
         }
     } catch (error) {
         log.error('Error adding solution item:', error);
-        vscode.window.showErrorMessage(`Error adding solution item: ${error}`);
+        vscode.window.showErrorMessage(t('Error adding solution item: {0}', error));
     }
 }
 
@@ -199,19 +200,19 @@ export async function handleRemoveProject(nodeId: NodeId): Promise<void> {
         const projectPath = nodeId.path;
         if (!projectPath) {
             log.error('Cannot extract project path from nodeId:', nodeId);
-            vscode.window.showErrorMessage('Error: Cannot determine project path');
+            vscode.window.showErrorMessage(t('Error: Cannot determine project path'));
             return;
         }
 
         const solution = SolutionService.getActiveSolution();
         if (!solution) {
-            vscode.window.showErrorMessage('No active solution found');
+            vscode.window.showErrorMessage(t('No active solution found'));
             return;
         }
 
         const projectName = path.basename(projectPath, path.extname(projectPath));
         const answer = await vscode.window.showWarningMessage(
-            `Are you sure you want to remove project '${projectName}' from the solution?`,
+            t('Are you sure you want to remove project \'{0}\' from the solution?', projectName),
             { modal: true },
             'Remove'
         );
@@ -222,7 +223,7 @@ export async function handleRemoveProject(nodeId: NodeId): Promise<void> {
         }
     } catch (error) {
         log.error('Error removing project:', error);
-        vscode.window.showErrorMessage(`Error removing project: ${error}`);
+        vscode.window.showErrorMessage(t('Error removing project: {0}', error));
     }
 }
 
@@ -231,12 +232,12 @@ export async function handleDeleteProject(nodeId: NodeId): Promise<void> {
         const projectPath = nodeId.path;
         if (!projectPath) {
             log.error('Cannot extract project path from nodeId:', nodeId);
-            vscode.window.showErrorMessage('Error: Cannot determine project path for deletion');
+            vscode.window.showErrorMessage(t('Error: Cannot determine project path for deletion'));
             return;
         }
         const solution = SolutionService.getActiveSolution();
         if (!solution) {
-            vscode.window.showErrorMessage('No active solution found');
+            vscode.window.showErrorMessage(t('No active solution found'));
             return;
         }
 
@@ -246,7 +247,7 @@ export async function handleDeleteProject(nodeId: NodeId): Promise<void> {
             ? 'its folder is moved to the trash'
             : `only the project file is moved to the trash, because ${plan.reason}`;
         const answer = await vscode.window.showWarningMessage(
-            `Delete project '${projectName}'? It is removed from the solution and ${what}.`,
+            t('Delete project \'{0}\'? It is removed from the solution and {1}.', projectName, what),
             { modal: true },
             'Delete'
         );
@@ -261,7 +262,7 @@ export async function handleDeleteProject(nodeId: NodeId): Promise<void> {
         }
     } catch (error) {
         log.error('Error deleting project:', error);
-        vscode.window.showErrorMessage(`Error deleting project: ${error}`);
+        vscode.window.showErrorMessage(t('Error deleting project: {0}', error));
     }
 }
 
@@ -273,7 +274,7 @@ export async function handleSetStartupProject(nodeId: NodeId): Promise<void> {
         const projectPath = nodeId.path;
         if (!projectPath) {
             log.error('Cannot extract project path from nodeId:', nodeId);
-            vscode.window.showErrorMessage('Error: Cannot determine project path');
+            vscode.window.showErrorMessage(t('Error: Cannot determine project path'));
             return;
         }
 
@@ -281,7 +282,7 @@ export async function handleSetStartupProject(nodeId: NodeId): Promise<void> {
 
         const solution = SolutionService.getActiveSolution();
         if (!solution) {
-            vscode.window.showErrorMessage('No solution is currently open');
+            vscode.window.showErrorMessage(t('No solution is currently open'));
             return;
         }
 
@@ -293,6 +294,6 @@ export async function handleSetStartupProject(nodeId: NodeId): Promise<void> {
         log.info(`Successfully set startup project: ${projectPath}`);
     } catch (error) {
         log.error('Error setting startup project:', error);
-        vscode.window.showErrorMessage(`Error setting startup project: ${error}`);
+        vscode.window.showErrorMessage(t('Error setting startup project: {0}', error));
     }
 }

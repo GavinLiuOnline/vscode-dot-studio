@@ -113,8 +113,8 @@ describe('contextMenus', () => {
         expect(debugMenu).toHaveLength(1);
         expect(debugMenu[0].when).toContain("nodeType == 'project' && contextValue =~ /^(executable|startup|startupWithProfiles)$/");
         expect(generated).toEqual([
-            { id: 'shinobi.solutionExplorer.debug', label: 'Debug' },
-            { id: 'shinobi.solutionExplorer.entityFramework', label: 'Entity Framework' },
+            { id: 'shinobi.solutionExplorer.debug', label: '%submenu.shinobi.solutionExplorer.debug.label%' },
+            { id: 'shinobi.solutionExplorer.entityFramework', label: '%submenu.shinobi.solutionExplorer.entityFramework.label%' },
         ]);
         expect(submenuItems['shinobi.solutionExplorer.debug'].map(item => item.command)).toEqual([
             'shinobi.solutionExplorer.startNewInstance',
