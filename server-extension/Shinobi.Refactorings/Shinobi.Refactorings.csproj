@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Refactorings for the C# extension's Roslyn language server: the C# extension passes the assembly to the server (its extension option),
+    named in the "csharpExtensionLoadPaths" of this extension's package.json. It runs in the server's process, against the Roslyn
+    assemblies the server has loaded, so none of them is copied here (ExcludeAssets runtime): the package is only what we compile
+    against. Compile against an old version: a newer assembly in the server satisfies the reference, an older one does not.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>Shinobi.Refactorings</AssemblyName>
+    <RoslynVersion Condition="'$(RoslynVersion)' == ''">5.0.0</RoslynVersion>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <DebugType>none</DebugType>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="$(RoslynVersion)" ExcludeAssets="runtime" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

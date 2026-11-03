@@ -74,14 +74,15 @@ const probes = [
   ['namespace', /^namespace /, 'Shop'],
   ['local variable', /int unused/, 'unused'],
 ];
+const actions = [];
 for (const [label, re, token] of probes) {
   const line = lines.findIndex(l => re.test(l));
   if (line < 0) { console.log(label, ': line not found'); continue; }
   const character = lines[line].indexOf(token) + 1;
   const result = await request('textDocument/codeAction', { textDocument: { uri }, range: { start: { line, character }, end: { line, character } }, context: { diagnostics: [] } });
+  actions.push(...(result.result ?? []));
   console.log(`== ${label} (${line + 1}:${character + 1}):`, (result.result ?? []).map(a => a.title).join(' || '));
 }
-const actions = [];
 console.log('Shinobi action present:', actions.some(a => /Shinobi/.test(a.title)));
 console.log('server stderr tail:', serverLog.join('').split('\n').slice(-6).join('\n').slice(0, 600));
 child.kill();
