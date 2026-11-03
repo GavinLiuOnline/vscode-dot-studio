@@ -69,6 +69,9 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "csharpExtensionLoadPaths": [
+      "out/server-extension/Shinobi.Refactorings.dll"
+    ],
     "configuration": [
       {
         "title": "Solution Explorer",
@@ -1753,7 +1756,8 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run build",
-    "build": "webpack --mode production",
+    "build": "npm run build:server-extension && webpack --mode production",
+    "build:server-extension": "dotnet build server-extension/Shinobi.Refactorings -c Release -o out/server-extension --nologo -v q",
     "build:dev": "webpack --mode development",
     "watch": "webpack --mode development --watch",
     "compile": "tsc -p ./",
