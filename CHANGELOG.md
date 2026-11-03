@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.4
+
+The Solution Explorer no longer warns that its view container does not exist and falls back to the Explorer in VS Code cores without secondary-sidebar containers (Trae's, for one).
+
+- **Fixed, Solution Explorer:** the view is contributed once, to the activity bar container, and `shinobi.solutionExplorer.location`'s `secondary-sidebar` is applied at activation with `vscode.moveViews`, which moves the view to the secondary sidebar and back. A host whose core has no such container keeps the view in the side bar, without the warning the second contribution caused.
+
 ## 0.2.3
 
 Simplified Chinese: the extension speaks the language VS Code does — commands, menus, settings, notifications, input and QuickPick prompts, and every webview — with English as the fallback.

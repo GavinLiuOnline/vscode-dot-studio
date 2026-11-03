@@ -128,7 +128,6 @@
   "command.shinobi.errorList.show.title": "Show Error List",
   "command.shinobi.showLog.title": "Show Log",
   "view.shinobi-solution-webview.name": "Solution Explorer",
-  "view.shinobi-solution-webview-secondary-sidebar.name": "Solution Explorer",
   "view.shinobi.errorList.name": "Error List",
   "viewContainer.shinobi-solution-explorer.title": "Solution Explorer",
   "viewContainer.shinobi-solution-explorer-secondary-sidebar.title": "Solution Explorer",

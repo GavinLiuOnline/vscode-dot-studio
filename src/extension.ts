@@ -185,17 +185,31 @@ export function activate(context: vscode.ExtensionContext) {
     );
     context.subscriptions.push(nugetCustomEditorProvider);
 
-    // Register webview providers for both sidebar and secondary-sidebar locations
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
             SolutionWebviewProvider.viewType,
             solutionWebviewProvider
-        ),
-        vscode.window.registerWebviewViewProvider(
-            'shinobi-solution-webview-secondary-sidebar',
-            solutionWebviewProvider
         )
     );
+
+    // The view is contributed once, to the activity bar container; only "vscode.moveViews" can put it in the secondary
+    // sidebar (hosts whose VS Code core has no secondary-sidebar containers, e.g. Trae, would otherwise warn about the
+    // view's container not existing and fall back to the Explorer)
+    const applySolutionExplorerLocation = () => {
+        const secondarySidebar = vscode.workspace.getConfiguration('shinobi.solutionExplorer').get<string>('location') === 'secondary-sidebar';
+        void Promise.resolve(vscode.commands.executeCommand('vscode.moveViews', {
+            viewIds: [SolutionWebviewProvider.viewType],
+            destinationId: secondarySidebar ? 'shinobi-solution-explorer-secondary-sidebar' : 'shinobi-solution-explorer'
+        })).catch(() => { /* unknown container: the view stays where it is */ });
+    };
+    if (vscode.workspace.getConfiguration('shinobi.solutionExplorer').get<string>('location') === 'secondary-sidebar') {
+        applySolutionExplorerLocation();
+    }
+    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => {
+        if (event.affectsConfiguration('shinobi.solutionExplorer.location')) {
+            applySolutionExplorerLocation();
+        }
+    }));
 
     // Register custom editor provider
     context.subscriptions.push(
@@ -321,9 +335,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('shinobi.solution.showAllFiles', () => solutionWebviewProvider.toggleShowAllFiles()),
         // Visual Studio's View > Solution Explorer (Ctrl+Alt+L) and View > Error List
         vscode.commands.registerCommand('shinobi.solution.focusSolutionExplorer', () => vscode.commands.executeCommand(
-            vscode.workspace.getConfiguration('shinobi.solutionExplorer').get('location') === 'secondary-sidebar'
-                ? 'shinobi-solution-webview-secondary-sidebar.focus'
-                : `${SolutionWebviewProvider.viewType}.focus`)),
+            `${SolutionWebviewProvider.viewType}.focus`)),
         // Visual Studio's File > Open > Solution: another solution of the workspace, or any solution file
         vscode.commands.registerCommand('shinobi.solution.open', async () => {
             const folders = vscode.workspace.workspaceFolders ?? [];

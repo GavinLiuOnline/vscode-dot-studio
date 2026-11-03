@@ -277,16 +277,7 @@
           "name": "%view.shinobi-solution-webview.name%",
           "icon": "$(folder-library)",
           "type": "webview",
-          "when": "shinobi.workspaceHasDotnetFiles && config.shinobi.solutionExplorer.location != 'secondary-sidebar'"
-        }
-      ],
-      "shinobi-solution-explorer-secondary-sidebar": [
-        {
-          "id": "shinobi-solution-webview-secondary-sidebar",
-          "name": "%view.shinobi-solution-webview-secondary-sidebar.name%",
-          "icon": "$(folder-library)",
-          "type": "webview",
-          "when": "shinobi.workspaceHasDotnetFiles && config.shinobi.solutionExplorer.location == 'secondary-sidebar'"
+          "when": "shinobi.workspaceHasDotnetFiles"
         }
       ],
       "shinobi-error-list": [
