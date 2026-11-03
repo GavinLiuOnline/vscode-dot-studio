@@ -52,4 +52,17 @@ describe('createSolutionWithProject (Visual Studio\'s "Create a new project")', 
         expect((await createSolutionWithProject(consoleTemplate, '2Bad', root, 'Other', false, {})).error).toMatch(/not a valid project name/);
         expect((await createSolutionWithProject(consoleTemplate, 'Ok', root, 'Bad/Name', false, {})).error).toMatch(/not a valid solution name/);
     });
+
+    withDotnet('makes the solution alone for the solution template ("Blank Solution")', async () => {
+        const solutionTemplate = {
+            identity: 'Microsoft.Standard.QuickStarts.Solution', name: 'Solution File', shortName: 'sln',
+            description: '', type: 'solution', tags: ['Solution'], options: [],
+        };
+        const result = await createSolutionWithProject(solutionTemplate, 'Solution1', root, 'Solution1', false, {});
+
+        expect(result.error).toBeUndefined();
+        expect(result.solutionPath).toBe(path.join(root, 'Solution1', 'Solution1.slnx'));
+        // Nothing else: the solution template has no project, which is what makes this a "Blank Solution"
+        expect(fs.readdirSync(path.join(root, 'Solution1'))).toEqual(['Solution1.slnx']);
+    }, 120000);
 });

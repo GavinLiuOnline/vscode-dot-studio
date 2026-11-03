@@ -65,7 +65,8 @@
   ],
   "activationEvents": [
     "workspaceContains:**/*.sln",
-    "workspaceContains:**/*.slnx"
+    "workspaceContains:**/*.slnx",
+    "onView:shinobi-solution-webview"
   ],
   "main": "./out/extension.js",
   "l10n": "./l10n",
@@ -276,8 +277,7 @@
           "id": "shinobi-solution-webview",
           "name": "%view.shinobi-solution-webview.name%",
           "icon": "$(folder-library)",
-          "type": "webview",
-          "when": "shinobi.workspaceHasDotnetFiles"
+          "type": "webview"
         }
       ],
       "shinobi-error-list": [

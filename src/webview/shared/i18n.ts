@@ -24,6 +24,11 @@ const zhCN: Record<string, string> = {
     'Collapse All': '全部折叠',
     'More': '更多',
     '(unloaded)': '（已卸载）',
+    'No solution in this folder': '此文件夹中没有解决方案',
+    'No solution found': '未找到解决方案',
+    'Loading the solution...': '正在加载解决方案...',
+    'Updating solution...': '正在更新解决方案...',
+    'Could not load the solution: {0}': '无法加载解决方案：{0}',
 
     // Diagnostics
     'Error': '错误',

@@ -32,6 +32,17 @@ describe('parseTemplateCache', () => {
         expect(templates.find(t => t.shortName === 'editorconfig')).toMatchObject({ type: 'item', language: undefined });
     });
 
+    it('marks the solution templates, which have no type tag, as solutions', () => {
+        // `dotnet new sln`: the cache has no type/language of it, only the Solution classification
+        const [solution] = parseTemplateCache(JSON.stringify({
+            TemplateInfo: [{
+                Identity: 'Microsoft.Standard.QuickStarts.Solution', Name: 'Solution File',
+                ShortNameList: ['sln', 'solution'], DefaultName: 'Solution1', Classifications: ['Solution'],
+            }],
+        }));
+        expect(solution).toMatchObject({ type: 'solution', shortName: 'sln', defaultName: 'Solution1', language: undefined });
+    });
+
     it('turns parameters into options with their CLI names, without hidden and built-in ones', () => {
         const options = find('webapi').options;
         expect(options.map(o => o.name)).not.toEqual(expect.arrayContaining(['name', 'language', 'type', 'use-minimal-apis']));

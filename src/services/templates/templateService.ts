@@ -58,6 +58,8 @@ export function projectForPath(fileOrFolder: string): string | undefined {
 }
 
 function wizardTemplate(template: TemplateInfo, recent = false): WizardTemplate {
+    const isSolution = template.type === 'solution';
+    // The solution templates have no project name field: the wizard's solution name is their name
     return {
         id: template.identity,
         name: template.name,
@@ -66,8 +68,8 @@ function wizardTemplate(template: TemplateInfo, recent = false): WizardTemplate 
         language: template.language,
         tags: template.tags,
         recent,
-        defaultName: template.defaultName ?? template.name.replace(/[^A-Za-z0-9]/g, ''),
-        needsName: !!template.language,
+        defaultName: template.defaultName ?? (template.name.replace(/[^A-Za-z0-9]/g, '') || (isSolution ? 'Solution1' : '')),
+        needsName: !isSolution && !!template.language,
         options: template.options,
     };
 }
@@ -116,13 +118,19 @@ export async function newProjectWizard(solutionFolderPath?: string): Promise<Wiz
 /** Data for "Create a New Project": a new solution, in the opened folder or the home folder */
 export async function newSolutionWizard(): Promise<WizardInit> {
     const recent = globalState?.get<string[]>(RECENT_PROJECT_TEMPLATES) ?? [];
-    const projectTemplates = preferLanguage((await templates()).filter(t => t.type === 'project'), 'C#')
+    const installed = await templates();
+    // The solution template ("Blank Solution") makes the solution without a project; it comes first.
+    // The solution filter template is a "Solution" too, but it needs a project to filter
+    const solutionTemplates = installed.filter(t => t.type === 'solution' && t.shortName === 'sln')
+        .map(template => wizardTemplate(template))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    const projectTemplates = preferLanguage(installed.filter(t => t.type === 'project'), 'C#')
         .map(template => wizardTemplate(template, recent.includes(template.identity)))
         .sort((a, b) => (recent.indexOf(a.id) + 1 || Infinity) - (recent.indexOf(b.id) + 1 || Infinity) || a.name.localeCompare(b.name));
     return {
         kind: 'project',
         title: 'Create a New Project',
-        templates: projectTemplates,
+        templates: [...solutionTemplates, ...projectTemplates],
         location: solutionWorkspaceFolder()?.uri.fsPath ?? os.homedir(),
         preferredValues: {},
         newSolution: true,
@@ -241,6 +249,17 @@ function removeCreated(dir: string, existedEmpty: boolean): void {
     }
 }
 
+/** `dotnet new sln`: .slnx where the SDK has it (the wizard's choice), .sln with SDKs before 9.0.200 */
+async function createSolutionFile(slnName: string, dir: string, format?: string) {
+    let created = await dotnet(['new', 'sln', '-n', slnName, '-o', dir, '--format', format || 'slnx'], dir);
+    if (created.code !== 0) {
+        created = await dotnet(['new', 'sln', '-n', slnName, '-o', dir], dir);
+    }
+    const solutionPath = [`${slnName}.slnx`, `${slnName}.sln`]
+        .map(file => path.join(dir, file)).find(file => fs.existsSync(file));
+    return { created, solutionPath };
+}
+
 /**
  * Visual Studio's "Create a new project": a new solution (.slnx; .sln with SDKs before 9.0.200) with the
  * project from the template in it. Returns the solution file, or an error message for the wizard.
@@ -254,6 +273,24 @@ export async function createSolutionWithProject(
     if (!sameDirectory && (!solutionName.trim() || /[\\/:*?"<>|]/.test(solutionName))) {
         return { error: `'${solutionName}' is not a valid solution name.` };
     }
+    // "Blank Solution": the solution template makes the solution only. As a "project" it created a second
+    // solution, findProjectFile found no project there and the undo then removed the whole folder
+    if (template.type === 'solution') {
+        const slnName = sameDirectory ? name : solutionName.trim() || name;
+        const { solutionDir } = solutionLayout(location, name, solutionName.trim() || name, sameDirectory);
+        if (fs.existsSync(solutionDir) && fs.readdirSync(solutionDir).length > 0) {
+            return { error: `${solutionDir} exists and is not empty.` };
+        }
+        const solutionDirExisted = fs.existsSync(solutionDir);
+        fs.mkdirSync(solutionDir, { recursive: true });
+        const file = await createSolutionFile(slnName, solutionDir, String(values.format ?? ''));
+        if (!file.solutionPath) {
+            removeCreated(solutionDir, solutionDirExisted);
+            return { error: failure('Creating the solution', file.created) };
+        }
+        return { solutionPath: file.solutionPath };
+    }
+
     const { solutionDir, projectDir } = solutionLayout(location, name, solutionName.trim() || name, sameDirectory);
     if (fs.existsSync(solutionDir) && fs.readdirSync(solutionDir).length > 0) {
         return { error: `${solutionDir} exists and is not empty.` };
@@ -264,15 +301,12 @@ export async function createSolutionWithProject(
     const undo = () => removeCreated(solutionDir, solutionDirExisted);
 
     const slnName = sameDirectory ? name : solutionName.trim();
-    let created = await dotnet(['new', 'sln', '-n', slnName, '-o', solutionDir, '--format', 'slnx'], solutionDir);
-    if (created.code !== 0) {
-        created = await dotnet(['new', 'sln', '-n', slnName, '-o', solutionDir], solutionDir);
-    }
-    const solutionPath = [`${slnName}.slnx`, `${slnName}.sln`].map(file => path.join(solutionDir, file)).find(file => fs.existsSync(file));
-    if (created.code !== 0 || !solutionPath) {
+    const solution = await createSolutionFile(slnName, solutionDir);
+    if (!solution.solutionPath) {
         undo();
-        return { error: failure('Creating the solution', created) };
+        return { error: failure('Creating the solution', solution.created) };
     }
+    const solutionPath = solution.solutionPath;
 
     const args = ['new', template.shortName, '-n', name, '-o', projectDir, ...optionArgs(template.options, values)];
     if (template.language) {

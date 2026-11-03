@@ -110,6 +110,39 @@ export class SolutionWebView {
                             padding-block: 6px;
                         }
     
+                        /* A folder without a solution: the buttons of an empty view instead of a blank tree */
+                        .no-solution {
+                            padding: 24px 12px;
+                            text-align: center;
+                        }
+
+                        .no-solution p {
+                            margin: 0 0 12px;
+                            opacity: 0.8;
+                        }
+
+                        .no-solution-buttons {
+                            display: flex;
+                            gap: 8px;
+                            justify-content: center;
+                            flex-wrap: wrap;
+                        }
+
+                        .no-solution-buttons .action {
+                            padding: 4px 12px;
+                            font: inherit;
+                            border: 1px solid var(--vscode-button-border, transparent);
+                            border-radius: 2px;
+                            cursor: pointer;
+                            background: var(--vscode-button-secondaryBackground);
+                            color: var(--vscode-button-secondaryForeground);
+                        }
+
+                        .no-solution-buttons .action.primary {
+                            background: var(--vscode-button-background);
+                            color: var(--vscode-button-foreground);
+                        }
+
                         .tree-node {
                             display: flex;
                             align-items: center;

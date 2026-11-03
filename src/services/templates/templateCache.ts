@@ -67,7 +67,10 @@ export function parseTemplateCache(json: string): TemplateInfo[] {
             shortName: template.ShortNameList?.[0] ?? template.Identity,
             description: template.Description ?? '',
             language: template.TagsCollection?.language || undefined,
-            type: template.TagsCollection?.type ?? 'project',
+            // The solution templates carry no type tag: without checking the classification they were projects,
+            // and creating one as a project added a second solution and then undid everything
+            type: template.TagsCollection?.type
+                ?? (template.Classifications?.includes('Solution') ? 'solution' : 'project'),
             tags: template.Classifications ?? [],
             defaultName: template.DefaultName || undefined,
             options,

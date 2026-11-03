@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.5
+
+The Solution Explorer stays in an empty folder and offers to create a solution there, and "Create a new project" with the solution template ("Blank Solution") now writes the solution file.
+
+- **Fixed, Solution Explorer:** the view no longer hides itself in a folder without `.sln`/`.slnx` files; it is activated when it opens (not only by a solution in the folder) and shows "No solution in this folder" with the **Create New Project...** and **Open Solution...** buttons where the tree would be, in English and Chinese.
+- **Fixed, Create New Project:** `dotnet new`'s solution templates carry no type tag and were taken for project templates, so the wizard created a solution, then ran `dotnet new sln` again in the project's folder, found no project file there and removed the whole folder, leaving nothing behind. The template is now recognised as a solution from its `Solution` classification and creates the `.slnx` (`.sln` with SDKs before 9.0.200, or the format picked in the wizard) without a project. The solution filter template, which also says "Solution", is not offered.
+
 ## 0.2.4
 
 The Solution Explorer no longer warns that its view container does not exist and falls back to the Explorer in VS Code cores without secondary-sidebar containers (Trae's, for one).
