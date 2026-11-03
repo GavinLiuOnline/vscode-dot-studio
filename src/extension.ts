@@ -31,6 +31,9 @@ import { openNewSolutionWizard, TemplateWizardPanel } from './webview/providers/
 import { PublishPanel } from './webview/providers/PublishPanel';
 import { ConfigurationManagerPanel } from './webview/providers/ConfigurationManagerPanel';
 import { StartupProjectsPanel } from './webview/providers/StartupProjectsPanel';
+import { RefactoringPanel } from './webview/providers/RefactoringPanel';
+import { CSharpServer, SERVER_EXTENSION_PATH } from './services/refactoring/csharpServer';
+import { ExtractInterface, EXTRACT_INTERFACE_COMMAND } from './services/refactoring/extractInterface';
 import { runCodeCleanupOnActiveFile } from './services/code/codeCleanup/activeFileCleanup';
 import { TestExplorer } from './services/testing/testExplorer';
 import { setFeedSources } from './services/nuget/feedAuth';
@@ -129,6 +132,8 @@ export function activate(context: vscode.ExtensionContext) {
     PublishPanel.state = context.workspaceState;
     ConfigurationManagerPanel.extensionUri = context.extensionUri;
     StartupProjectsPanel.extensionUri = context.extensionUri;
+    RefactoringPanel.extensionUri = context.extensionUri;
+    const extractInterface = new ExtractInterface(new CSharpServer(vscode.Uri.joinPath(context.extensionUri, SERVER_EXTENSION_PATH).fsPath));
     // The expired-token message needs the configured sources to know which feed a request went to
     setFeedSources(() => PackageBrowseService.getPackageSources());
     const testExplorer = new TestExplorer();
@@ -354,6 +359,10 @@ export function activate(context: vscode.ExtensionContext) {
         }),
         vscode.commands.registerCommand('shinobi.configurationManager.open', () => ConfigurationManagerPanel.show()),
         vscode.commands.registerCommand('shinobi.startupProjects.open', () => StartupProjectsPanel.show()),
+        vscode.languages.registerCodeActionsProvider({ language: 'csharp' }, extractInterface, ExtractInterface.metadata),
+        vscode.commands.registerCommand(EXTRACT_INTERFACE_COMMAND, (uri: vscode.Uri, position: vscode.Position) => extractInterface.run(uri, position).catch(error => {
+            void vscode.window.showErrorMessage(`Extract interface failed: ${error instanceof Error ? error.message : String(error)}`);
+        })),
         vscode.commands.registerCommand('shinobi.codeCleanup.file', () => runCodeCleanupOnActiveFile()),
         vscode.commands.registerCommand('shinobi.solution.new', () => openNewSolutionWizard()),
         vscode.commands.registerCommand('shinobi.internal.errorList.showScope', (name: string, scope: DiagnosticScope) => errorList.showScope(name, scope)),

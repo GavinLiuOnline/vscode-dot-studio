@@ -384,6 +384,11 @@
         "category": ".NET"
       },
       {
+        "command": "shinobi.refactor.extractInterface",
+        "title": "Extract Interface...",
+        "category": ".NET"
+      },
+      {
         "command": "shinobi.startupProjects.open",
         "title": "Configure Startup Projects...",
         "category": ".NET"
@@ -1383,6 +1388,10 @@
         }
       ],
       "commandPalette": [
+        {
+          "command": "shinobi.refactor.extractInterface",
+          "when": "false"
+        },
         {
           "command": "shinobi.codeCleanup.file",
           "when": "editorLangId == csharp"

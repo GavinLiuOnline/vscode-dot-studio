@@ -78,7 +78,8 @@ What this extension does compared with Visual Studio 2022, feature by feature: w
 | IntelliSense, live errors, Go to Definition, Find References, refactorings | The C# extension's Roslyn server | ➖ |
 | Code Cleanup | `dotnet format` with `.editorconfig`; no Visual Studio cleanup profiles, no sorting of usings | ≈ |
 | Sync Namespaces | Changes namespaces to match the folders and updates references | ✅ |
-| Change Signature, Move to namespace, Pull members up, Extract Interface dialog | Not offered by the Roslyn server | ❌ |
+| Extract Interface dialog (members, name, new file) | [Refactorings](refactorings.md): our own action next to the server's | ✅ |
+| Change Signature, Move to namespace, Pull members up | Not offered by the Roslyn server; planned as [refactorings](refactorings.md) | ❌ |
 | Task List (`// TODO`) | VS Code's extensions for TODO comments | ❌ |
 | `.resx` editor | Not offered | ❌ |
 | Git | VS Code's Source Control view | ➖ |
