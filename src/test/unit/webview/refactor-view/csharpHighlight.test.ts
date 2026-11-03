@@ -24,4 +24,9 @@ describe('C# highlighting of the interface preview', () => {
         const code = 'public interface IOrder\n{\n    void Add(string product);\n}';
         expect(tokenize(code).map(token => token.text).join('')).toBe(code);
     });
+
+    it('colours the name after class, struct and record as a type, partial as a keyword', () => {
+        expect(kinds('partial class Order')).toEqual(['keyword:partial', 'keyword:class', 'class:Order']);
+        expect(kinds('partial record struct Point')).toEqual(['keyword:partial', 'keyword:record', 'keyword:struct', 'class:Point']);
+    });
 });

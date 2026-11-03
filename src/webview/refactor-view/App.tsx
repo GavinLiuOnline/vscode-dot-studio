@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { RefactorForm, SyntaxPalette, RefactorMessage, RefactorRequest } from '../../types/refactoring';
+import { RefactorChoice, RefactorForm, SyntaxPalette, RefactorMessage, RefactorRequest } from '../../types/refactoring';
 import { ExtractInterfaceFormView } from './ExtractInterfaceFormView';
+import { ExtractPartialFormView } from './ExtractPartialFormView';
 
 export interface RefactorApi {
     postMessage(message: RefactorRequest): void;
@@ -35,5 +36,10 @@ export const App: React.FC<{ api: RefactorApi }> = ({ api }) => {
     if (!form) {
         return <div className="empty">Loading...</div>;
     }
-    return <ExtractInterfaceFormView form={form} palette={palette} onSubmit={choice => api.postMessage({ type: 'submit', choice })} onCancel={() => api.postMessage({ type: 'cancel' })} />;
+    const submit = (choice: RefactorChoice) => api.postMessage({ type: 'submit', choice });
+    const cancel = () => api.postMessage({ type: 'cancel' });
+    switch (form.kind) {
+        case 'extractInterface': return <ExtractInterfaceFormView form={form} palette={palette} onSubmit={submit} onCancel={cancel} />;
+        case 'extractPartial': return <ExtractPartialFormView form={form} palette={palette} onSubmit={submit} onCancel={cancel} />;
+    }
 };

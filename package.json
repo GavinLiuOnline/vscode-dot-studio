@@ -389,6 +389,11 @@
         "category": ".NET"
       },
       {
+        "command": "shinobi.refactor.extractPartial",
+        "title": "Extract Members to Partial Class...",
+        "category": ".NET"
+      },
+      {
         "command": "shinobi.startupProjects.open",
         "title": "Configure Startup Projects...",
         "category": ".NET"
@@ -1390,6 +1395,10 @@
       "commandPalette": [
         {
           "command": "shinobi.refactor.extractInterface",
+          "when": "false"
+        },
+        {
+          "command": "shinobi.refactor.extractPartial",
           "when": "false"
         },
         {

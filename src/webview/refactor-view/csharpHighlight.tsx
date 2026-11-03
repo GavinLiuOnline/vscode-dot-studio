@@ -4,7 +4,7 @@ import { SyntaxPalette, TokenKind } from '../../types/refactoring';
 export interface Token { text: string; kind: TokenKind }
 
 const KEYWORDS = new Set([
-    'public', 'interface', 'void', 'get', 'set', 'init', 'event', 'this', 'ref', 'out', 'in', 'params', 'where', 'new', 'class', 'struct',
+    'public', 'private', 'protected', 'internal', 'partial', 'record', 'readonly', 'override', 'abstract', 'sealed', 'virtual', 'const', 'interface', 'void', 'get', 'set', 'init', 'event', 'this', 'ref', 'out', 'in', 'params', 'where', 'new', 'class', 'struct',
     'string', 'int', 'long', 'short', 'byte', 'bool', 'char', 'decimal', 'double', 'float', 'object', 'uint', 'ulong', 'ushort', 'sbyte', 'dynamic', 'var',
     'null', 'true', 'false', 'async', 'static', 'default',
 ]);
@@ -18,7 +18,7 @@ export function tokenize(text: string): Token[] {
     const tokens: Token[] = [];
     const word = /[A-Za-z_][A-Za-z0-9_]*|\s+|[^\sA-Za-z_]/g;
     const pieces = text.match(word) ?? [];
-    let afterInterface = false;
+    let after: 'interface' | 'class' | undefined;
     for (let i = 0; i < pieces.length; i++) {
         const piece = pieces[i];
         if (!/^[A-Za-z_]/.test(piece)) {
@@ -30,8 +30,8 @@ export function tokenize(text: string): Token[] {
         let kind: TokenKind;
         if (KEYWORDS.has(piece)) {
             kind = 'keyword';
-        } else if (afterInterface) {
-            kind = 'interface';
+        } else if (after) {
+            kind = after;
         } else if (next === '(') {
             kind = 'method';
         } else if (next === '{' || next === ';') {
@@ -44,7 +44,7 @@ export function tokenize(text: string): Token[] {
         } else {
             kind = 'parameter';
         }
-        afterInterface = piece === 'interface';
+        after = piece === 'interface' ? 'interface' : piece === 'class' || piece === 'struct' || piece === 'record' ? 'class' : undefined;
         tokens.push({ text: piece, kind });
     }
     return tokens;

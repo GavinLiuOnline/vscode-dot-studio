@@ -59,7 +59,7 @@ notify('solution/open', { solution: pathToFileURL(path.join(root, 'Contoso.slnx'
 for (let i = 0; i < 120 && !notifications.includes('workspace/projectInitializationComplete'); i++) await sleep(1000);
 console.log('project initialization complete:', notifications.includes('workspace/projectInitializationComplete'));
 
-const file = path.join(root, 'src/Shop.Core/Orders/Order.cs');
+const file = path.join(root, process.env.FILE ?? 'src/Shop.Core/Orders/Order.cs');
 const text = fs.readFileSync(file, 'utf8');
 const uri = pathToFileURL(file).href;
 notify('textDocument/didOpen', { textDocument: { uri, languageId: 'csharp', version: 1, text } });
@@ -110,7 +110,7 @@ if (process.env.PROBE_MESSAGE) {
   const probes = [].concat(JSON.parse(process.env.PROBE_MESSAGE.replaceAll('{{uri}}', uri).replaceAll('{{dll}}', extension)));
   for (const probe of probes) {
     const reply = await request(probe.method, probe.params);
-    console.log('PROBE reply:', JSON.stringify(reply).slice(0, 1500));
+    console.log('PROBE reply:', JSON.stringify(reply).slice(0, 1500)); if (process.env.PROBE_OUT) fs.writeFileSync(process.env.PROBE_OUT, JSON.stringify(reply));
   }
 }
 console.log('server stderr tail:', serverLog.join('').split('\n').slice(-6).join('\n').slice(0, 600));
