@@ -240,7 +240,7 @@ public static class PullUpEngine
     }
 
     /// <summary>A member of the target that the pulled member would clash with: the same name and, for methods, the same parameter types.</summary>
-    private static string? FindClash(SuperclassContext context, INamedTypeSymbol target, MemberDeclarationSyntax member)
+    internal static string? FindClash(SuperclassContext context, INamedTypeSymbol target, MemberDeclarationSyntax member)
     {
         foreach (var symbol in ExtractSuperclassEngine.DeclaredSymbols(context.Model, member))
         {

@@ -15,7 +15,7 @@ Refactorings that need choices ask them in a form in the editor area, like a dia
 | Rename, Generate Constructor, Encapsulate Field, Use file-scoped namespace, Use primary constructor, Move Type to File, ... | Yes | ➖ The C# server offers them in Ctrl+. already; not repeated here |
 | Pull Members Up (pick members and the base class or interface, with a warning for members that use what stays) | Yes | ✅ [Added](#pull-members-up) |
 | Use Base Type Where Possible (a checkbox of Extract Interface and Extract Superclass, and an action on a type's name) | No (Rider) | ✅ [Added](#use-base-type-where-possible) |
-| Push Members Down (pick members and the derived types) | No (Rider) | 🔜 Planned |
+| Push Members Down (pick members and the derived types, or leave an abstract declaration) | No (Rider) | ✅ [Added](#push-members-down) |
 | Convert Abstract Class ↔ Interface | No (Rider) | 🔜 Planned |
 | Extract Class (members go to a new class the type delegates to) | No (Rider) | 🔜 Planned, last: it rewrites references |
 | Move Type to Namespace (pick the namespace) | Yes | 🔜 Planned: a small form |
@@ -99,6 +99,20 @@ What it refuses, with the reason, and never half-applies:
 **The result is compiled first**, in the projects it touches (the class's, the target's): an edit that adds compiler errors is not applied and a dialog lists the first ones. That is also how the cases the refactoring does not rewrite show up: pulling an abstract member while another class derives from the base class without implementing it lists "does not implement inherited abstract member" for each (CS0534), and making a base class abstract where it is created with `new` lists CS0144; implement the member there first, or pull it up as a normal member. The changed files are saved when they had no other unsaved changes, so a build sees them at once.
 
 Not covered yet: generating `throw new NotImplementedException()` stubs in the other derived classes, moving a member between classes in two projects when the base project does not reference what the member uses (the compile check then refuses it).
+
+## Push Members Down
+
+Rider's refactoring, the opposite of Pull Members Up. Put the cursor on a class's name or on one of its members and press Ctrl+. > **Push members down...**. It is offered for classes that have a class derived from them in this solution's source (directly derived classes only; generic classes, on either side, are not supported).
+
+The form has:
+- **Push down to:** the derived classes with their file and project, all checked. A class in another file or project is edited there.
+- **Leave an abstract declaration** (off): the class keeps an abstract declaration of each method and property and the checked derived classes get the body as an `override` (the class becomes abstract); fields and nested types always move.
+- **Members to push down:** the class's members; the one the cursor was on is checked at the start. When a member that leaves is used by one that stays (`Report()` uses `Energy`), the form warns, and **Push it down too** checks the users, also in turn; with the abstract declaration left nothing is lost and no warning shows.
+- A preview of what the derived classes get.
+
+What it does: the chosen members are copied (with their comments) to the end of each chosen derived class, the usings they need that the derived class's file lacks are added there, and the members leave the class (or become abstract declarations). A `private` member of the class that a pushed member uses stays and becomes `protected`, so the derived class can reach it. It refuses a member a chosen derived class has already (the same name and, for methods, the same parameter types).
+
+**The result is compiled first**, in every project it touches. What the refactoring does not rewrite shows up as errors and nothing is applied: code that used the member through the class (`animal.Rest()`, CS1061), a derived class that was not chosen and now misses an abstract member (CS0534), an interface the class implemented with the member (CS0535). Push down to those classes as well, or implement the member there first.
 
 ## Use Base Type Where Possible
 

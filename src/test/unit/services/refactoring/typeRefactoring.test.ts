@@ -36,6 +36,7 @@ import { EXTRACT_PARTIAL } from '../../../../services/refactoring/extractPartial
 import { EXTRACT_SUPERCLASS } from '../../../../services/refactoring/extractSuperclass';
 import { PULL_UP } from '../../../../services/refactoring/pullUp';
 import { USE_BASE_TYPE } from '../../../../services/refactoring/useBaseType';
+import { PUSH_DOWN } from '../../../../services/refactoring/pushDown';
 
 const uri = { fsPath: '/p/Order.cs', toString: () => 'file:///p/Order.cs' } as vscode.Uri;
 const position = new vscode.Position(4, 14);
@@ -184,5 +185,15 @@ describe('TypeRefactoring', () => {
         ]);
         expect(picked.mock.calls[0][1]).toMatchObject({ kind: 'useBaseType', targets: [{ count: 3, publicCount: 1 }] });
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith('Animal is used instead of Dog in 3 places.');
+    });
+
+    it('Push Members Down is offered on a member line and not where the server refuses', async () => {
+        const refactoring = setup(PUSH_DOWN as never);
+        document.mockResolvedValueOnce({ typeName: 'Animal', derived: [{ id: 'D' }], members: [], selected: [] });
+        const [action] = await refactoring.provideCodeActions(lineOf('    public void Rest() { }'), at(10, 20));
+        expect(action.title).toBe('Push members down...');
+        expect(document.mock.calls[0][1]).toBe('Shinobi.Refactorings.PushDownInfoHandler');
+        document.mockResolvedValueOnce({ typeName: 'Loner', derived: [], members: [], selected: [], refusal: 'No class derives from Loner' });
+        expect(await refactoring.provideCodeActions(lineOf('public class Loner'), at(4, 14))).toEqual([]);
     });
 });

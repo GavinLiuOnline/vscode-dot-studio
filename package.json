@@ -414,6 +414,11 @@
         "category": ".NET"
       },
       {
+        "command": "shinobi.refactor.pushDown",
+        "title": "Push Members Down...",
+        "category": ".NET"
+      },
+      {
         "command": "shinobi.refactor.extractSuperclass",
         "title": "Extract Superclass...",
         "category": ".NET"
@@ -1440,6 +1445,10 @@
         },
         {
           "command": "shinobi.refactor.useBaseType",
+          "when": "false"
+        },
+        {
+          "command": "shinobi.refactor.pushDown",
           "when": "false"
         },
         {

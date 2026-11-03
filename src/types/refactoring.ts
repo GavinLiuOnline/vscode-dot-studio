@@ -16,6 +16,8 @@ export interface MemberInfo {
     blocked?: string;
     /** Pull Members Up: the declaration an interface gets for the member; missing when an interface cannot have it */
     interfaceSignature?: string;
+    /** Push Members Down: the ids of the members of the class that use this one; when it leaves and they stay they cannot reach it */
+    usedBy?: string[];
 }
 
 /** What Extract Interface asks: the members of the type and a name for the interface */
@@ -97,6 +99,31 @@ export interface PullUpChoice {
     abstractIds: string[];
 }
 
+/** A class derived from the one members are pushed down from */
+export interface PushDownDerived {
+    id: string;
+    name: string;
+    /** "Dog.cs (Zoo)" */
+    where: string;
+}
+
+/** What Push Members Down asks: which members, and to which derived classes */
+export interface PushDownForm {
+    kind: 'pushDown';
+    typeName: string;
+    derived: PushDownDerived[];
+    members: MemberInfo[];
+    selected: string[];
+}
+
+export interface PushDownChoice {
+    kind: 'pushDown';
+    derivedIds: string[];
+    memberIds: string[];
+    /** The class keeps an abstract declaration of what can be abstract; the chosen derived classes get an override */
+    leaveAbstract: boolean;
+}
+
 /** A base class or interface a type's uses could name instead */
 export interface UseBaseTypeTarget {
     id: string;
@@ -122,8 +149,8 @@ export interface UseBaseTypeChoice {
 }
 
 /** The forms the tab can show; every refactoring that needs choices adds one */
-export type RefactorForm = ExtractInterfaceForm | ExtractPartialForm | ExtractSuperclassForm | PullUpForm | UseBaseTypeForm;
-export type RefactorChoice = ExtractInterfaceChoice | ExtractPartialChoice | ExtractSuperclassChoice | PullUpChoice | UseBaseTypeChoice;
+export type RefactorForm = ExtractInterfaceForm | ExtractPartialForm | ExtractSuperclassForm | PullUpForm | UseBaseTypeForm | PushDownForm;
+export type RefactorChoice = ExtractInterfaceChoice | ExtractPartialChoice | ExtractSuperclassChoice | PullUpChoice | UseBaseTypeChoice | PushDownChoice;
 
 /** What a token of the C# preview is; `plain` has no colour */
 export type TokenKind = 'keyword' | 'interface' | 'class' | 'method' | 'property' | 'parameter' | 'plain';

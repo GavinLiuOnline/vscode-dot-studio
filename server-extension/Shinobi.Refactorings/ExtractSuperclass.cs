@@ -360,10 +360,10 @@ public static class ExtractSuperclassEngine
         return result;
     }
 
-    private static readonly SyntaxKind[] AccessKinds = [SyntaxKind.PublicKeyword, SyntaxKind.ProtectedKeyword, SyntaxKind.InternalKeyword, SyntaxKind.PrivateKeyword];
+    internal static readonly SyntaxKind[] AccessKinds = [SyntaxKind.PublicKeyword, SyntaxKind.ProtectedKeyword, SyntaxKind.InternalKeyword, SyntaxKind.PrivateKeyword];
 
     /// <summary>Where a modifier can be added to a member that has none: in front of its type.</summary>
-    private static int ModifierAnchor(MemberDeclarationSyntax member)
+    internal static int ModifierAnchor(MemberDeclarationSyntax member)
     {
         if (member.Modifiers.Count > 0) { return member.Modifiers[0].SpanStart; }
         var first = member.AttributeLists.Count > 0 ? member.AttributeLists.Last().GetLastToken().GetNextToken() : member.GetFirstToken();

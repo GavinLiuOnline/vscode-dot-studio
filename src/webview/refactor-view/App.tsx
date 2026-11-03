@@ -5,6 +5,7 @@ import { ExtractPartialFormView } from './ExtractPartialFormView';
 import { ExtractSuperclassFormView } from './ExtractSuperclassFormView';
 import { PullUpFormView } from './PullUpFormView';
 import { UseBaseTypeFormView } from './UseBaseTypeFormView';
+import { PushDownFormView } from './PushDownFormView';
 
 export interface RefactorApi {
     postMessage(message: RefactorRequest): void;
@@ -46,6 +47,7 @@ export const App: React.FC<{ api: RefactorApi }> = ({ api }) => {
         case 'extractPartial': return <ExtractPartialFormView form={form} palette={palette} onSubmit={submit} onCancel={cancel} />;
         case 'extractSuperclass': return <ExtractSuperclassFormView form={form} palette={palette} onSubmit={submit} onCancel={cancel} />;
         case 'pullUp': return <PullUpFormView form={form} palette={palette} onSubmit={submit} onCancel={cancel} />;
+        case 'pushDown': return <PushDownFormView form={form} palette={palette} onSubmit={submit} onCancel={cancel} />;
         case 'useBaseType': return <UseBaseTypeFormView form={form} onSubmit={submit} onCancel={cancel} />;
     }
 };
