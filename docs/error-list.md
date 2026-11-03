@@ -22,7 +22,7 @@ Rest the mouse on the name of a node with a squiggle in the Solution Explorer an
 ## Where the entries come from
 
 1. **The last build.** Build, Rebuild and F5's pre-build run with VS Code's `$msCompile` problem matcher; their errors and warnings are reliable for the whole solution, as in Visual Studio after a build.
-2. **The C# language server**, live, for open files. For live errors in all files, set `"dotnet.backgroundAnalysis.compilerDiagnosticsScope": "fullSolution"` (slower on big solutions).
+2. **The C# language server**, live, for open files. For live errors in all files, set `"dotnet.backgroundAnalysis.compilerDiagnosticsScope": "fullSolution"` (heavy on big solutions: it analyzes every file of every project; on a 50-project solution leave it on `openFiles` and rely on the build).
 
 The same problem from both sources shows once.
 
