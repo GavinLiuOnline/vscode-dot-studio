@@ -103,7 +103,7 @@ What this extension does compared with Visual Studio 2022, feature by feature: w
 
 ## Planned, and what changes it
 
-- **Planned:** per-framework packages for multi-targeted projects ([the roadmap](roadmap.md#phase-35-per-framework-packages)), only if the team's real project files need it.
+- **Planned:** per-framework packages for multi-targeted projects ([the roadmap](roadmap.md#per-framework-packages-hard-and-error-prone-so-last)), only if the team's real project files need it.
 - **To be built when someone opens an issue:** Solution Explorer search, solution filters, the Configure Service Reference dialog, scaffolding, Docker profiles, Windows-encrypted NuGet credentials, refactorings the Roslyn server lacks, accessibility of the views.
 - **Not possible today:** Edit and Continue and Hot Reload with the debugger attached (netcoredbg); running Windows-only workloads (WinForms and WPF designers, IIS Web Deploy) off Windows.
 

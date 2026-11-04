@@ -73,7 +73,7 @@ There are two webpack bundles: the extension (Node) and the webviews (browser). 
 
 ## Conventions
 
-- **Like Visual Studio.** Features follow Visual Studio's behaviour, names and keys, so people coming from it feel at home. Ideas Visual Studio doesn't have go to Phase 30 of the roadmap unless they're small.
+- **Like Visual Studio.** Features follow Visual Studio's behaviour, names and keys, so people coming from it feel at home. Ideas Visual Studio doesn't have go to "On request" in the roadmap unless they're small.
 - **Documentation with the change.** A change users can notice updates its page in `docs/` in the same commit. Tests check that `docs/keyboard-shortcuts.md` lists every key binding and `docs/settings.md` every setting.
 - **Manual checks.** What unit tests can't cover goes into [docs/manual-testing.md](docs/manual-testing.md), and is ticked once someone tried it in VS Code.
 - TypeScript is strict, with `noUnusedLocals`/`noUnusedParameters`: unused variables break the build.
