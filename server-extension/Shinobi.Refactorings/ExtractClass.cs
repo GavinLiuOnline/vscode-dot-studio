@@ -187,6 +187,7 @@ public static class ExtractClassEngine
         // the new class
         var usings = PartialSupport.NeededUsings(context.Root, context.Model, moved, ct);
         var ns = declaration.Ancestors().OfType<BaseNamespaceDeclarationSyntax>().FirstOrDefault();
+        PartialSupport.RefuseExisting(document, context.Symbol, className, request.NewFile ? Path.Combine(Path.GetDirectoryName(path)!, className + ".cs") : null);
         string? newPath = null;
         string? newContent = null;
         if (request.NewFile)

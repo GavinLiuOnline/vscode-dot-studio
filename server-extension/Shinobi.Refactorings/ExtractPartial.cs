@@ -80,6 +80,7 @@ public sealed class ExtractPartialHandler : IExtensionDocumentMessageHandler<Ext
         var usings = PartialSupport.NeededUsings(root, model, moved, cancellationToken);
         var content = PartialSupport.NewFile(root, types, usings, body.ToString(), eol);
         var newPath = Path.Combine(Path.GetDirectoryName(path)!, $"{Path.GetFileNameWithoutExtension(path)}.{message.PartName}.cs");
+        PartialSupport.RefuseExisting(document, null, null, newPath);
         return await RefactoringValidator.CheckAsync(document, new ExtractInterfaceResult(edits, newPath, content), cancellationToken).ConfigureAwait(false);
     }
 }
@@ -206,6 +207,27 @@ internal static class PartialSupport
             sb.Append(line.Trim().Length == 0 ? "" : indent + line[Math.Min(common, line.Length)..]).Append(eol);
         }
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// Refuses a new type or file that exists already: the file would be written over (the user's code in it lost), and a second type
+    /// of the same name in the namespace does not compile.
+    /// </summary>
+    public static void RefuseExisting(Document document, INamedTypeSymbol? sibling, string? typeName, string? newFilePath)
+    {
+        if (sibling is not null && typeName is not null)
+        {
+            var existing = sibling.ContainingType is { } outer ? outer.GetTypeMembers(typeName) : sibling.ContainingNamespace.GetTypeMembers(typeName);
+            if (existing.Length > 0)
+            {
+                throw new InvalidOperationException($"A type called {typeName} exists already in {(sibling.ContainingType?.Name ?? (sibling.ContainingNamespace.IsGlobalNamespace ? "the global namespace" : sibling.ContainingNamespace.ToDisplayString()))}: pick another name.");
+            }
+        }
+        if (newFilePath is not null
+            && (File.Exists(newFilePath) || document.Project.Solution.Projects.SelectMany(p => p.Documents).Any(d => string.Equals(d.FilePath, newFilePath, StringComparison.OrdinalIgnoreCase))))
+        {
+            throw new InvalidOperationException($"{Path.GetFileName(newFilePath)} exists already: pick another name, or write the code into the file of the type.");
+        }
     }
 
     public static TextEdit Insert(SourceText text, int position, string newText)

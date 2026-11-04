@@ -382,4 +382,17 @@ public class ExtractSuperclassTests
         var (_, _, baseFile) = await Extracted(source, "class Foo", "Foo", ["private int Count"]);
         Assert.Contains("protected int Count { get; set; }", baseFile);
     }
+
+    [Fact]
+    public async Task Refuses_a_base_class_name_or_file_that_exists_already()
+    {
+        const string source = "namespace App { public class Item { public string Id { get; set; } public string Value { get; set; } } }";
+        var withType = new Harness(("A.cs", source), ("ItemBase.cs", "namespace App { public class ItemBase { public string Id { get; set; } } }"));
+        var type = await Assert.ThrowsAsync<InvalidOperationException>(() => Run(withType, "A.cs", "class Item", "Item", "ItemBase", ["Id"], null, true));
+        Assert.Contains("A type called ItemBase exists already", type.Message);
+
+        var withFile = new Harness(("A.cs", source), ("ItemBase.cs", "// notes"));
+        var file = await Assert.ThrowsAsync<InvalidOperationException>(() => Run(withFile, "A.cs", "class Item", "Item", "ItemBase", ["Id"], null, true));
+        Assert.Contains("ItemBase.cs exists already", file.Message);
+    }
 }

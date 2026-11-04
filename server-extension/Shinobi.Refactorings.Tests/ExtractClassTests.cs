@@ -257,4 +257,17 @@ public class ExtractClassTests
         Assert.Contains("public int Size { get => _helper.Size; set => _helper.Size = value; }", original);
         Assert.Contains("public int Size;", helper);
     }
+
+    [Fact]
+    public async Task Refuses_a_class_name_or_file_that_exists_already()
+    {
+        const string source = "namespace App { public class Item { public string Id { get; set; } public string Value { get; set; } } }";
+        var withType = new Harness(("A.cs", source), ("ItemHelper.cs", "namespace App { public class ItemHelper { } }"));
+        var type = await Assert.ThrowsAsync<InvalidOperationException>(() => Run(withType, source, "Item", "ItemHelper", ["Value"]));
+        Assert.Contains("A type called ItemHelper exists already", type.Message);
+
+        var withFile = new Harness(("A.cs", source), ("ItemHelper.cs", "// notes"));
+        var file = await Assert.ThrowsAsync<InvalidOperationException>(() => Run(withFile, source, "Item", "ItemHelper", ["Value"]));
+        Assert.Contains("ItemHelper.cs exists already", file.Message);
+    }
 }

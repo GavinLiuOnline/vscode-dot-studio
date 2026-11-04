@@ -109,6 +109,7 @@ public sealed class ExtractInterfaceHandler : IExtensionDocumentMessageHandler<E
             edits.Add(At(text, after, " : " + baseType));
         }
 
+        PartialSupport.RefuseExisting(document, symbol, interfaceName, message.NewFile && document.FilePath is { } filePath ? Path.Combine(Path.GetDirectoryName(filePath)!, interfaceName + ".cs") : null);
         string? newFilePath = null;
         string? newFileContent = null;
         if (message.NewFile && document.FilePath is { } path)

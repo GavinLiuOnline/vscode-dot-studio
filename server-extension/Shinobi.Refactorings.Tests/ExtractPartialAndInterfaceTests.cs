@@ -98,15 +98,15 @@ public class ExtractPartialAndInterfaceTests
     }
 
     [Fact]
-    public async Task Extract_partial_leaves_a_file_the_project_already_has_to_the_caller()
+    public async Task Extract_partial_refuses_a_file_the_project_already_has()
     {
-        // the file of the part exists already: the validator does not add it a second time (the extension refuses to overwrite it)
         var h = new Harness(("Order.cs", Source), ("Order.Part.cs", "namespace App; public partial class Order { public int Extra; }"));
         var document = h.Document("Order.cs");
         var position = Harness.At(Source, "class Order", "Order");
         var info = (await new ExtractPartialInfoHandler().ExecuteAsync(new TypeAt(position), null!, document, default))!;
-        var result = (await new ExtractPartialHandler().ExecuteAsync(new ExtractPartialRequest(position, "Part", [info.Members[1].Id]), null!, document, default))!;
-        Assert.Null(result.Errors);
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => new ExtractPartialHandler().ExecuteAsync(
+            new ExtractPartialRequest(position, "Part", [info.Members[1].Id]), null!, document, default));
+        Assert.Contains("Order.Part.cs exists already", error.Message);
     }
 
     [Fact]
@@ -128,21 +128,25 @@ public class ExtractPartialAndInterfaceTests
     }
 
     [Fact]
-    public async Task Extract_interface_with_an_existing_type_of_that_name_is_reported_by_the_validator()
+    public async Task Extract_interface_refuses_a_name_that_exists_already_as_a_type_or_a_file()
     {
         var h = new Harness(("Order.cs", Source), ("IOrder.cs", "namespace App; public interface IOrder { }"));
         var document = h.Document("Order.cs");
         var position = Harness.At(Source, "class Order", "Order");
         var info = (await new ExtractInterfaceInfoHandler().ExecuteAsync(new TypeAt(position), null!, document, default))!;
-        var result = (await new ExtractInterfaceHandler().ExecuteAsync(
-            new ExtractInterfaceRequest(position, "IOrder2", info.Members.Select(m => m.Id).ToList(), false), null!, document, default))!;
-        Assert.Null(result.Errors);
+        var ids = info.Members.Select(m => m.Id).ToList();
+        var ok = (await new ExtractInterfaceHandler().ExecuteAsync(new ExtractInterfaceRequest(position, "IOrder2", ids, false), null!, document, default))!;
+        Assert.Null(ok.Errors);
 
-        var clash = (await new ExtractInterfaceHandler().ExecuteAsync(
-            new ExtractInterfaceRequest(position, "IOrder", info.Members.Select(m => m.Id).ToList(), false), null!, document, default))!;
-        // IOrder exists already (another file): the same-file interface is a duplicate definition
-        Assert.NotNull(clash.Errors);
-        Assert.Contains(clash.Errors!, e => e.Contains("CS0101"));
+        var type = await Assert.ThrowsAsync<InvalidOperationException>(() => new ExtractInterfaceHandler().ExecuteAsync(
+            new ExtractInterfaceRequest(position, "IOrder", ids, false), null!, document, default));
+        Assert.Contains("A type called IOrder exists already", type.Message);
+
+        // a new file of that name: the file is the problem, even when the type is not there
+        var withFile = new Harness(("Order.cs", Source), ("IOrder2.cs", "// somebody's notes"));
+        var file = await Assert.ThrowsAsync<InvalidOperationException>(() => new ExtractInterfaceHandler().ExecuteAsync(
+            new ExtractInterfaceRequest(position, "IOrder2", ids, true), null!, withFile.Document("Order.cs"), default));
+        Assert.Contains("IOrder2.cs exists already", file.Message);
     }
 
     [Fact]

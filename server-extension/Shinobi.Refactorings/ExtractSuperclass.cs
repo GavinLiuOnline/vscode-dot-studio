@@ -173,6 +173,7 @@ public static class ExtractSuperclassEngine
         var nodes = moved.Concat(declared).Cast<SyntaxNode>().ToList();
         var usings = PartialSupport.NeededUsings(context.Root, context.Model, nodes, ct, oldBase is null ? null : [declaration.BaseList!.Types[0]]);
 
+        PartialSupport.RefuseExisting(document, context.Symbol, baseName, request.NewFile ? Path.Combine(Path.GetDirectoryName(path)!, baseName + ".cs") : null);
         string? newPath = null;
         string? newContent = null;
         if (request.NewFile)

@@ -28,7 +28,7 @@ The entries sit in the group of the Refactor menu that fits them, so `editor.act
 | Change Signature (add, remove, reorder, rename, retype parameters and update the callers) | Yes | ✅ [Added](#change-signature) |
 | Extract Interface: generic constraints of the type | Yes | ✅ Added: the interface gets the type's `where` clauses |
 
-The order is by cost, cheapest first (Phase 45 in the [roadmap](roadmap.md)). Every refactoring here follows the same pattern: the lightbulb entry opens the form, the confirm button applies, Cancel or Esc changes nothing. A refactoring the C# server gets itself later is dropped from here. Ideas go to the [roadmap](roadmap.md) (Phase 45).
+The order is by cost, cheapest first (Phase 45 in the [roadmap](roadmap.md)). A refactoring that writes a new type or file (Extract Interface, Extract Superclass, Extract Class, Extract Members to Partial Class) stops with a message when a type of that name or a file of that name exists already, instead of writing over it. Every refactoring here follows the same pattern: the lightbulb entry opens the form, the confirm button applies, Cancel or Esc changes nothing. A refactoring the C# server gets itself later is dropped from here. Ideas go to the [roadmap](roadmap.md) (Phase 45).
 
 ## Extract Interface
 
