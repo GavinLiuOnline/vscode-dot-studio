@@ -138,5 +138,13 @@
   "task.shinobi-dotnet.action.description": "要运行的 dotnet 操作",
   "task.shinobi-dotnet.target.description": "解决方案或项目文件的绝对路径",
   "task.shinobi-dotnet.configuration.description": "生成配置（Debug、Release 等）；未设置时使用活动解决方案配置",
-  "task.shinobi-dotnet.profile.description": "发布配置文件名称（Properties/PublishProfiles/<profile>.pubxml），用于发布"
+  "task.shinobi-dotnet.profile.description": "发布配置文件名称（Properties/PublishProfiles/<profile>.pubxml），用于发布",
+  "command.shinobi.refactor.extractInterface.title": "提取接口...",
+  "command.shinobi.refactor.extractPartial.title": "将成员提取到分部类...",
+  "command.shinobi.refactor.extractMethodChecked.title": "提取方法（已检查）...",
+  "command.shinobi.refactor.extractLocalFunctionChecked.title": "提取本地函数（已检查）...",
+  "command.shinobi.refactor.pullUp.title": "将成员上移...",
+  "command.shinobi.refactor.useBaseType.title": "尽可能使用基类型...",
+  "command.shinobi.refactor.pushDown.title": "将成员下移...",
+  "command.shinobi.refactor.extractSuperclass.title": "提取超类..."
 }

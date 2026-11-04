@@ -138,5 +138,13 @@
   "task.shinobi-dotnet.action.description": "The dotnet action to run",
   "task.shinobi-dotnet.target.description": "Absolute path of the solution or project file",
   "task.shinobi-dotnet.configuration.description": "Build configuration (Debug, Release, ...); the active solution configuration when not set",
-  "task.shinobi-dotnet.profile.description": "Publish profile name (Properties/PublishProfiles/<profile>.pubxml), for publish"
+  "task.shinobi-dotnet.profile.description": "Publish profile name (Properties/PublishProfiles/<profile>.pubxml), for publish",
+  "command.shinobi.refactor.extractInterface.title": "Extract Interface...",
+  "command.shinobi.refactor.extractPartial.title": "Extract Members to Partial Class...",
+  "command.shinobi.refactor.extractMethodChecked.title": "Extract Method (checked)...",
+  "command.shinobi.refactor.extractLocalFunctionChecked.title": "Extract Local Function (checked)...",
+  "command.shinobi.refactor.pullUp.title": "Pull Members Up...",
+  "command.shinobi.refactor.useBaseType.title": "Use Base Type Where Possible...",
+  "command.shinobi.refactor.pushDown.title": "Push Members Down...",
+  "command.shinobi.refactor.extractSuperclass.title": "Extract Superclass..."
 }

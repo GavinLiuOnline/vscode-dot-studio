@@ -383,42 +383,42 @@
       },
       {
         "command": "shinobi.refactor.extractInterface",
-        "title": "Extract Interface...",
+        "title": "%command.shinobi.refactor.extractInterface.title%",
         "category": ".NET"
       },
       {
         "command": "shinobi.refactor.extractPartial",
-        "title": "Extract Members to Partial Class...",
+        "title": "%command.shinobi.refactor.extractPartial.title%",
         "category": ".NET"
       },
       {
         "command": "shinobi.refactor.extractMethodChecked",
-        "title": "Extract Method (checked)...",
+        "title": "%command.shinobi.refactor.extractMethodChecked.title%",
         "category": ".NET"
       },
       {
         "command": "shinobi.refactor.extractLocalFunctionChecked",
-        "title": "Extract Local Function (checked)...",
+        "title": "%command.shinobi.refactor.extractLocalFunctionChecked.title%",
         "category": ".NET"
       },
       {
         "command": "shinobi.refactor.pullUp",
-        "title": "Pull Members Up...",
+        "title": "%command.shinobi.refactor.pullUp.title%",
         "category": ".NET"
       },
       {
         "command": "shinobi.refactor.useBaseType",
-        "title": "Use Base Type Where Possible...",
+        "title": "%command.shinobi.refactor.useBaseType.title%",
         "category": ".NET"
       },
       {
         "command": "shinobi.refactor.pushDown",
-        "title": "Push Members Down...",
+        "title": "%command.shinobi.refactor.pushDown.title%",
         "category": ".NET"
       },
       {
         "command": "shinobi.refactor.extractSuperclass",
-        "title": "Extract Superclass...",
+        "title": "%command.shinobi.refactor.extractSuperclass.title%",
         "category": ".NET"
       },
       {
