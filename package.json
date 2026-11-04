@@ -82,11 +82,13 @@
             "type": "string",
             "enum": [
               "sidebar",
-              "secondary-sidebar"
+              "secondary-sidebar",
+              "manual"
             ],
             "enumDescriptions": [
               "%config.shinobi.solutionExplorer.location.enumDescription.0%",
-              "%config.shinobi.solutionExplorer.location.enumDescription.1%"
+              "%config.shinobi.solutionExplorer.location.enumDescription.1%",
+              "%config.shinobi.solutionExplorer.location.enumDescription.2%"
             ],
             "default": "sidebar",
             "description": "%config.shinobi.solutionExplorer.location.description%"

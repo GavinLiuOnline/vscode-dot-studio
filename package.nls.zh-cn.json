@@ -69,6 +69,7 @@
   "config.shinobi.solutionExplorer.location.description": "选择解决方案资源管理器的显示位置",
   "config.shinobi.solutionExplorer.location.enumDescription.0": "在左侧边栏显示解决方案资源管理器（侧边栏）",
   "config.shinobi.solutionExplorer.location.enumDescription.1": "在右侧边栏显示解决方案资源管理器（辅助侧边栏）",
+  "config.shinobi.solutionExplorer.location.enumDescription.2": "不移动解决方案资源管理器：保留在您拖放到的位置",
   "config.shinobi.solutionExplorer.fileNesting.markdownDescription": "文件如何嵌套在相关文件下，类似 Visual Studio 解决方案资源管理器中的“文件嵌套”按钮。",
   "config.shinobi.solutionExplorer.fileNesting.enumDescription.0": "不嵌套：每个文件都显示在所在文件夹中",
   "config.shinobi.solutionExplorer.fileNesting.enumDescription.1": "Visual Studio 的默认规则：代码隐藏文件（Index.cshtml.cs）、设计器文件、配置变体（appsettings.Development.json）、资源",

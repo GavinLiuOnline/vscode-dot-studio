@@ -217,7 +217,11 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.executeCommand('workbench.view.extension.shinobi-solution-explorer.resetViewContainerLocation')
     ).then(() => vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup'));
     const applySolutionExplorerLocation = () => {
-        const secondarySidebar = vscode.workspace.getConfiguration('shinobi.solutionExplorer').get<string>('location') === 'secondary-sidebar';
+        const location = vscode.workspace.getConfiguration('shinobi.solutionExplorer').get<string>('location', 'sidebar');
+        if (location === 'manual') {
+            return;
+        }
+        const secondarySidebar = location === 'secondary-sidebar';
         void (secondarySidebar
             ? Promise.resolve(vscode.commands.executeCommand('vscode.moveViews', {
                 viewIds: [SolutionWebviewProvider.viewType],

@@ -1,31 +1,17 @@
 # Changelog
 
-## 0.2.6
+## Unreleased
 
-The Solution Explorer is in the left or right sidebar again, also when an earlier layout left it in the panel.
-
-- **Fixed, Solution Explorer:** where a view container sits is workbench state, not something a manifest can set. A container that was moved to the panel (or ended up there) is not part of either sidebar, so it can be missing from the activity bar even with the view always contributed. On activation the extension resets the container's location: it is in the activity bar (left sidebar) again; with `shinobi.solutionExplorer.location: "secondary-sidebar"` its view is moved to the right sidebar, or to the left one on hosts without that container.
-
-## 0.2.5
-
-The Solution Explorer stays in an empty folder and offers to create a solution there, and "Create a new project" with the solution template ("Blank Solution") now writes the solution file.
-
-- **Fixed, Solution Explorer:** the view no longer hides itself in a folder without `.sln`/`.slnx` files; it is activated when it opens (not only by a solution in the folder) and shows "No solution in this folder" with the **Create New Project...** and **Open Solution...** buttons where the tree would be, in English and Chinese.
-- **Fixed, Create New Project:** `dotnet new`'s solution templates carry no type tag and were taken for project templates, so the wizard created a solution, then ran `dotnet new sln` again in the project's folder, found no project file there and removed the whole folder, leaving nothing behind. The template is now recognised as a solution from its `Solution` classification and creates the `.slnx` (`.sln` with SDKs before 9.0.200, or the format picked in the wizard) without a project. The solution filter template, which also says "Solution", is not offered.
-
-## 0.2.4
-
-The Solution Explorer no longer warns that its view container does not exist and falls back to the Explorer in VS Code cores without secondary-sidebar containers (Trae's, for one).
-
-- **Fixed, Solution Explorer:** the view is contributed once, to the activity bar container, and `shinobi.solutionExplorer.location`'s `secondary-sidebar` is applied at activation with `vscode.moveViews`, which moves the view to the secondary sidebar and back. A host whose core has no such container keeps the view in the side bar, without the warning the second contribution caused.
-
-## 0.2.3
-
-Simplified Chinese: the extension speaks the language VS Code does — commands, menus, settings, notifications, input and QuickPick prompts, and every webview — with English as the fallback.
+Simplified Chinese (the extension speaks the language VS Code does), and fixes found while using it: the Solution Explorer in an empty folder, "Blank Solution" in Create New Project, and the view's location.
 
 - **Added, all views:** the manifest's strings are localized in `package.nls.json` and `package.nls.zh-cn.json` (commands, submenus, settings with their descriptions and enum values, view titles, welcome pages, custom editors and task definitions), and the extension host's messages in `l10n/bundle.l10n.json` and `l10n/bundle.l10n.zh-cn.json` through `t()` in `src/core/i18n.ts`, which takes the English text as the key.
 - **Added, webviews:** a shared dictionary (`src/webview/shared/i18n.ts`) translates the Solution Explorer, NuGet manager, Error List, Configuration Manager, Startup Projects, Publish and New Project panels; they follow the language VS Code runs in (`<html lang>` set by their HTML), not a setting of their own.
 - **Fixed, menu generator:** `npm run generate:menus` writes the NLS keys of the generated commands and submenus to `package.nls.json` again, so regenerating the menus keeps the Chinese titles.
+- **Fixed, Solution Explorer:** the view is contributed once, to the activity bar container, and `shinobi.solutionExplorer.location`'s `secondary-sidebar` is applied at activation with `vscode.moveViews`, which moves the view to the secondary sidebar and back. A host whose core has no such container keeps the view in the side bar, without the warning the second contribution caused.
+- **Fixed, Solution Explorer:** the view no longer hides itself in a folder without `.sln`/`.slnx` files; it is activated when it opens (not only by a solution in the folder) and shows "No solution in this folder" with the **Create New Project...** and **Open Solution...** buttons where the tree would be, in English and Chinese.
+- **Fixed, Create New Project:** `dotnet new`'s solution templates carry no type tag and were taken for project templates, so the wizard created a solution, then ran `dotnet new sln` again in the project's folder, found no project file there and removed the whole folder, leaving nothing behind. The template is now recognised as a solution from its `Solution` classification and creates the `.slnx` (`.sln` with SDKs before 9.0.200, or the format picked in the wizard) without a project. The solution filter template, which also says "Solution", is not offered.
+- **Fixed, Solution Explorer:** where a view container sits is workbench state, not something a manifest can set. A container that was moved to the panel (or ended up there) is not part of either sidebar, so it can be missing from the activity bar even with the view always contributed. On activation the extension resets the container's location: it is in the activity bar (left sidebar) again; with `shinobi.solutionExplorer.location: "secondary-sidebar"` its view is moved to the right sidebar, or to the left one on hosts without that container.
+- **Added, Solution Explorer:** `shinobi.solutionExplorer.location` has a third value, `manual`: the extension leaves the Solution Explorer where you dragged it and does not reset its location on activation (`sidebar`, the default, still does, which brings back a view container stuck in the panel).
 
 ## 0.2.1
 

@@ -69,6 +69,7 @@
   "config.shinobi.solutionExplorer.location.description": "Choose where the Solution Explorer appears",
   "config.shinobi.solutionExplorer.location.enumDescription.0": "Show Solution Explorer in the left sidebar (Sidebar)",
   "config.shinobi.solutionExplorer.location.enumDescription.1": "Show Solution Explorer in the right sidebar (Secondary Sidebar)",
+  "config.shinobi.solutionExplorer.location.enumDescription.2": "Don't move the Solution Explorer: keep it wherever you drag it",
   "config.shinobi.solutionExplorer.fileNesting.markdownDescription": "How files nest under related files, like the File Nesting button in Visual Studio's Solution Explorer.",
   "config.shinobi.solutionExplorer.fileNesting.enumDescription.0": "No nesting: every file shows in its folder",
   "config.shinobi.solutionExplorer.fileNesting.enumDescription.1": "Visual Studio's default rules: code-behind (Index.cshtml.cs), designer files, configuration variants (appsettings.Development.json), resources",
