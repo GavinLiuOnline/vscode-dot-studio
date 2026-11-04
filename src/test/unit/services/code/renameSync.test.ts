@@ -62,7 +62,7 @@ jest.mock('vscode', () => {
         workspace: {
             textDocuments: [],
             openTextDocument: async (u: { fsPath: string }) => doc(u.fsPath),
-            applyEdit: async (edit: any) => { env.appliedEdits.push(edit); env.ownWhileApplying = require('../../../../services/code/typeRename').isOwnRename('/p/Order.cs'); return true; },
+            applyEdit: async (edit: any) => { env.appliedEdits.push(edit); env.ownWhileApplying = require('../../../../services/code/typeRename').isOwnRename(require('path').join('/p', 'Order.cs')); return true; },
             fs: { stat: async (u: { fsPath: string }) => { if (!env.existing.has(u.fsPath)) throw new Error('missing'); return {}; } },
             onDidRenameFiles: () => ({ dispose() { } }),
             onDidChangeTextDocument: (listener: (event: any) => void) => { env.listeners.push(listener); return { dispose() { env.listeners = env.listeners.filter(l => l !== listener); } }; },
@@ -70,6 +70,7 @@ jest.mock('vscode', () => {
     };
 }, { virtual: true });
 
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { renameSymbol, typeFollowsRenamedFiles } from '../../../../services/code/renameSync';
 import { isOwnRename, ownRename } from '../../../../services/code/typeRename';
@@ -160,7 +161,7 @@ describe('F2 on the type of a file named after it', () => {
 
         expect(env.commands).toContain('editor.action.rename');
         expect(env.prompts).toEqual(["Would you also like to rename the file 'Foo.cs' to 'Order.cs'?"]);
-        expect(env.appliedEdits[0].operations).toEqual(['rename /p/Foo.cs -> /p/Order.cs']);
+        expect(env.appliedEdits[0].operations).toEqual([`rename /p/Foo.cs -> ${path.join('/p', 'Order.cs')}`]);
         expect(env.ownWhileApplying).toBe(true);
     });
 
@@ -180,7 +181,7 @@ describe('F2 on the type of a file named after it', () => {
         await done;
 
         expect(env.prompts).toEqual(["Would you also like to rename the file 'Foo.cs' to 'Order.cs'?"]);
-        expect(env.appliedEdits[0].operations).toEqual(['rename /p/Foo.cs -> /p/Order.cs']);
+        expect(env.appliedEdits[0].operations).toEqual([`rename /p/Foo.cs -> ${path.join('/p', 'Order.cs')}`]);
     });
 
     it('does nothing more when the rename was cancelled, or the file is not named after the type, or the cursor is elsewhere', async () => {
@@ -204,7 +205,7 @@ describe('F2 on the type of a file named after it', () => {
         env.activeEditor = editorAt('/p/Foo.cs', 2, 15);
         env.symbols = [symbol('Foo', vscode.SymbolKind.Class, 2)];
         env.symbolsAfterRename = [symbol('Order', vscode.SymbolKind.Class, 2)];
-        env.existing.add('/p/Order.cs');
+        env.existing.add(path.join('/p', 'Order.cs'));
 
         await f2();
 
