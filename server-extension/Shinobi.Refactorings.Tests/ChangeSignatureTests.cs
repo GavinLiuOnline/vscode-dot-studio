@@ -398,4 +398,83 @@ public class ChangeSignatureTests
         Assert.Contains("GetAsync<T>(string path, Dictionary<string, string> queryParams)", genericEdited);
         Assert.Contains("api.GetAsync<string>(\"x\", new())", genericEdited);
     }
+
+    [Fact]
+    public async Task Calls_in_a_test_project_on_the_internal_class_that_implements_an_internal_interface_change_too()
+    {
+        var refs = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator)
+            .Where(p => Path.GetFileName(p) is { } n && (n.StartsWith("System.") || n is "netstandard.dll" or "mscorlib.dll"))
+            .Select(p => (Microsoft.CodeAnalysis.MetadataReference)Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(p)).ToList();
+        var workspace = new Microsoft.CodeAnalysis.AdhocWorkspace();
+        Microsoft.CodeAnalysis.Project Make(string name, params (string, string)[] files)
+        {
+            var project = workspace.AddProject(Microsoft.CodeAnalysis.ProjectInfo.Create(Microsoft.CodeAnalysis.ProjectId.CreateNewId(), Microsoft.CodeAnalysis.VersionStamp.Create(), name, name, Microsoft.CodeAnalysis.LanguageNames.CSharp,
+                compilationOptions: new Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions(Microsoft.CodeAnalysis.OutputKind.DynamicallyLinkedLibrary), metadataReferences: refs));
+            foreach (var (file, text) in files) { project = project.AddDocument(file, Microsoft.CodeAnalysis.Text.SourceText.From(text), filePath: "/" + name + "/" + file).Project; }
+            workspace.TryApplyChanges(project.Solution);
+            return workspace.CurrentSolution.GetProject(project.Id)!;
+        }
+        var lib = Make("Lib",
+            ("IProxyHelper.cs", """
+                using System.Collections.Generic;
+                using System.Threading.Tasks;
+
+                namespace Lib
+                {
+                    internal interface IProxyHelper
+                    {
+                        Task GetAsync(Dictionary<string, string> queryParams, string path);
+                        Task<T> GetAsync<T>(string path, Dictionary<string, string> queryParams);
+                    }
+                }
+                """),
+            ("ProxyHelper.cs", """
+                using System.Collections.Generic;
+                using System.Threading.Tasks;
+
+                namespace Lib
+                {
+                    internal class ProxyHelper : IProxyHelper
+                    {
+                        public Task<T> GetAsync<T>(string path, Dictionary<string, string> queryParams) => Task.FromResult(default(T));
+                        public Task GetAsync(string path, Dictionary<string, string> queryParams) => Task.CompletedTask;
+                    }
+                }
+                """),
+            ("Info.cs", "[assembly: System.Runtime.CompilerServices.InternalsVisibleTo(\"Lib.Tests\")]"));
+        var tests = Make("Lib.Tests", ("Tests.cs", """
+            using System.Collections.Generic;
+            using System.Threading.Tasks;
+            using Lib;
+
+            namespace Lib.Tests
+            {
+                public sealed class ProxyHelperTests
+                {
+                    internal static ProxyHelper Create() => new();
+                    public async Task A()
+                    {
+                        var sut = Create();
+                        var result = await sut.GetAsync<Dictionary<string, string>>("api/items", new Dictionary<string, string> { ["siteId"] = "7" });
+                        var act = () => sut.GetAsync("api/action", new Dictionary<string, string> { ["selectedIds"] = "1;2" });
+                        var second = await sut.GetAsync<object>("api/x", []);
+                    }
+                }
+            }
+            """));
+        workspace.TryApplyChanges(workspace.CurrentSolution.AddProjectReference(tests.Id, new Microsoft.CodeAnalysis.ProjectReference(lib.Id)));
+        var document = workspace.CurrentSolution.GetProject(lib.Id)!.Documents.Single(d => d.Name == "IProxyHelper.cs");
+        var source = (await document.GetTextAsync()).ToString();
+
+        var result = await ChangeSignatureEngine.RunAsync(document, new ChangeSignatureRequest(Harness.At(source, "Task<T> GetAsync<T>(string path", "GetAsync"),
+            [Keep(1, "queryParams", "Dictionary<string, string>"), Keep(0, "path", "string")]), default);
+        Assert.Null(result!.Errors);
+        Assert.Equal(2, result.Others!.Count);
+        var edited = Harness.Lf(Harness.Apply(workspace.CurrentSolution.GetProject(tests.Id)!.Documents.Single().GetTextAsync().Result.ToString(),
+            new ExtractInterfaceResult(result.Others!.Single(o => o.Path.EndsWith("Tests.cs")).Edits, null, null)));
+        Assert.Contains("sut.GetAsync<Dictionary<string, string>>(new Dictionary<string, string> { [\"siteId\"] = \"7\" }, \"api/items\")", edited);
+        Assert.Contains("sut.GetAsync<object>([], \"api/x\")", edited);
+        // the overload without a type argument is another method: untouched
+        Assert.Contains("sut.GetAsync(\"api/action\"", edited);
+    }
 }
