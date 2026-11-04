@@ -62,6 +62,15 @@ Context menus are native VS Code menus (`webview/context`), not rendered by Reac
 
 User documentation is in `docs/` (index: `docs/README.md`), one page per area. `README.md` is the store page (features with screenshots from `docs/images/`, captured by `scripts/screenshots/capture.sh`, links into `docs/`); the roadmap with known bugs is `docs/roadmap.md`, finished phases move to `docs/history.md`, how to build and run is `DEVELOPER.md`, and how to release (version from the GitHub Release tag, the store accounts and tokens) is `RELEASING.md`. The README must stay a store page: features and how to use them, no roadmap, phases or contributor material (those go in `DEVELOPER.md` and `docs/`). A change a user can notice updates its page in the same commit (`docs/context-menus.md` is generated, see above; tests check that `docs/keyboard-shortcuts.md` lists every key binding and `docs/settings.md` every setting in `package.json`). `docs/manual-testing.md` lists checks still to do in VS Code itself; tick an entry only when the user confirms.
 
+### Translations (keep them in step)
+
+The extension speaks Simplified Chinese when VS Code does (`zh-cn`); English is the source. **Every new or changed user-visible text gets its Chinese entry in the same commit**, like documentation. A test (`src/test/unit/core/i18nCoverage.test.ts`) fails when one is missing. Three places, by where the text is shown:
+- **Manifest** (`package.json`: command titles, settings, enum labels, views): write `"%key%"` and add the key to `package.nls.json` and `package.nls.zh-cn.json` (`command.<id>.title`, `config.<setting>.markdownDescription`). `npm run generate:menus` writes the keys of the generated commands and menus.
+- **Extension host** (messages, quick picks, prompts, progress titles, dialog labels): `t('English text {0}', arg)` from `core/i18n.ts`; the English text is the key, add it to `l10n/bundle.l10n.json` (same text) and `l10n/bundle.l10n.zh-cn.json` (Chinese). Wrap whole sentences with arguments, not fragments; a plural is two keys (`'{0} place'` / `'{0} places'`).
+- **Webviews** (React): `t(...)` from `webview/shared/i18n.ts` (the webview must not import `core/i18n`), add the Chinese to its `zhCN` dictionary. `lang` of the page comes from `vscode.env.language`.
+
+The C# server's own messages (refusals, summaries from `server-extension`) stay English. Words that are code (`override`, `abstract`, type and file names) are not translated.
+
 ### Node IDs
 
 Tree nodes are identified by `NodeIdString` (branded string, `src/types/nodeId.ts`). `services/solution/nodeIdService.ts` encodes a typed JSON object (`{type: 'solution'|'project'|'folder'|'file'|'solutionFolder'|..., path, ...}`) as base64url (older gzipped IDs still parse). The webview treats IDs as opaque strings (`webview/shared/nodeIdUtils.ts` is browser-safe and does not decode); only the extension host encodes/decodes them via `nodeIdService`, and a test fails if webview code imports it or decodes IDs.
