@@ -120,6 +120,10 @@ export async function renameTypeOfFile(uri: vscode.Uri, oldName: string, newName
     const edit = await vscode.commands.executeCommand<vscode.WorkspaceEdit | undefined>('vscode.executeDocumentRenameProvider', uri, type.selectionRange.start, newName);
     if (!edit) {
         log.warn(`Language server returned no edit to rename '${oldName}' to '${newName}'`);
+    } else {
+        // what the server found: a rename that touches one file only has found no reference to the type
+        const files = edit.entries().map(([target]) => target.fsPath);
+        log.info(`Renaming the type '${oldName}' to '${newName}': the language server's edit touches ${new Set(files).size} file(s): ${[...new Set(files)].map(file => path.basename(file)).join(', ')}`);
     }
     return edit;
 }
