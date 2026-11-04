@@ -147,5 +147,6 @@
   "command.shinobi.refactor.useBaseType.title": "Use Base Type Where Possible...",
   "command.shinobi.refactor.pushDown.title": "Push Members Down...",
   "command.shinobi.refactor.extractSuperclass.title": "Extract Superclass...",
-  "command.shinobi.refactor.convertType.title": "Convert Abstract Class / Interface..."
+  "command.shinobi.refactor.convertType.title": "Convert Abstract Class / Interface...",
+  "command.shinobi.refactor.extractClass.title": "Extract Class..."
 }

@@ -286,7 +286,7 @@ public static class ExtractSuperclassEngine
     }
 
     /// <summary>The names in a node that stand for a symbol, with the symbol.</summary>
-    private static IEnumerable<(SimpleNameSyntax Name, ISymbol Symbol)> References(SemanticModel model, SyntaxNode node)
+    internal static IEnumerable<(SimpleNameSyntax Name, ISymbol Symbol)> References(SemanticModel model, SyntaxNode node)
     {
         foreach (var name in node.DescendantNodesAndSelf().OfType<SimpleNameSyntax>())
         {
@@ -297,7 +297,7 @@ public static class ExtractSuperclassEngine
     }
 
     /// <summary>A name that reaches a member of the class itself: plain (`count`) or through `this` (`this.count`), not `other.count` or `Type.Count`.</summary>
-    private static bool IsSelfAccess(SimpleNameSyntax name)
+    internal static bool IsSelfAccess(SimpleNameSyntax name)
         => name.Parent switch
         {
             MemberAccessExpressionSyntax access when access.Name == name => access.Expression is ThisExpressionSyntax,
@@ -464,7 +464,7 @@ public static class ExtractSuperclassEngine
         return sb.ToString();
     }
 
-    private static string FileText(IReadOnlyList<UsingDirectiveSyntax> usings, BaseNamespaceDeclarationSyntax? ns, string typeText, string eol)
+    internal static string FileText(IReadOnlyList<UsingDirectiveSyntax> usings, BaseNamespaceDeclarationSyntax? ns, string typeText, string eol)
     {
         var sb = new StringBuilder();
         foreach (var u in usings) { sb.Append(u.ToString()).Append(eol); }

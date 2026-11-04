@@ -17,7 +17,7 @@ Refactorings that need choices ask them in a form in the editor area, like a dia
 | Use Base Type Where Possible (a checkbox of Extract Interface and Extract Superclass, and an action on a type's name) | No (Rider) | ✅ [Added](#use-base-type-where-possible) |
 | Push Members Down (pick members and the derived types, or leave an abstract declaration) | No (Rider) | ✅ [Added](#push-members-down) |
 | Convert Abstract Class ↔ Interface | No (Rider) | ✅ [Added](#convert-abstract-class--interface) |
-| Extract Class (members go to a new class the type delegates to) | No (Rider) | 🔜 Planned, last: it rewrites references |
+| Extract Class (members go to a new class the type delegates to) | No (Rider) | ✅ [Added](#extract-class) |
 | Move Type to Namespace (pick the namespace) | Yes | 🔜 Planned: a small form |
 | Change Signature (add, remove, reorder parameters and update the callers) | Yes | 🔜 Planned: a form with the parameter list |
 | Extract Interface: generic constraints of the type | Yes | 🔜 Planned, a gap of the first version |
@@ -113,6 +113,26 @@ The form has:
 What it does: the chosen members are copied (with their comments) to the end of each chosen derived class, the usings they need that the derived class's file lacks are added there, and the members leave the class (or become abstract declarations). A `private` member of the class that a pushed member uses stays and becomes `protected`, so the derived class can reach it. It refuses a member a chosen derived class has already (the same name and, for methods, the same parameter types).
 
 **The result is compiled first**, in every project it touches. What the refactoring does not rewrite shows up as errors and nothing is applied: code that used the member through the class (`animal.Rest()`, CS1061), a derived class that was not chosen and now misses an abstract member (CS0534), an interface the class implemented with the member (CS0535). Push down to those classes as well, or implement the member there first.
+
+## Extract Class
+
+Rider's refactoring. Put the cursor on a class's name and press Ctrl+. > **Extract class (choose members)...**. It is offered for classes that are not generic, nested, partial or static, and have no primary constructor.
+
+The form has:
+- **Name of the new class** (`<Type>Helper` at the start) and **Generate into:** a new file next to the type, or the same file above it.
+- **Members to move:** methods, properties and fields (nothing is checked at the start). Not offered, with the reason shown: `virtual`, `abstract`, `override`, `sealed`, `new`, `extern` and `partial` members, members that implement an interface, events, indexers, nested types, `init` accessors, and members that use `this` or `base` themselves.
+- A warning when a picked member uses a `private` or `protected` member that stays: the new class could not reach it. **Move it too** checks it (and what it uses in turn). `public` and `internal` members that stay are reached through a reference to the type.
+- A preview of the new class.
+
+What it does:
+- The chosen members move to the new class. The type gets a `private readonly` field of it (`_orderHelper`); a field initializer when the moved members need nothing of the type, otherwise the type's constructors create it with `new OrderHelper(this)` (a type without a constructor gets one) and the new class keeps the owner in `_owner`, through which its members reach what stays (`_owner.Id`). If every moved member is `static`, the new class is `static` and there is no field.
+- Uses of the moved members inside the type go through the field (`Bump()` and `this.Bump()` become `_orderHelper.Bump()`).
+- Moved members that were `public`, `protected` or `internal` stay in the type as one-line forwarding members (`public int Total => _orderHelper.Total;`, a field becomes a forwarding property), so no caller anywhere changes; moved `private` members just leave. In the new class `protected` and `internal` members become `internal`, and a `private` member stays `private` unless the type still uses it (then it becomes `internal`).
+- The usings the moved code needs go to the new file.
+
+**The result is compiled first.** What it does not rewrite shows up as errors and nothing is applied: a `readonly` field that the type assigns in its constructor (CS0191), another instance of the type reaching a moved `private` member (`other._count`), a public field that others pass as `ref` or `out`. Move those members as well, or change that code first.
+
+Not covered: attributes of members that stay as forwarding members are dropped (they move with the member), and a constructor with an expression body is refused when the field has to be created in it.
 
 ## Convert Abstract Class ↔ Interface
 

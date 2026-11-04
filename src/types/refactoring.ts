@@ -124,6 +124,21 @@ export interface PushDownChoice {
     leaveAbstract: boolean;
 }
 
+/** What Extract Class asks: the name of the new class, where it goes and the members that move to it (the type keeps a field of it and forwarding members) */
+export interface ExtractClassForm {
+    kind: 'extractClass';
+    typeName: string;
+    className: string;
+    members: MemberInfo[];
+}
+
+export interface ExtractClassChoice {
+    kind: 'extractClass';
+    className: string;
+    memberIds: string[];
+    newFile: boolean;
+}
+
 /** What Convert Abstract Class <-> Interface shows: what is rewritten and, for a class with members that have a body, the choice to keep them */
 export interface ConvertTypeForm {
     kind: 'convertType';
@@ -167,8 +182,8 @@ export interface UseBaseTypeChoice {
 }
 
 /** The forms the tab can show; every refactoring that needs choices adds one */
-export type RefactorForm = ExtractInterfaceForm | ExtractPartialForm | ExtractSuperclassForm | PullUpForm | UseBaseTypeForm | PushDownForm | ConvertTypeForm;
-export type RefactorChoice = ExtractInterfaceChoice | ExtractPartialChoice | ExtractSuperclassChoice | PullUpChoice | UseBaseTypeChoice | PushDownChoice | ConvertTypeChoice;
+export type RefactorForm = ExtractInterfaceForm | ExtractPartialForm | ExtractSuperclassForm | PullUpForm | UseBaseTypeForm | PushDownForm | ConvertTypeForm | ExtractClassForm;
+export type RefactorChoice = ExtractInterfaceChoice | ExtractPartialChoice | ExtractSuperclassChoice | PullUpChoice | UseBaseTypeChoice | PushDownChoice | ConvertTypeChoice | ExtractClassChoice;
 
 /** What a token of the C# preview is; `plain` has no colour */
 export type TokenKind = 'keyword' | 'interface' | 'class' | 'method' | 'property' | 'parameter' | 'plain';

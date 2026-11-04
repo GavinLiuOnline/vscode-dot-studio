@@ -381,6 +381,9 @@ const zhCN: Record<string, string> = {
     'The result is compiled before it is applied; if it would not compile nothing is changed and the errors are listed.': '应用之前会先编译结果；如果无法编译，则不会更改任何内容，并列出错误。',
     'Convert': '转换',
     'Enter converts, Esc cancels': '按 Enter 转换，按 Esc 取消',
+    'Extract Class': '提取类',
+    'Name of the new class': '新类的名称',
+    'These members use members that stay in {0}, which the new class cannot reach:': '这些成员使用了留在 {0} 中的成员，而新类无法访问它们：',
 };
 
 const format = (text: string, args: Array<string | number>): string =>

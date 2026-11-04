@@ -349,5 +349,8 @@
   "Convert interface to abstract class...": "将接口转换为抽象类...",
   "Put the cursor on the name of an abstract class or an interface to convert it.": "请将光标放在抽象类或接口的名称上以进行转换。",
   "Convert {0} to an Abstract Class": "将 {0} 转换为抽象类",
-  "Convert {0} to an Interface": "将 {0} 转换为接口"
+  "Convert {0} to an Interface": "将 {0} 转换为接口",
+  "Extract class (choose members)...": "提取类（选择成员）...",
+  "Put the cursor on the name of a class to extract a class from it.": "请将光标放在类的名称上以从中提取类。",
+  "Extract Class from {0}": "从 {0} 提取类"
 }

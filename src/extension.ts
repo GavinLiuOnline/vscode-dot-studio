@@ -41,6 +41,7 @@ import { PULL_UP } from './services/refactoring/pullUp';
 import { USE_BASE_TYPE } from './services/refactoring/useBaseType';
 import { PUSH_DOWN } from './services/refactoring/pushDown';
 import { CONVERT_TYPE } from './services/refactoring/convertType';
+import { EXTRACT_CLASS } from './services/refactoring/extractClass';
 import { ExtractMethodChecked, EXTRACT_METHOD_CHECKED, EXTRACT_LOCAL_FUNCTION_CHECKED } from './services/refactoring/extractMethodChecked';
 import { runCodeCleanupOnActiveFile } from './services/code/codeCleanup/activeFileCleanup';
 import { TestExplorer } from './services/testing/testExplorer';
@@ -144,7 +145,7 @@ export function activate(context: vscode.ExtensionContext) {
     RefactoringPanel.extensionUri = context.extensionUri;
     const csharpServer = new CSharpServer(vscode.Uri.joinPath(context.extensionUri, SERVER_EXTENSION_PATH).fsPath);
     const checkedExtractions = [EXTRACT_METHOD_CHECKED, EXTRACT_LOCAL_FUNCTION_CHECKED].map(extraction => new ExtractMethodChecked(csharpServer, extraction));
-    const typeRefactorings = [EXTRACT_INTERFACE, EXTRACT_PARTIAL, EXTRACT_SUPERCLASS, PULL_UP, USE_BASE_TYPE, PUSH_DOWN, CONVERT_TYPE].map(spec => new TypeRefactoring(csharpServer, spec));
+    const typeRefactorings = [EXTRACT_INTERFACE, EXTRACT_PARTIAL, EXTRACT_SUPERCLASS, PULL_UP, USE_BASE_TYPE, PUSH_DOWN, CONVERT_TYPE, EXTRACT_CLASS].map(spec => new TypeRefactoring(csharpServer, spec));
     // The expired-token message needs the configured sources to know which feed a request went to
     setFeedSources(() => PackageBrowseService.getPackageSources());
     const testExplorer = new TestExplorer();

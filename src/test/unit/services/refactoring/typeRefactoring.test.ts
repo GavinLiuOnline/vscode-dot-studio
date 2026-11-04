@@ -37,6 +37,7 @@ import { EXTRACT_SUPERCLASS } from '../../../../services/refactoring/extractSupe
 import { PULL_UP } from '../../../../services/refactoring/pullUp';
 import { USE_BASE_TYPE } from '../../../../services/refactoring/useBaseType';
 import { PUSH_DOWN } from '../../../../services/refactoring/pushDown';
+import { EXTRACT_CLASS } from '../../../../services/refactoring/extractClass';
 import { CONVERT_TYPE } from '../../../../services/refactoring/convertType';
 
 const uri = { fsPath: '/p/Order.cs', toString: () => 'file:///p/Order.cs' } as vscode.Uri;
@@ -213,5 +214,13 @@ describe('TypeRefactoring', () => {
         await refactoring.run(uri, position);
         expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(expect.stringContaining('is a field'));
         expect(picked).not.toHaveBeenCalled();
+    });
+
+    it('Extract Class is offered on a class line and shows the reason it refuses', async () => {
+        const refactoring = setup(EXTRACT_CLASS as never);
+        document.mockResolvedValueOnce({ typeName: 'Order', className: 'OrderHelper', members: [], refusal: null });
+        const [action] = await refactoring.provideCodeActions(lineOf('public class Order'), at(4, 14));
+        expect(action.title).toBe('Extract class (choose members)...');
+        expect(document.mock.calls[0][1]).toBe('Shinobi.Refactorings.ExtractClassInfoHandler');
     });
 });
