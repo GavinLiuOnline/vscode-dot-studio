@@ -351,7 +351,16 @@ public static class ExtractClassEngine
     private static string Modifiers(SyntaxTokenList modifiers, params SyntaxKind[] drop)
         => string.Join(" ", modifiers.Where(m => !drop.Contains(m.Kind())).Select(m => m.Text));
 
+    /// <summary>The forwarding member keeps `[Obsolete]` of the member: the moved member is obsolete in its new class, and a use of it from a member that is not obsolete would not compile (CS0619 with `error: true`).</summary>
     private static string Forwarders(MemberDeclarationSyntax member, string fieldName, string className, string eol, string indent)
+    {
+        var obsolete = member.AttributeLists
+            .Where(list => list.Attributes.All(a => a.Name.ToString() is "Obsolete" or "ObsoleteAttribute" or "System.Obsolete" or "System.ObsoleteAttribute"))
+            .Select(list => Squash(list) + eol + indent);
+        return string.Concat(obsolete) + ForwardersOf(member, fieldName, className, eol, indent);
+    }
+
+    private static string ForwardersOf(MemberDeclarationSyntax member, string fieldName, string className, string eol, string indent)
     {
         var isStatic = member.Modifiers.Any(SyntaxKind.StaticKeyword) || member.Modifiers.Any(SyntaxKind.ConstKeyword);
         var target = isStatic ? className : fieldName;
