@@ -284,4 +284,118 @@ public class ChangeSignatureTests
         var result = await ChangeSignatureEngine.RunAsync(document, new ChangeSignatureRequest(at, [Keep(0, "a", "int"), Keep(1, "b", "int", newType: "string")]), default);
         Assert.NotNull(result!.Errors);
     }
+
+    [Fact]
+    public async Task A_generic_method_changes_with_its_implementations_and_every_call_in_all_forms()
+    {
+        var h = new Harness(
+            ("Api.cs", """
+                using System.Collections.Generic;
+                using System.Threading.Tasks;
+
+                public class Foo { }
+                public interface IApi
+                {
+                    Task<T> GetAsync<T>(Dictionary<string, string> queryParams, string path);
+                }
+                public class Api : IApi
+                {
+                    public Task<T> GetAsync<T>(Dictionary<string, string> queryParams, string path) => Task.FromResult(default(T));
+                }
+                """),
+            ("Use.cs", """
+                using System;
+                using System.Collections.Generic;
+                using System.Linq.Expressions;
+                using System.Threading.Tasks;
+
+                public class Use
+                {
+                    public async Task Go(IApi api, Api concrete)
+                    {
+                        var a = await api.GetAsync<Foo>(new Dictionary<string, string>(), "a");
+                        Foo b = await concrete.GetAsync<Foo>(new(), "b");
+                        Expression<Func<IApi, Task<Foo>>> e = x => x.GetAsync<Foo>(null, "c");
+                    }
+                }
+                """));
+        var (result, textOf) = await Change(h, "Api.cs", "Task<T> GetAsync<T>(Dictionary<string, string> queryParams, string path);", "GetAsync",
+            Keep(1, "path", "string"), Keep(0, "queryParams", "Dictionary<string, string>"));
+        var api = textOf("Api.cs");
+        Assert.Equal(2, System.Text.RegularExpressions.Regex.Matches(api, @"GetAsync<T>\(string path, Dictionary<string, string> queryParams\)").Count);
+        var use = textOf("Use.cs");
+        Assert.Contains("api.GetAsync<Foo>(\"a\", new Dictionary<string, string>())", use);
+        Assert.Contains("concrete.GetAsync<Foo>(\"b\", new())", use);
+        Assert.Contains("x.GetAsync<Foo>(\"c\", null)", use);
+    }
+
+    [Fact]
+    public async Task An_internal_member_changes_in_a_test_project_that_sees_internals()
+    {
+        var refs = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator)
+            .Where(p => Path.GetFileName(p) is { } n && (n.StartsWith("System.") || n is "netstandard.dll" or "mscorlib.dll"))
+            .Select(p => (Microsoft.CodeAnalysis.MetadataReference)Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(p)).ToList();
+        var workspace = new Microsoft.CodeAnalysis.AdhocWorkspace();
+        Microsoft.CodeAnalysis.Project Make(string name, params (string, string)[] files)
+        {
+            var project = workspace.AddProject(Microsoft.CodeAnalysis.ProjectInfo.Create(Microsoft.CodeAnalysis.ProjectId.CreateNewId(), Microsoft.CodeAnalysis.VersionStamp.Create(), name, name, Microsoft.CodeAnalysis.LanguageNames.CSharp,
+                compilationOptions: new Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions(Microsoft.CodeAnalysis.OutputKind.DynamicallyLinkedLibrary), metadataReferences: refs));
+            foreach (var (file, text) in files) { project = project.AddDocument(file, Microsoft.CodeAnalysis.Text.SourceText.From(text), filePath: "/" + name + "/" + file).Project; }
+            workspace.TryApplyChanges(project.Solution);
+            return workspace.CurrentSolution.GetProject(project.Id)!;
+        }
+        var lib = Make("Lib", ("Api.cs", """
+            using System.Collections.Generic;
+            using System.Runtime.CompilerServices;
+            using System.Threading.Tasks;
+
+            [assembly: InternalsVisibleTo("Lib.Tests")]
+
+            namespace Lib
+            {
+                internal interface IApi
+                {
+                    int Get(string path, int limit);
+                    Task<T> GetAsync<T>(Dictionary<string, string> queryParams, string path);
+                }
+            }
+            """));
+        var tests = Make("Lib.Tests", ("Use.cs", """
+            using System.Collections.Generic;
+            using System.Threading.Tasks;
+            using Lib;
+
+            namespace Lib.Tests
+            {
+                internal class Proxy : IApi
+                {
+                    public int Get(string path, int limit) => limit;
+                    public Task<T> GetAsync<T>(Dictionary<string, string> queryParams, string path) => Task.FromResult(default(T));
+                }
+                public class Use
+                {
+                    internal int Go(IApi api, Proxy proxy) => api.Get("a", 1) + proxy.Get("b", 2);
+                    internal Task<string> Async(IApi api) => api.GetAsync<string>(new(), "x");
+                }
+            }
+            """));
+        workspace.TryApplyChanges(workspace.CurrentSolution.AddProjectReference(tests.Id, new Microsoft.CodeAnalysis.ProjectReference(lib.Id)));
+        var document = workspace.CurrentSolution.GetProject(lib.Id)!.Documents.Single();
+        var source = (await document.GetTextAsync()).ToString();
+
+        var result = await ChangeSignatureEngine.RunAsync(document, new ChangeSignatureRequest(Harness.At(source, "int Get(string path, int limit);", "Get"),
+            [Keep(1, "limit", "int"), Keep(0, "path", "string")]), default);
+        Assert.Null(result!.Errors);
+        var other = Assert.Single(result.Others!);
+        var edited = Harness.Lf(Harness.Apply(workspace.CurrentSolution.GetProject(tests.Id)!.Documents.Single().GetTextAsync().Result.ToString(), new ExtractInterfaceResult(other.Edits, null, null)));
+        Assert.Contains("public int Get(int limit, string path)", edited);
+        Assert.Contains("api.Get(1, \"a\") + proxy.Get(2, \"b\")", edited);
+
+        var generic = await ChangeSignatureEngine.RunAsync(document, new ChangeSignatureRequest(Harness.At(source, "GetAsync<T>(Dictionary", "GetAsync"),
+            [Keep(1, "path", "string"), Keep(0, "queryParams", "Dictionary<string, string>")]), default);
+        Assert.Null(generic!.Errors);
+        var genericEdited = Harness.Lf(Harness.Apply(workspace.CurrentSolution.GetProject(tests.Id)!.Documents.Single().GetTextAsync().Result.ToString(), new ExtractInterfaceResult(Assert.Single(generic.Others!).Edits, null, null)));
+        Assert.Contains("GetAsync<T>(string path, Dictionary<string, string> queryParams)", genericEdited);
+        Assert.Contains("api.GetAsync<string>(\"x\", new())", genericEdited);
+    }
 }

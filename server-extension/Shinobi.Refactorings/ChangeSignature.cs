@@ -165,6 +165,7 @@ public static class ChangeSignatureEngine
         // ---- the calls
         var calls = 0;
         var notCalls = 0;
+        var notCallPlaces = new List<string>();
         var seen = new HashSet<(DocumentId, int)>();
         void Register(Document d, CallSite site)
         {
@@ -179,7 +180,7 @@ public static class ChangeSignatureEngine
             }
             calls++;
         }
-        bool InFamily(IMethodSymbol? m) => m is not null && family.Any(f => Same(f, (m.ReducedFrom ?? m).OriginalDefinition));
+        bool InFamily(IMethodSymbol? m) => m is not null && family.Any(f => SameMethod(f, (m.ReducedFrom ?? m).OriginalDefinition));
         foreach (var member in family)
         {
             foreach (var referenced in await SymbolFinder.FindReferencesAsync(member, solution, ct).ConfigureAwait(false))
@@ -198,7 +199,7 @@ public static class ChangeSignatureEngine
                     var site = CallAt(model, token, span, InFamily, ct);
                     if (site is null)
                     {
-                        if (!token.Parent.Ancestors().OfType<InvocationExpressionSyntax>().Any(i => i.Expression is IdentifierNameSyntax { Identifier.Text: "nameof" })) { notCalls++; }
+                        if (!token.Parent.Ancestors().OfType<InvocationExpressionSyntax>().Any(i => i.Expression is IdentifierNameSyntax { Identifier.Text: "nameof" })) { notCalls++; notCallPlaces.Add($"{Path.GetFileName(d.FilePath ?? d.Name)}({token.GetLocation().GetLineSpan().StartLinePosition.Line + 1})"); }
                         continue;
                     }
                     Register(d, site);
@@ -241,7 +242,7 @@ public static class ChangeSignatureEngine
 
         var files = others.Count + (current.Count > 0 ? 1 : 0);
         var summary = $"{Describe(start)} changed: {declarations} declaration{(declarations == 1 ? "" : "s")} and {calls} call{(calls == 1 ? "" : "s")} in {files} file{(files == 1 ? "" : "s")}."
-            + (notCalls > 0 ? $" {notCalls} reference{(notCalls == 1 ? " is" : "s are")} not a call (a method group, for one) and {(notCalls == 1 ? "was" : "were")} left as {(notCalls == 1 ? "it is" : "they are")}." : "");
+            + (notCalls > 0 ? $" {notCalls} reference{(notCalls == 1 ? " is" : "s are")} not a call (a method group, for one) and {(notCalls == 1 ? "was" : "were")} left as {(notCalls == 1 ? "it is" : "they are")}: {string.Join(", ", notCallPlaces.Take(5))}{(notCallPlaces.Count > 5 ? ", ..." : "")}." : "");
         var result = new ExtractInterfaceResult(current, null, null, null, others.Count == 0 ? null : others, summary);
         return await RefactoringValidator.CheckAsync(document, result, ct).ConfigureAwait(false);
     }
@@ -343,6 +344,14 @@ public static class ChangeSignatureEngine
         => symbol.MethodKind == MethodKind.Constructor ? $"{symbol.ContainingType.Name}.{symbol.ContainingType.Name}" : symbol.ContainingType is { } type ? $"{type.Name}.{symbol.Name}" : symbol.Name;
 
     private static bool Same(ISymbol? a, ISymbol? b) => SymbolEqualityComparer.Default.Equals(a, b);
+
+    /// <summary>
+    /// The same method as another project's compilation sees it: equal symbols, or the same name, parameter count and containing type
+    /// (a symbol seen through a reference from another project is not always the very object of the declaring project).
+    /// </summary>
+    private static bool SameMethod(IMethodSymbol a, IMethodSymbol b)
+        => Same(a, b) || (a.MetadataName == b.MetadataName && a.Parameters.Length == b.Parameters.Length && a.Arity == b.Arity
+            && a.ContainingType?.ToDisplayString() == b.ContainingType?.ToDisplayString());
 
     // ---- the methods that change along
 
