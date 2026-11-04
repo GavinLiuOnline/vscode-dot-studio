@@ -352,5 +352,9 @@
   "Convert {0} to an Interface": "Convert {0} to an Interface",
   "Extract class (choose members)...": "Extract class (choose members)...",
   "Put the cursor on the name of a class to extract a class from it.": "Put the cursor on the name of a class to extract a class from it.",
-  "Extract Class from {0}": "Extract Class from {0}"
+  "Extract Class from {0}": "Extract Class from {0}",
+  "Move type to namespace...": "Move type to namespace...",
+  "Looking for the namespaces of the solution...": "Looking for the namespaces of the solution...",
+  "Put the cursor on the name of a type to move it to another namespace.": "Put the cursor on the name of a type to move it to another namespace.",
+  "Move {0} to Namespace": "Move {0} to Namespace"
 }

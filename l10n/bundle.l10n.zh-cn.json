@@ -352,5 +352,9 @@
   "Convert {0} to an Interface": "将 {0} 转换为接口",
   "Extract class (choose members)...": "提取类（选择成员）...",
   "Put the cursor on the name of a class to extract a class from it.": "请将光标放在类的名称上以从中提取类。",
-  "Extract Class from {0}": "从 {0} 提取类"
+  "Extract Class from {0}": "从 {0} 提取类",
+  "Move type to namespace...": "将类型移动到命名空间...",
+  "Looking for the namespaces of the solution...": "正在查找解决方案的命名空间...",
+  "Put the cursor on the name of a type to move it to another namespace.": "请将光标放在类型的名称上以将其移动到其他命名空间。",
+  "Move {0} to Namespace": "将 {0} 移动到命名空间"
 }

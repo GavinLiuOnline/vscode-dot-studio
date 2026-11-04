@@ -38,6 +38,7 @@ import { PULL_UP } from '../../../../services/refactoring/pullUp';
 import { USE_BASE_TYPE } from '../../../../services/refactoring/useBaseType';
 import { PUSH_DOWN } from '../../../../services/refactoring/pushDown';
 import { EXTRACT_CLASS } from '../../../../services/refactoring/extractClass';
+import { MOVE_TYPE_NAMESPACE } from '../../../../services/refactoring/moveTypeNamespace';
 import { CONVERT_TYPE } from '../../../../services/refactoring/convertType';
 
 const uri = { fsPath: '/p/Order.cs', toString: () => 'file:///p/Order.cs' } as vscode.Uri;
@@ -222,5 +223,15 @@ describe('TypeRefactoring', () => {
         const [action] = await refactoring.provideCodeActions(lineOf('public class Order'), at(4, 14));
         expect(action.title).toBe('Extract class (choose members)...');
         expect(document.mock.calls[0][1]).toBe('Shinobi.Refactorings.ExtractClassInfoHandler');
+    });
+
+    it('Move Type to Namespace is offered on interface and enum lines too, and asks the namespaces when it runs', async () => {
+        const refactoring = setup(MOVE_TYPE_NAMESPACE as never);
+        document.mockResolvedValueOnce({ typeName: 'IShape', namespace: 'Shop', namespaces: [], refusal: null });
+        const [action] = await refactoring.provideCodeActions(lineOf('public interface IShape'), at(4, 18));
+        expect(action.title).toBe('Move type to namespace...');
+        expect(document.mock.calls[0][1]).toBe('Shinobi.Refactorings.MoveTypeNamespaceInfoHandler');
+        document.mockResolvedValueOnce({ typeName: 'Color', namespace: 'Shop', namespaces: [], refusal: null });
+        expect(await refactoring.provideCodeActions(lineOf('public enum Color'), at(4, 14))).toHaveLength(1);
     });
 });

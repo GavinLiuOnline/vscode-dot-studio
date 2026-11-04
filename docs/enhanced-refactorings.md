@@ -18,7 +18,7 @@ Refactorings that need choices ask them in a form in the editor area, like a dia
 | Push Members Down (pick members and the derived types, or leave an abstract declaration) | No (Rider) | ✅ [Added](#push-members-down) |
 | Convert Abstract Class ↔ Interface | No (Rider) | ✅ [Added](#convert-abstract-class--interface) |
 | Extract Class (members go to a new class the type delegates to) | No (Rider) | ✅ [Added](#extract-class) |
-| Move Type to Namespace (pick the namespace) | Yes | 🔜 Planned: a small form |
+| Move Type to Namespace (pick the namespace) | Yes | ✅ [Added](#move-type-to-namespace) |
 | Change Signature (add, remove, reorder parameters and update the callers) | Yes | 🔜 Planned: a form with the parameter list |
 | Extract Interface: generic constraints of the type | Yes | 🔜 Planned, a gap of the first version |
 
@@ -133,6 +133,22 @@ What it does:
 **The result is compiled first.** What it does not rewrite shows up as errors and nothing is applied: a `readonly` field that the type assigns in its constructor (CS0191), another instance of the type reaching a moved `private` member (`other._count`), a public field that others pass as `ref` or `out`. Move those members as well, or change that code first.
 
 Not covered: attributes of members that stay as forwarding members are dropped (they move with the member), and a constructor with an expression body is refused when the field has to be created in it.
+
+## Move Type to Namespace
+
+Visual Studio's *Move to namespace*, with the namespace of your choice (the C# server's own *Change namespace* cannot take one). Put the cursor on the name of a class, struct, record, interface or enum and press Ctrl+. > **Move type to namespace...**.
+
+The form shows the namespace the type is in and an input for the new one; the namespaces your solution's source declares are suggested while you type. **Move** is off until the name is a valid, different namespace.
+
+What it does:
+- **The type:** its namespace declaration is renamed (a file-scoped namespace, or a block that holds only this type). From a block with other types it moves to a block of its own at the end of the file; a type in a file without a namespace gets `namespace X;`. The file stays where it is: use *Move type to file* or *Sync namespaces* to match the folder.
+- **What it used:** the type keeps the usings of what it used from its old namespace and the ones around it (`using App;` for `Root` when `App.Old.Order` moves to `Shop.Orders`).
+- **Everywhere it is used** (also in other projects): a place that no longer sees the new namespace gets `using <namespace>;` (callers of extension methods of a moved static class too); a name written with its namespace (`App.Old.Order`) gets the new one. Places that already see the namespace (inside it or an enclosing one, a `using` or a global using) are left alone.
+- **A namespace that is empty now:** `using App.Old;` in the files that used it is changed to the new namespace, or removed when the file needs nothing from it.
+
+It refuses nested types, namespaces declared inside another namespace, partial types with several parts, and a type that shares a file-scoped namespace (or a file without namespace) with other types: move it to its own file first.
+
+**The result is compiled first** in every project it touches, and nothing is applied when it would add errors (a name that is now ambiguous, for one).
 
 ## Convert Abstract Class ↔ Interface
 

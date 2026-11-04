@@ -427,6 +427,11 @@
         "category": ".NET"
       },
       {
+        "command": "shinobi.refactor.moveTypeNamespace",
+        "title": "%command.shinobi.refactor.moveTypeNamespace.title%",
+        "category": ".NET"
+      },
+      {
         "command": "shinobi.refactor.extractSuperclass",
         "title": "%command.shinobi.refactor.extractSuperclass.title%",
         "category": ".NET"
@@ -1465,6 +1470,10 @@
         },
         {
           "command": "shinobi.refactor.extractClass",
+          "when": "false"
+        },
+        {
+          "command": "shinobi.refactor.moveTypeNamespace",
           "when": "false"
         },
         {

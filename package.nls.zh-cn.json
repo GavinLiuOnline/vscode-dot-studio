@@ -148,5 +148,6 @@
   "command.shinobi.refactor.pushDown.title": "将成员下移...",
   "command.shinobi.refactor.extractSuperclass.title": "提取超类...",
   "command.shinobi.refactor.convertType.title": "转换抽象类 / 接口...",
-  "command.shinobi.refactor.extractClass.title": "提取类..."
+  "command.shinobi.refactor.extractClass.title": "提取类...",
+  "command.shinobi.refactor.moveTypeNamespace.title": "将类型移动到命名空间..."
 }

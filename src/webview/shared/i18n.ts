@@ -384,6 +384,12 @@ const zhCN: Record<string, string> = {
     'Extract Class': '提取类',
     'Name of the new class': '新类的名称',
     'These members use members that stay in {0}, which the new class cannot reach:': '这些成员使用了留在 {0} 中的成员，而新类无法访问它们：',
+    'Move Type to Namespace': '将类型移动到命名空间',
+    'is in': '位于',
+    'the global namespace': '全局命名空间',
+    'Move to namespace': '移动到命名空间',
+    'Not a valid namespace.': '不是有效的命名空间。',
+    'Every place that uses the type gets the using it needs, and the type keeps the usings of what it used from its old namespace. The file stays where it is.': '每个使用该类型的位置都会得到所需的 using，该类型也会保留它从旧命名空间中使用的内容所需的 using。文件保持在原处。',
 };
 
 const format = (text: string, args: Array<string | number>): string =>
