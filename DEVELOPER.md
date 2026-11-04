@@ -38,6 +38,8 @@ To try your changes, press **F5** in VS Code with this launch configuration in `
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint (`eslint.config.mjs`): unawaited promises, hooks rules, `var`, `prefer-const`; CI runs it |
 | `npm test` | All Jest tests; `npx jest path/to/file.test.ts` or `npx jest -t "name"` for one |
+| `npm run test:server-extension` | The xunit tests of the refactorings' C# code (`server-extension/Shinobi.Refactorings.Tests`, an in-memory workspace; CI runs it on all three systems) |
+| `npm run check:server-extension` | Loads `out/server-extension/Shinobi.Refactorings.dll` into the real language server of the installed C# extension and asks every refactoring's handler on a small solution; prints the Roslyn version the server binds. Run `npm run build:server-extension` first; skipped when no C# extension is installed (so not in CI). Run it after each update of the C# extension and before a release |
 | `npm run test:coverage` | The tests with a coverage report in `coverage/` (ignored by git) |
 | `npm run generate:menus` | Writes the context menus from `src/core/contextMenus.ts` into `package.json` and `docs/context-menus.md` (a test fails if you forget) |
 | `scripts/screenshots/capture.sh` | Captures the screenshots in `docs/images/` (see below) |

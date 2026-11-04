@@ -1923,6 +1923,7 @@
     "typecheck": "tsc --noEmit",
     "typecheck:watch": "tsc --noEmit --watch",
     "test": "jest",
+    "check:server-extension": "node scripts/check-server-extension.mjs",
     "test:server-extension": "dotnet test server-extension/Shinobi.Refactorings.Tests --nologo -v q",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
