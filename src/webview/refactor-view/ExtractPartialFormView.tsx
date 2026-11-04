@@ -1,6 +1,7 @@
 import React from 'react';
 import { ExtractPartialChoice, ExtractPartialForm, SyntaxPalette } from '../../types/refactoring';
 import { foldedSignature, MembersForm } from './MembersForm';
+import { t } from '../shared/i18n';
 
 /** The new part of the type as it will be written (the bodies are folded) */
 export function partialPreview(typeName: string, lines: readonly string[]): string {
@@ -15,23 +16,23 @@ export const ExtractPartialFormView: React.FC<{
     onCancel: () => void;
 }> = ({ form, palette, onSubmit, onCancel }) => (
     <MembersForm
-        title="Extract Members to Partial Class"
+        title={t('Extract Members to Partial Class')}
         typeName={form.typeName}
-        nameLabel="Name of the part"
+        nameLabel={t('Name of the part')}
         initialName={form.partName}
         targets={name => (
             <section>
-                <h2>New file</h2>
+                <h2>{t('New file')}</h2>
                 <div className="target on" style={{ cursor: 'default' }}>
-                    <span><div className="what">{form.typeName}.{name}.cs</div><div className="where">Next to {form.typeName}, same namespace; the type is made partial</div></span>
+                    <span><div className="what">{form.typeName}.{name}.cs</div><div className="where">{t('Next to {0}, same namespace; the type is made partial', form.typeName)}</div></span>
                 </div>
             </section>
         )}
-        membersLabel="Members to move"
+        membersLabel={t('Members to move')}
         members={form.members}
         previewOf={(_name, chosen) => partialPreview(form.typeName, chosen.map(foldedSignature))}
         palette={palette}
-        confirmLabel="Move"
+        confirmLabel={t('Move')}
         onSubmit={(name, memberIds) => onSubmit({ kind: 'extractPartial', partName: name, memberIds })}
         onCancel={onCancel}
     />

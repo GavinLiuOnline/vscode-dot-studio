@@ -3,6 +3,7 @@ import { ExtractInterfaceChoice, ExtractInterfaceForm, MemberInfo, SyntaxPalette
 import { FileTargets } from './FileTargets';
 import { MembersForm } from './MembersForm';
 import { UseBaseTypeOption } from './UseBaseTypeOption';
+import { t } from '../shared/i18n';
 
 /** The interface as it will be written; the type parameters of the type are not known here */
 export function previewOf(name: string, signatures: readonly string[]): string {
@@ -23,9 +24,9 @@ export const ExtractInterfaceFormView: React.FC<{
     const [useBaseType, setUseBaseType] = useState(false);
     return (
         <MembersForm
-            title="Extract Interface"
+            title={t('Extract Interface')}
             typeName={form.typeName}
-            nameLabel="Interface name"
+            nameLabel={t('Interface name')}
             initialName={form.interfaceName}
             targets={name => (
                 <>
@@ -33,11 +34,11 @@ export const ExtractInterfaceFormView: React.FC<{
                     <UseBaseTypeOption checked={useBaseType} onChange={setUseBaseType} typeName={form.typeName} newName={name} />
                 </>
             )}
-            membersLabel="Members"
+            membersLabel={t('Members')}
             members={form.members}
             previewOf={(name, chosen) => previewOf(name, chosen.map(interfaceLine))}
             palette={palette}
-            confirmLabel="Extract"
+            confirmLabel={t('Extract')}
             onSubmit={(name, memberIds) => onSubmit({ kind: 'extractInterface', interfaceName: name, memberIds, newFile, ...(useBaseType ? { useBaseType } : {}) })}
             onCancel={onCancel}
         />

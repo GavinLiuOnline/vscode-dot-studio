@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { MemberInfo, PushDownChoice, PushDownForm, SyntaxPalette } from '../../types/refactoring';
 import { foldedSignature, MembersForm } from './MembersForm';
+import { t } from '../shared/i18n';
 
 /** What the derived classes get (and the class keeps), as it will be written; the bodies are folded */
 export function pushDownPreview(derived: readonly string[], lines: readonly string[], abstractLines: readonly string[], typeName: string): string {
     const part = (header: string, body: readonly string[]) => [header, '{', ...body.map(line => `    ${line}`), '}'].join('\n');
-    const derivedText = part(derived.length > 0 ? `class ${derived.join(', ')}` : 'class (no derived class chosen)', lines);
+    const derivedText = part(derived.length > 0 ? `class ${derived.join(', ')}` : `class (${t('no derived class chosen')})`, lines);
     return abstractLines.length > 0 ? `${part(`abstract class ${typeName}`, abstractLines)}\n\n${derivedText}` : derivedText;
 }
 
@@ -48,12 +49,12 @@ export const PushDownFormView: React.FC<{
     const chosenNames = form.derived.filter(derived => derivedIds.has(derived.id)).map(derived => derived.name);
     return (
         <MembersForm
-            title="Push Members Down"
+            title={t('Push Members Down')}
             typeName={form.typeName}
             targets={() => (
                 <>
                     <section>
-                        <h2>Push down to</h2>
+                        <h2>{t('Push down to')}</h2>
                         <div style={{ display: 'grid', gap: 6 }}>
                             {form.derived.map(derived => (
                                 <label key={derived.id} className={`target${derivedIds.has(derived.id) ? ' on' : ''}`}>
@@ -67,14 +68,14 @@ export const PushDownFormView: React.FC<{
                         <label className={`target${leaveAbstract ? ' on' : ''}`} style={{ display: 'flex' }}>
                             <input type="checkbox" checked={leaveAbstract} onChange={event => setLeaveAbstract(event.target.checked)} />
                             <span>
-                                <div className="what">Leave an abstract declaration in {form.typeName}</div>
-                                <div className="where">Methods and properties stay declared (abstract) and the chosen classes get the body as an override; {form.typeName} becomes abstract. Fields and nested types always move.</div>
+                                <div className="what">{t('Leave an abstract declaration in {0}', form.typeName)}</div>
+                                <div className="where">{t('Methods and properties stay declared (abstract) and the chosen classes get the body as an override; {0} becomes abstract. Fields and nested types always move.', form.typeName)}</div>
                             </span>
                         </label>
                     </section>
                 </>
             )}
-            membersLabel="Members to push down"
+            membersLabel={t('Members to push down')}
             members={form.members}
             initiallyChecked={form.selected}
             disabledReason={member => member.blocked}
@@ -83,12 +84,12 @@ export const PushDownFormView: React.FC<{
                 if (problems.length === 0) { return null; }
                 return (
                     <div className="notice" role="alert">
-                        These members are used by members that stay in {form.typeName}, which could not reach them in a derived class:
+                        {t('These members are used by members that stay in {0}, which could not reach them in a derived class:', form.typeName)}
                         <ul>
                             {problems.map(({ member, users }) => (
                                 <li key={member.id}>
-                                    <code>{member.signature}</code> is used by {users.map(id => byId.get(id)?.signature ?? id).join(', ')}
-                                    <button type="button" className="link" onClick={() => check(withUsers(users))}>Push {users.length === 1 ? 'it' : 'them'} down too</button>
+                                    <code>{member.signature}</code> {t('is used by')} {users.map(id => byId.get(id)?.signature ?? id).join(', ')}
+                                    <button type="button" className="link" onClick={() => check(withUsers(users))}>{t(users.length === 1 ? 'Push it down too' : 'Push them down too')}</button>
                                 </li>
                             ))}
                         </ul>
@@ -103,7 +104,7 @@ export const PushDownFormView: React.FC<{
                 form.typeName,
             )}
             palette={palette}
-            confirmLabel="Push down"
+            confirmLabel={t('Push down')}
             onSubmit={(_name, memberIds) => onSubmit({ kind: 'pushDown', derivedIds: [...derivedIds], memberIds, leaveAbstract })}
             onCancel={onCancel}
         />

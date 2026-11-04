@@ -6,6 +6,7 @@ import { ExtractSuperclassFormView } from './ExtractSuperclassFormView';
 import { PullUpFormView } from './PullUpFormView';
 import { UseBaseTypeFormView } from './UseBaseTypeFormView';
 import { PushDownFormView } from './PushDownFormView';
+import { t } from '../shared/i18n';
 
 export interface RefactorApi {
     postMessage(message: RefactorRequest): void;
@@ -38,7 +39,7 @@ export const App: React.FC<{ api: RefactorApi }> = ({ api }) => {
     }, [api]);
 
     if (!form) {
-        return <div className="empty">Loading...</div>;
+        return <div className="empty">{t('Loading...')}</div>;
     }
     const submit = (choice: RefactorChoice) => api.postMessage({ type: 'submit', choice });
     const cancel = () => api.postMessage({ type: 'cancel' });

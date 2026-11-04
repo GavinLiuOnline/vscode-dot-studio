@@ -3,6 +3,7 @@ import { ExtractSuperclassChoice, ExtractSuperclassForm, MemberInfo, SyntaxPalet
 import { FileTargets } from './FileTargets';
 import { foldedSignature, MembersForm } from './MembersForm';
 import { UseBaseTypeOption } from './UseBaseTypeOption';
+import { t } from '../shared/i18n';
 
 /** The member as the base class will have it: the abstract declaration when it is made abstract, else as it is written */
 export function superclassLine(member: MemberInfo, isAbstract: boolean): string {
@@ -52,9 +53,9 @@ export const ExtractSuperclassFormView: React.FC<{
     };
     return (
         <MembersForm
-            title="Extract Superclass"
+            title={t('Extract Superclass')}
             typeName={form.typeName}
-            nameLabel="Name of the base class"
+            nameLabel={t('Name of the base class')}
             initialName={form.baseName}
             targets={name => (
                 <>
@@ -62,13 +63,13 @@ export const ExtractSuperclassFormView: React.FC<{
                     <UseBaseTypeOption checked={useBaseType} onChange={setUseBaseType} typeName={form.typeName} newName={name} />
                 </>
             )}
-            membersLabel="Members to move up"
+            membersLabel={t('Members to move up')}
             members={form.members}
             initiallyChecked={[]}
             disabledReason={member => member.blocked}
             memberExtra={member => member.canBeAbstract && (
-                <label className="extra" title="The base class declares it abstract; the class keeps the body as an override">
-                    <input type="checkbox" checked={abstractIds.has(member.id)} onChange={() => toggleAbstract(member.id)} /> abstract
+                <label className="extra" title={t('The base class declares it abstract; the class keeps the body as an override')}>
+                    <input type="checkbox" checked={abstractIds.has(member.id)} onChange={() => toggleAbstract(member.id)} /> {t('abstract')}
                 </label>
             )}
             notice={(checked, check) => {
@@ -76,12 +77,12 @@ export const ExtractSuperclassFormView: React.FC<{
                 if (problems.length === 0) { return null; }
                 return (
                     <div className="notice" role="alert">
-                        These members use members that stay in {form.typeName}, which the base class cannot reach:
+                        {t('These members use members that stay in {0}, which the base class cannot reach:', form.typeName)}
                         <ul>
                             {problems.map(({ member, missing }) => (
                                 <li key={member.id}>
-                                    <code>{member.signature}</code> uses {missing.map(id => byId.get(id)?.signature ?? id).join(', ')}
-                                    <button type="button" className="link" onClick={() => check(withDependencies(missing))}>Move {missing.length === 1 ? 'it' : 'them'} too</button>
+                                    <code>{member.signature}</code> {t('uses')} {missing.map(id => byId.get(id)?.signature ?? id).join(', ')}
+                                    <button type="button" className="link" onClick={() => check(withDependencies(missing))}>{t(missing.length === 1 ? 'Move it too' : 'Move them too')}</button>
                                 </li>
                             ))}
                         </ul>
@@ -91,7 +92,7 @@ export const ExtractSuperclassFormView: React.FC<{
             canSubmit={checked => unmet(checked).length === 0}
             previewOf={(name, chosen) => superclassPreview(name, chosen.map(member => superclassLine(member, abstractIds.has(member.id))), chosen.some(member => abstractIds.has(member.id)))}
             palette={palette}
-            confirmLabel="Extract"
+            confirmLabel={t('Extract')}
             onSubmit={(name, memberIds) => onSubmit({ kind: 'extractSuperclass', baseName: name, memberIds, abstractIds: memberIds.filter(id => abstractIds.has(id)), newFile, ...(useBaseType ? { useBaseType } : {}) })}
             onCancel={onCancel}
         />

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { MemberInfo, SyntaxPalette } from '../../types/refactoring';
 import { Highlighted } from './csharpHighlight';
+import { t } from '../shared/i18n';
 
 /** A C# identifier; the server would reject anything else */
 export const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -121,13 +122,13 @@ export const MembersForm: React.FC<MembersFormProps> = props => {
         }}>
             <style>{FORM_STYLE}</style>
             <h1>{props.title}</h1>
-            <p className="subtitle">from <strong>{props.typeName}</strong></p>
+            <p className="subtitle">{t('from')} <strong>{props.typeName}</strong></p>
 
             {asksName && (
                 <section>
                     <h2><label htmlFor="rf-name">{props.nameLabel}</label></h2>
                     <input id="rf-name" ref={nameInput} type="text" value={name} onChange={event => setName(event.target.value)} aria-invalid={!nameValid} spellCheck={false} />
-                    {!nameValid && <div className="error-text">{props.nameError ?? 'Not a valid C# identifier.'}</div>}
+                    {!nameValid && <div className="error-text">{props.nameError ?? t('Not a valid C# identifier.')}</div>}
                 </section>
             )}
 
@@ -135,13 +136,13 @@ export const MembersForm: React.FC<MembersFormProps> = props => {
 
             <section>
                 <div className="members-head">
-                    <h2>{props.membersLabel} ({chosen.length} of {members.length})</h2>
+                    <h2>{props.membersLabel} ({t('{0} of {1}', chosen.length, members.length)})</h2>
                     <span className="links">
-                        <button type="button" className="link" onClick={() => setSelected(new Set(members.map(member => member.id)))}>Select all</button>
-                        <button type="button" className="link" onClick={() => setSelected(new Set())}>Deselect all</button>
+                        <button type="button" className="link" onClick={() => setSelected(new Set(members.map(member => member.id)))}>{t('Select all')}</button>
+                        <button type="button" className="link" onClick={() => setSelected(new Set())}>{t('Deselect all')}</button>
                     </span>
                 </div>
-                <div className="members" role="group" aria-label="Members">
+                <div className="members" role="group" aria-label={t('Members')}>
                     {members.map(member => {
                         const reason = disabledReason?.(member);
                         const on = !reason && selected.has(member.id);
@@ -157,22 +158,22 @@ export const MembersForm: React.FC<MembersFormProps> = props => {
                             </div>
                         );
                     })}
-                    {members.length === 0 && <div className="member">The type has no members to take along.</div>}
+                    {members.length === 0 && <div className="member">{t('The type has no members to take along.')}</div>}
                 </div>
             </section>
 
             {props.notice?.(selected, check)}
 
             <section>
-                <h2>Preview</h2>
-                <pre aria-label="Preview"><Highlighted palette={palette} code={props.previewOf(name, chosen)} /></pre>
+                <h2>{t('Preview')}</h2>
+                <pre aria-label={t('Preview')}><Highlighted palette={palette} code={props.previewOf(name, chosen)} /></pre>
             </section>
 
             <div className="footer">
-                <button type="button" className="action" onClick={onCancel}>Cancel</button>
+                <button type="button" className="action" onClick={onCancel}>{t('Cancel')}</button>
                 <button type="submit" className="action primary" disabled={!valid}>{props.confirmLabel}</button>
             </div>
-            <div className="hint">Enter confirms, Esc cancels</div>
+            <div className="hint">{t('Enter confirms, Esc cancels')}</div>
         </form>
     );
 };

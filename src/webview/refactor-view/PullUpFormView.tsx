@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MemberInfo, PullUpChoice, PullUpForm, PullUpTarget, SyntaxPalette } from '../../types/refactoring';
 import { foldedSignature, MembersForm } from './MembersForm';
+import { t } from '../shared/i18n';
 
 /** The member as the target will have it: the interface's declaration, the abstract declaration when it is made abstract, else as it is written */
 export function pullUpLine(member: MemberInfo, target: PullUpTarget, isAbstract: boolean): string {
@@ -53,11 +54,11 @@ export const PullUpFormView: React.FC<{
     };
     return (
         <MembersForm
-            title="Pull Members Up"
+            title={t('Pull Members Up')}
             typeName={form.typeName}
             targets={() => (
                 <section>
-                    <h2><label htmlFor="rf-target">Pull up to</label></h2>
+                    <h2><label htmlFor="rf-target">{t('Pull up to')}</label></h2>
                     <select id="rf-target" value={targetId} onChange={event => setTargetId(event.target.value)} style={{ width: '100%', padding: '6px 8px', font: 'inherit' }}>
                         {form.targets.map(candidate => (
                             <option key={candidate.id} value={candidate.id}>{candidate.name} ({candidate.kind}{candidate.where ? `, ${candidate.where}` : ''})</option>
@@ -65,13 +66,13 @@ export const PullUpFormView: React.FC<{
                     </select>
                 </section>
             )}
-            membersLabel="Members to pull up"
+            membersLabel={t('Members to pull up')}
             members={form.members}
             initiallyChecked={form.selected}
-            disabledReason={member => member.blocked && toClass ? member.blocked : !toClass && !member.interfaceSignature ? 'an interface cannot have it' : undefined}
+            disabledReason={member => member.blocked && toClass ? member.blocked : !toClass && !member.interfaceSignature ? t('an interface cannot have it') : undefined}
             memberExtra={member => toClass && member.canBeAbstract && (
-                <label className="extra" title="The base class only declares it abstract; the class keeps the body as an override">
-                    <input type="checkbox" checked={abstractIds.has(member.id)} onChange={() => toggleAbstract(member.id)} /> abstract
+                <label className="extra" title={t('The base class only declares it abstract; the class keeps the body as an override')}>
+                    <input type="checkbox" checked={abstractIds.has(member.id)} onChange={() => toggleAbstract(member.id)} /> {t('abstract')}
                 </label>
             )}
             notice={(checked, check) => {
@@ -81,16 +82,16 @@ export const PullUpFormView: React.FC<{
                 return (
                     <>
                         {makesAbstract && (
-                            <div className="notice" role="status">{target.name} becomes abstract; where it is created with <code>new</code> the result would not compile and nothing is applied.</div>
+                            <div className="notice" role="status">{t('{0} becomes abstract; where it is created with new the result would not compile and nothing is applied.', target.name)}</div>
                         )}
                         {problems.length > 0 && (
                             <div className="notice" role="alert">
-                                These members use members that stay in {form.typeName}, which {target.name} cannot reach:
+                                {t('These members use members that stay in {0}, which {1} cannot reach:', form.typeName, target.name)}
                                 <ul>
                                     {problems.map(({ member, missing }) => (
                                         <li key={member.id}>
-                                            <code>{member.signature}</code> uses {missing.map(id => byId.get(id)?.signature ?? id).join(', ')}
-                                            <button type="button" className="link" onClick={() => check(withDependencies(missing))}>Pull {missing.length === 1 ? 'it' : 'them'} up too</button>
+                                            <code>{member.signature}</code> {t('uses')} {missing.map(id => byId.get(id)?.signature ?? id).join(', ')}
+                                            <button type="button" className="link" onClick={() => check(withDependencies(missing))}>{t(missing.length === 1 ? 'Pull it up too' : 'Pull them up too')}</button>
                                         </li>
                                     ))}
                                 </ul>
@@ -102,7 +103,7 @@ export const PullUpFormView: React.FC<{
             canSubmit={checked => !!target && unmet(checked).length === 0}
             previewOf={(_name, chosen) => target ? pullUpPreview(target, chosen.map(member => pullUpLine(member, target, isAbstract(member.id))), chosen.some(member => isAbstract(member.id))) : ''}
             palette={palette}
-            confirmLabel="Pull up"
+            confirmLabel={t('Pull up')}
             onSubmit={(_name, memberIds) => onSubmit({ kind: 'pullUp', targetId, memberIds, abstractIds: memberIds.filter(isAbstract) })}
             onCancel={onCancel}
         />
