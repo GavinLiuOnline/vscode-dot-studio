@@ -150,6 +150,7 @@
   "command.shinobi.refactor.convertType.title": "Convert Abstract Class / Interface...",
   "command.shinobi.refactor.extractClass.title": "Extract Class...",
   "command.shinobi.refactor.moveTypeNamespace.title": "Move Type to Namespace...",
+  "command.shinobi.renameSymbol.title": "Rename Symbol (and Offer to Rename the File)",
   "command.shinobi.refactor.changeSignature.title": "Change Signature...",
   "config.shinobi.refactorings.disabled.markdownDescription": "Refactorings that are not offered in the lightbulb and the Refactor menu (Ctrl+.). The commands stay registered, so a key binding to one still works.",
   "config.shinobi.refactorings.disabled.label.extractInterface": "Extract Interface",

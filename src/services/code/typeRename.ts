@@ -9,12 +9,34 @@ const codeExtensions = ['.cs', '.vb'];
 
 const identifier = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
+/** Files this extension is renaming itself (by their new path): the rename hook of VS Code's Explorer leaves them alone */
+const ownRenames = new Set<string>();
+
+export function isOwnRename(newPath: string): boolean {
+    return ownRenames.has(newPath);
+}
+
+/** Runs a file rename of ours; the hook for renames made elsewhere does not ask about it again */
+export async function ownRename<T>(newPath: string, action: () => Promise<T>): Promise<T> {
+    ownRenames.add(newPath);
+    try {
+        return await action();
+    } finally {
+        // the event of the rename arrives after it, not within the awaited action
+        setTimeout(() => ownRenames.delete(newPath), 2000).unref?.();
+    }
+}
+
 /**
  * Renames a file like Visual Studio: if a C#/VB file declares a type named after the file,
  * offers to rename the type and all references to it through the language server, together with the file.
  * Otherwise (declined, no matching type, no language server) only the file is renamed.
  */
 export async function renameFileAndType(oldPath: string, newPath: string): Promise<void> {
+    return ownRename(newPath, () => renameFileAndTypeNow(oldPath, newPath));
+}
+
+async function renameFileAndTypeNow(oldPath: string, newPath: string): Promise<void> {
     const oldUri = vscode.Uri.file(oldPath);
     const newUri = vscode.Uri.file(newPath);
 
@@ -24,17 +46,25 @@ export async function renameFileAndType(oldPath: string, newPath: string): Promi
         return;
     }
 
-    const dirtyBefore = new Set(vscode.workspace.textDocuments.filter(d => d.isDirty).map(d => d.uri.toString()));
+    const dirtyBefore = dirtyDocuments();
 
     // Text edits apply to the old path, then the file moves, all in one undoable operation
     edit.renameFile(oldUri, newUri);
     if (!await vscode.workspace.applyEdit(edit)) {
-        throw new Error(`Could not rename ${path.basename(oldPath)}`);
+        throw new Error(t('Could not rename {0}', path.basename(oldPath)));
     }
 
-    // Save what the rename changed, like Visual Studio; leave other unsaved changes alone
-    const changed = edit.entries().map(([uri]) => uri.fsPath === oldPath ? newUri : uri);
-    for (const uri of changed) {
+    await saveChanged(edit, dirtyBefore, uri => uri.fsPath === oldPath ? newUri : uri);
+}
+
+/** The documents that were open with unsaved changes before a rename */
+export function dirtyDocuments(): Set<string> {
+    return new Set(vscode.workspace.textDocuments.filter(d => d.isDirty).map(d => d.uri.toString()));
+}
+
+/** Saves what a rename changed, like Visual Studio; other unsaved changes are left alone */
+export async function saveChanged(edit: vscode.WorkspaceEdit, dirtyBefore: Set<string>, moved: (uri: vscode.Uri) => vscode.Uri = uri => uri): Promise<void> {
+    for (const uri of edit.entries().map(([uri]) => moved(uri))) {
         if (dirtyBefore.has(uri.toString())) {
             continue;
         }
@@ -45,32 +75,41 @@ export async function renameFileAndType(oldPath: string, newPath: string): Promi
     }
 }
 
-/** The language server's edit renaming the file's type, or undefined if not applicable or declined */
-async function typeRenameEdit(oldPath: string, newPath: string): Promise<vscode.WorkspaceEdit | undefined> {
+/** The type name a file stands for before and after a rename (a code file keeping its extension, to a name that is an identifier), or undefined */
+export function typeNamesOfRename(oldPath: string, newPath: string): { oldName: string; newName: string } | undefined {
     const ext = path.extname(oldPath);
     if (!codeExtensions.includes(ext.toLowerCase()) || path.extname(newPath) !== ext) {
         return undefined;
     }
-
     const oldName = path.basename(oldPath, ext);
     const newName = path.basename(newPath, ext);
-    if (oldName === newName || !identifier.test(newName)) {
+    return oldName === newName || !identifier.test(newName) ? undefined : { oldName, newName };
+}
+
+/** The language server's edit renaming the file's type, or undefined if not applicable or declined */
+async function typeRenameEdit(oldPath: string, newPath: string): Promise<vscode.WorkspaceEdit | undefined> {
+    const names = typeNamesOfRename(oldPath, newPath);
+    if (!names) {
         return undefined;
     }
+    return renameTypeOfFile(vscode.Uri.file(oldPath), names.oldName, names.newName, true);
+}
 
-    const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[] | undefined>(
-        'vscode.executeDocumentSymbolProvider',
-        vscode.Uri.file(oldPath)
-    );
+/**
+ * The language server's edit renaming the type `oldName` that `uri` declares (and its references) to `newName`, after asking;
+ * undefined when the file has no such type, the user declines or there is no language server
+ */
+export async function renameTypeOfFile(uri: vscode.Uri, oldName: string, newName: string, modal: boolean): Promise<vscode.WorkspaceEdit | undefined> {
+    const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[] | undefined>('vscode.executeDocumentSymbolProvider', uri);
     const type = findType(symbols ?? [], oldName);
     if (!type) {
-        log.debug(`No type '${oldName}' found in ${oldPath} (or no language server)`);
+        log.debug(`No type '${oldName}' found in ${uri.fsPath} (or no language server)`);
         return undefined;
     }
 
     const choice = await vscode.window.showInformationMessage(
         t('Would you also like to rename the type \'{0}\' to \'{1}\' and all references to it?', oldName, newName),
-        { modal: true },
+        { modal },
         'Yes',
         'No'
     );
@@ -78,31 +117,41 @@ async function typeRenameEdit(oldPath: string, newPath: string): Promise<vscode.
         return undefined;
     }
 
-    const edit = await vscode.commands.executeCommand<vscode.WorkspaceEdit | undefined>(
-        'vscode.executeDocumentRenameProvider',
-        vscode.Uri.file(oldPath),
-        type.selectionRange.start,
-        newName
-    );
+    const edit = await vscode.commands.executeCommand<vscode.WorkspaceEdit | undefined>('vscode.executeDocumentRenameProvider', uri, type.selectionRange.start, newName);
     if (!edit) {
         log.warn(`Language server returned no edit to rename '${oldName}' to '${newName}'`);
     }
     return edit;
 }
 
-function findType(symbols: vscode.DocumentSymbol[], name: string): vscode.DocumentSymbol | undefined {
-    const typeKinds = [
-        vscode.SymbolKind.Class, // also records
-        vscode.SymbolKind.Struct,
-        vscode.SymbolKind.Interface,
-        vscode.SymbolKind.Enum,
-    ];
+const typeKinds = (): vscode.SymbolKind[] => [
+    vscode.SymbolKind.Class, // also records
+    vscode.SymbolKind.Struct,
+    vscode.SymbolKind.Interface,
+    vscode.SymbolKind.Enum,
+];
+
+export function findType(symbols: vscode.DocumentSymbol[], name: string): vscode.DocumentSymbol | undefined {
     for (const symbol of symbols) {
         // Only DocumentSymbol has selectionRange (the name itself), which the rename needs
-        if (symbol.name === name && typeKinds.includes(symbol.kind) && symbol.selectionRange) {
+        if (symbol.name === name && typeKinds().includes(symbol.kind) && symbol.selectionRange) {
             return symbol;
         }
         const nested = findType(symbol.children ?? [], name);
+        if (nested) {
+            return nested;
+        }
+    }
+    return undefined;
+}
+
+/** The type declared where the cursor was (its name starts there), whatever it is called now */
+export function typeStartingAt(symbols: vscode.DocumentSymbol[], start: vscode.Position): vscode.DocumentSymbol | undefined {
+    for (const symbol of symbols) {
+        if (typeKinds().includes(symbol.kind) && symbol.selectionRange?.start.isEqual(start)) {
+            return symbol;
+        }
+        const nested = typeStartingAt(symbol.children ?? [], start);
         if (nested) {
             return nested;
         }

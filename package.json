@@ -474,6 +474,11 @@
         "category": ".NET"
       },
       {
+        "command": "shinobi.renameSymbol",
+        "title": "%command.shinobi.renameSymbol.title%",
+        "category": ".NET"
+      },
+      {
         "command": "shinobi.refactor.extractSuperclass",
         "title": "%command.shinobi.refactor.extractSuperclass.title%",
         "category": ".NET"
@@ -1523,6 +1528,10 @@
           "when": "false"
         },
         {
+          "command": "shinobi.renameSymbol",
+          "when": "false"
+        },
+        {
           "command": "shinobi.refactor.extractSuperclass",
           "when": "false"
         },
@@ -1817,6 +1826,11 @@
       ]
     },
     "keybindings": [
+      {
+        "command": "shinobi.renameSymbol",
+        "key": "f2",
+        "when": "editorTextFocus && editorLangId == csharp && !editorReadonly"
+      },
       {
         "command": "shinobi.solution.startWithoutDebugging",
         "key": "ctrl+f5",

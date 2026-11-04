@@ -150,6 +150,7 @@
   "command.shinobi.refactor.convertType.title": "转换抽象类 / 接口...",
   "command.shinobi.refactor.extractClass.title": "提取类...",
   "command.shinobi.refactor.moveTypeNamespace.title": "将类型移动到命名空间...",
+  "command.shinobi.renameSymbol.title": "重命名符号（并提示重命名文件）",
   "command.shinobi.refactor.changeSignature.title": "更改签名...",
   "config.shinobi.refactorings.disabled.markdownDescription": "不在灯泡和“重构”菜单（Ctrl+.）中提供的重构。命令仍保持注册，因此绑定到它们的快捷键仍然有效。",
   "config.shinobi.refactorings.disabled.label.extractInterface": "提取接口",

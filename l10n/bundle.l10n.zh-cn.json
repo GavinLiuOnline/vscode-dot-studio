@@ -360,5 +360,9 @@
   "Change signature...": "更改签名...",
   "Looking for the methods that change along...": "正在查找一并更改的方法...",
   "Put the cursor on the name of a method or constructor to change its signature.": "请将光标放在方法或构造函数的名称上以更改其签名。",
-  "Change Signature of {0}": "更改 {0} 的签名"
+  "Change Signature of {0}": "更改 {0} 的签名",
+  "Could not rename the type '{0}'.": "无法重命名类型“{0}”。",
+  "'{0}' exists already, so the file keeps the name '{1}'.": "“{0}”已存在，因此文件保留名称“{1}”。",
+  "Would you also like to rename the file '{0}' to '{1}'?": "是否也将文件“{0}”重命名为“{1}”？",
+  "Could not rename {0}": "无法重命名 {0}"
 }

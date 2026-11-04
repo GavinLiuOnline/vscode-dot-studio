@@ -360,5 +360,9 @@
   "Change signature...": "Change signature...",
   "Looking for the methods that change along...": "Looking for the methods that change along...",
   "Put the cursor on the name of a method or constructor to change its signature.": "Put the cursor on the name of a method or constructor to change its signature.",
-  "Change Signature of {0}": "Change Signature of {0}"
+  "Change Signature of {0}": "Change Signature of {0}",
+  "Could not rename the type '{0}'.": "Could not rename the type '{0}'.",
+  "'{0}' exists already, so the file keeps the name '{1}'.": "'{0}' exists already, so the file keeps the name '{1}'.",
+  "Would you also like to rename the file '{0}' to '{1}'?": "Would you also like to rename the file '{0}' to '{1}'?",
+  "Could not rename {0}": "Could not rename {0}"
 }

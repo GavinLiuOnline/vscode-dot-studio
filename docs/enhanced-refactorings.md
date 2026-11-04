@@ -201,6 +201,15 @@ Methods that cannot change their signature are skipped: overrides, virtual and a
 
 **The result is compiled first.** What the analysis accepted but does not compile (an overload that now has the same signature, a conversion it did not see) is found by compiling halves of the changes on a copy of the solution; the offending ones are left out, and when none compiles nothing is changed. After it ran, a message says how many places use the new type now.
 
+## Keeping file and type names in step
+
+Like Visual Studio, a file and the type named after it are renamed together, in all three ways to rename:
+- **In the Solution Explorer** (F2 on a `.cs` file): asks whether to rename the type of the same name and all references to it, then renames the file.
+- **In VS Code's Explorer** (or any other rename of the file): once the file is renamed, the same question is asked (a message, not a dialog).
+- **F2 on the type's name in the editor:** the rename runs as it always does; when the file is named after the type, you are then asked whether to rename the file to the new name too. If a file with that name exists already, the file keeps its name and you are told. This works through the F2 key (a `.NET` key binding for C# files); the rename from the context menu or the command palette is VS Code's own and does not ask.
+
+A file that only moves, a rename to a name that is no identifier and files that declare no type of that name are left alone. The type's rename is the C# server's, so it needs the C# extension.
+
 ## Needs
 
 A C# extension that has the language server (`ms-dotnettools.csharp` or `muhammad-sammy.csharp`, with its Roslyn server, not OmniSharp). The refactorings are a small .NET assembly (`out/server-extension/Shinobi.Refactorings.dll`, built with the extension) that the C# extension hands to its server; nothing else is installed.

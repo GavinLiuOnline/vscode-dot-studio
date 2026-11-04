@@ -14,6 +14,7 @@ Keys for Windows and Linux; on macOS use Cmd instead of Ctrl where VS Code does 
 | Ctrl+X | Cut the file or folder (Paste moves it) (macOS: Cmd+X) | Solution Explorer |
 | Ctrl+V | Paste into the project or folder (macOS: Cmd+V) | Solution Explorer |
 | F2 | Rename | Solution Explorer |
+| F2 | Rename Symbol; when the file is named after the type renamed, offers to rename the file too | C# editor |
 | Delete | Delete a file or folder; remove a solution folder, solution item or reference (macOS: Cmd+Backspace) | Solution Explorer |
 
 Keys in the Solution Explorer act on the node that has focus. Which commands each node offers: [Context menus](context-menus.md).
