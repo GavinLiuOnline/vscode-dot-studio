@@ -364,5 +364,7 @@
   "Could not rename the type '{0}'.": "无法重命名类型“{0}”。",
   "'{0}' exists already, so the file keeps the name '{1}'.": "“{0}”已存在，因此文件保留名称“{1}”。",
   "Would you also like to rename the file '{0}' to '{1}'?": "是否也将文件“{0}”重命名为“{1}”？",
-  "Could not rename {0}": "无法重命名 {0}"
+  "Could not rename {0}": "无法重命名 {0}",
+  "{0} had unsaved changes of yours, so it is changed but not saved.": "{0} 有您未保存的更改，因此它已被修改但未保存。",
+  "{0} had unsaved changes of yours, so they are changed but not saved.": "{0} 有您未保存的更改，因此它们已被修改但未保存。"
 }

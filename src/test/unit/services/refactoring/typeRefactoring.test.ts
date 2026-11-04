@@ -1,5 +1,6 @@
 const edits: { replace: unknown[]; created: unknown[] } = { replace: [], created: [] };
 const saved: string[] = [];
+const dirty = new Set<string>();
 const picked = jest.fn();
 const disabled: string[] = [];
 const document = jest.fn();
@@ -26,7 +27,7 @@ jest.mock('vscode', () => ({
         withProgress: async (_options: unknown, task: () => Promise<unknown>) => task(),
     },
     workspace: {
-        openTextDocument: async (uri: { fsPath: string }) => ({ uri, isDirty: false, save: async () => { saved.push(uri.fsPath); } }),
+        openTextDocument: async (uri: { fsPath: string }) => ({ uri, isDirty: dirty.has(uri.fsPath), save: async () => { saved.push(uri.fsPath); } }),
         applyEdit: async () => true,
         getConfiguration: () => ({ get: (_key: string, fallback: unknown) => (disabled.length > 0 ? disabled : fallback) }),
     },
@@ -59,7 +60,7 @@ function setup(spec = EXTRACT_PARTIAL) {
 }
 
 describe('TypeRefactoring', () => {
-    beforeEach(() => { disabled.length = 0; edits.replace = []; edits.created = []; saved.length = 0; picked.mockReset(); existsSync.mockReturnValue(false); });
+    beforeEach(() => { disabled.length = 0; edits.replace = []; edits.created = []; saved.length = 0; dirty.clear(); picked.mockReset(); existsSync.mockReturnValue(false); });
 
     it('offers its entry on the name of a type only, as the server says', async () => {
         const refactoring = setup();
@@ -173,6 +174,22 @@ describe('TypeRefactoring', () => {
         expect(document.mock.calls[1][2]).toMatchObject({ kind: 'pullUp', targetId: 'A', memberIds: ['1:A'], position });
         expect(edits.replace).toHaveLength(2);
         expect(saved).toEqual(['/p/Order.cs', '/p/Animal.cs']);
+    });
+
+    it('leaves a file with unsaved changes of the user unsaved, and says so', async () => {
+        const refactoring = setup(PULL_UP as never);
+        document
+            .mockResolvedValueOnce({ typeName: 'Dog', targets: [{ id: 'A', name: 'Animal', kind: 'class', where: '', isAbstract: false }], members: [], selected: [] })
+            .mockResolvedValueOnce({
+                edits: [{ startLine: 8, startCharacter: 0, endLine: 10, endCharacter: 0, newText: '' }],
+                others: [{ path: '/p/Animal.cs', edits: [{ startLine: 5, startCharacter: 0, endLine: 5, endCharacter: 0, newText: 'int x;\n' }] }],
+                summary: 'Moved.',
+            });
+        picked.mockResolvedValue({ kind: 'pullUp', targetId: 'A', memberIds: ['1:A'], abstractIds: [] });
+        dirty.add('/p/Animal.cs');
+        await refactoring.run(uri, position);
+        expect(saved).toEqual(['/p/Order.cs']);
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith('Moved. Animal.cs had unsaved changes of yours, so it is changed but not saved.');
     });
 
     it('Use Base Type asks the cheap list for the lightbulb and the counting one when it runs, and says what it did', async () => {

@@ -364,5 +364,7 @@
   "Could not rename the type '{0}'.": "Could not rename the type '{0}'.",
   "'{0}' exists already, so the file keeps the name '{1}'.": "'{0}' exists already, so the file keeps the name '{1}'.",
   "Would you also like to rename the file '{0}' to '{1}'?": "Would you also like to rename the file '{0}' to '{1}'?",
-  "Could not rename {0}": "Could not rename {0}"
+  "Could not rename {0}": "Could not rename {0}",
+  "{0} had unsaved changes of yours, so it is changed but not saved.": "{0} had unsaved changes of yours, so it is changed but not saved.",
+  "{0} had unsaved changes of yours, so they are changed but not saved.": "{0} had unsaved changes of yours, so they are changed but not saved."
 }

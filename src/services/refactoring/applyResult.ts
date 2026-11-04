@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import * as path from 'path';
 import { logger } from '../../core/logger';
 import { refreshProjectForNewFile } from './newFileRefresh';
 import { t } from '../../core/i18n';
@@ -61,15 +62,29 @@ export async function applyServerResult(uri: vscode.Uri, result: ServerResult, t
             log.debug('Touched the project file: the language server does not see new files in multi-targeted projects otherwise');
         }
     }
-    if (!wasDirty) {
-        await document.save();
+    // what the user had unsaved stays unsaved (their own changes are not ours to save): it is said, so a file that stays unsaved is no surprise
+    const unsaved: string[] = [];
+    if (wasDirty) {
+        unsaved.push(path.basename(uri.fsPath));
+    } else if (await document.save() === false) {
+        unsaved.push(path.basename(uri.fsPath));
     }
-    for (const other of others.filter(o => !o.wasDirty)) {
-        await other.document.save();
+    for (const other of others) {
+        if (other.wasDirty) {
+            unsaved.push(path.basename(other.document.uri.fsPath));
+        } else if (await other.document.save() === false) {
+            unsaved.push(path.basename(other.document.uri.fsPath));
+        }
     }
-    log.info(`${title} on ${uri.fsPath}`);
-    if (result.summary) {
-        void vscode.window.showInformationMessage(result.summary);
+    log.info(`${title} on ${uri.fsPath}${result.summary ? `: ${result.summary}` : ''}`
+        + `${others.length > 0 ? `; also changed: ${others.map(o => o.document.uri.fsPath).join(', ')}` : ''}`
+        + `${unsaved.length > 0 ? `; left unsaved (had unsaved changes): ${unsaved.join(', ')}` : ''}`);
+    const note = unsaved.length === 0 ? '' : unsaved.length === 1
+        ? t('{0} had unsaved changes of yours, so it is changed but not saved.', unsaved[0])
+        : t('{0} had unsaved changes of yours, so they are changed but not saved.', unsaved.join(', '));
+    const message = [result.summary, note].filter(Boolean).join(' ');
+    if (message) {
+        void vscode.window.showInformationMessage(message);
     }
     return true;
 }
