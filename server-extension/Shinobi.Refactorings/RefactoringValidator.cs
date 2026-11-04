@@ -28,6 +28,13 @@ public static class RefactoringValidator
         var text = await document.GetTextAsync(ct).ConfigureAwait(false);
         var solution = original.WithDocumentText(document.Id, text.WithChanges(Changes(text, result.Edits)));
         var projects = new HashSet<ProjectId> { project.Id };
+        // a file of several projects (a project built for several frameworks, a linked file) is one file: every copy gets the edits
+        foreach (var copy in original.Projects.SelectMany(p => p.Documents).Where(d => d.Id != document.Id && string.Equals(d.FilePath, document.FilePath, StringComparison.OrdinalIgnoreCase)))
+        {
+            var copyText = await copy.GetTextAsync(ct).ConfigureAwait(false);
+            solution = solution.WithDocumentText(copy.Id, copyText.WithChanges(Changes(copyText, result.Edits)));
+            projects.Add(copy.Project.Id);
+        }
         foreach (var other in result.Others ?? [])
         {
             // every document of that path (a file linked into several projects is one file)

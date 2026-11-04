@@ -191,4 +191,32 @@ public class MoveTypeNamespaceTests
         Assert.Equal(["One.Two", "Three", "Three.Four"], info!.Namespaces);
         Assert.Equal("One.Two", info.Namespace);
     }
+
+    [Fact]
+    public async Task A_file_of_several_projects_is_checked_in_every_project_it_is_in()
+    {
+        // a project built for two frameworks is two projects with the same files
+        var refs = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator)
+            .Where(p => Path.GetFileName(p) is { } n && (n.StartsWith("System.") || n is "netstandard.dll" or "mscorlib.dll"))
+            .Select(p => (Microsoft.CodeAnalysis.MetadataReference)Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(p)).ToList();
+        var workspace = new Microsoft.CodeAnalysis.AdhocWorkspace();
+        Microsoft.CodeAnalysis.Project Make(string name)
+        {
+            var project = workspace.AddProject(Microsoft.CodeAnalysis.ProjectInfo.Create(Microsoft.CodeAnalysis.ProjectId.CreateNewId(), Microsoft.CodeAnalysis.VersionStamp.Create(), name, name, Microsoft.CodeAnalysis.LanguageNames.CSharp,
+                compilationOptions: new Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions(Microsoft.CodeAnalysis.OutputKind.DynamicallyLinkedLibrary), metadataReferences: refs));
+            project = project.AddDocument("Order.cs", Microsoft.CodeAnalysis.Text.SourceText.From("namespace App.Old;\n\npublic class Order { }\n"), filePath: "/shared/Order.cs").Project;
+            project = project.AddDocument("Use.cs", Microsoft.CodeAnalysis.Text.SourceText.From("namespace App.Other;\n\nusing App.Old;\n\npublic class Use { public Order O = new(); }\n"), filePath: "/shared/Use.cs").Project;
+            workspace.TryApplyChanges(project.Solution);
+            return workspace.CurrentSolution.GetProject(project.Id)!;
+        }
+        var net10 = Make("Lib.net10");
+        Make("Lib.net472");
+        var document = workspace.CurrentSolution.GetProject(net10.Id)!.Documents.Single(d => d.Name == "Order.cs");
+        var source = (await document.GetTextAsync()).ToString();
+
+        var result = await MoveTypeNamespaceEngine.RunAsync(document, new MoveTypeNamespaceRequest(Harness.At(source, "class Order", "Order"), "App.New"), default);
+
+        Assert.NotNull(result);
+        Assert.Null(result!.Errors);
+    }
 }
