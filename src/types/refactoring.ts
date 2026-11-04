@@ -153,6 +153,43 @@ export interface MoveTypeNamespaceChoice {
     namespace: string;
 }
 
+/** A parameter of the method as it is declared now */
+export interface SignatureParameterInfo {
+    name: string;
+    type: string;
+    /** `ref`, `out`, `in`, `params`, `this`... as written (empty: none) */
+    modifier: string;
+    defaultValue?: string | null;
+}
+
+/** What Change Signature asks: the parameters of the method; the methods that change along come with the details */
+export interface ChangeSignatureForm {
+    kind: 'changeSignature';
+    /** The type the method is in */
+    typeName: string;
+    methodName: string;
+    returnType: string;
+    parameters: SignatureParameterInfo[];
+    /** The overridden, overriding, implemented and implementing methods that change with it */
+    related: string[];
+}
+
+/** One parameter of the new signature: an existing one (its index in the old list) or a new one (`oldIndex` null) */
+export interface SignatureParameterChoice {
+    oldIndex: number | null;
+    name: string;
+    type: string;
+    /** A new parameter: its default value (it is optional) */
+    defaultValue?: string;
+    /** A new parameter: what the calls pass (empty for an optional one: the calls leave it out) */
+    callSiteValue?: string;
+}
+
+export interface ChangeSignatureChoice {
+    kind: 'changeSignature';
+    parameters: SignatureParameterChoice[];
+}
+
 /** What Convert Abstract Class <-> Interface shows: what is rewritten and, for a class with members that have a body, the choice to keep them */
 export interface ConvertTypeForm {
     kind: 'convertType';
@@ -196,8 +233,8 @@ export interface UseBaseTypeChoice {
 }
 
 /** The forms the tab can show; every refactoring that needs choices adds one */
-export type RefactorForm = ExtractInterfaceForm | ExtractPartialForm | ExtractSuperclassForm | PullUpForm | UseBaseTypeForm | PushDownForm | ConvertTypeForm | ExtractClassForm | MoveTypeNamespaceForm;
-export type RefactorChoice = ExtractInterfaceChoice | ExtractPartialChoice | ExtractSuperclassChoice | PullUpChoice | UseBaseTypeChoice | PushDownChoice | ConvertTypeChoice | ExtractClassChoice | MoveTypeNamespaceChoice;
+export type RefactorForm = ExtractInterfaceForm | ExtractPartialForm | ExtractSuperclassForm | PullUpForm | UseBaseTypeForm | PushDownForm | ConvertTypeForm | ExtractClassForm | MoveTypeNamespaceForm | ChangeSignatureForm;
+export type RefactorChoice = ExtractInterfaceChoice | ExtractPartialChoice | ExtractSuperclassChoice | PullUpChoice | UseBaseTypeChoice | PushDownChoice | ConvertTypeChoice | ExtractClassChoice | MoveTypeNamespaceChoice | ChangeSignatureChoice;
 
 /** What a token of the C# preview is; `plain` has no colour */
 export type TokenKind = 'keyword' | 'interface' | 'class' | 'method' | 'property' | 'parameter' | 'plain';

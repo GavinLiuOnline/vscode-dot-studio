@@ -136,7 +136,8 @@
                 "pushDown",
                 "useBaseType",
                 "convertType",
-                "moveTypeNamespace"
+                "moveTypeNamespace",
+                "changeSignature"
               ],
               "enumItemLabels": [
                 "%config.shinobi.refactorings.disabled.label.extractInterface%",
@@ -149,7 +150,8 @@
                 "%config.shinobi.refactorings.disabled.label.pushDown%",
                 "%config.shinobi.refactorings.disabled.label.useBaseType%",
                 "%config.shinobi.refactorings.disabled.label.convertType%",
-                "%config.shinobi.refactorings.disabled.label.moveTypeNamespace%"
+                "%config.shinobi.refactorings.disabled.label.moveTypeNamespace%",
+                "%config.shinobi.refactorings.disabled.label.changeSignature%"
               ]
             }
           },
@@ -464,6 +466,11 @@
       {
         "command": "shinobi.refactor.moveTypeNamespace",
         "title": "%command.shinobi.refactor.moveTypeNamespace.title%",
+        "category": ".NET"
+      },
+      {
+        "command": "shinobi.refactor.changeSignature",
+        "title": "%command.shinobi.refactor.changeSignature.title%",
         "category": ".NET"
       },
       {
@@ -1509,6 +1516,10 @@
         },
         {
           "command": "shinobi.refactor.moveTypeNamespace",
+          "when": "false"
+        },
+        {
+          "command": "shinobi.refactor.changeSignature",
           "when": "false"
         },
         {

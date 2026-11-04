@@ -10,6 +10,7 @@ import { t } from '../shared/i18n';
 import { ConvertTypeFormView } from './ConvertTypeFormView';
 import { ExtractClassFormView } from './ExtractClassFormView';
 import { MoveTypeNamespaceFormView } from './MoveTypeNamespaceFormView';
+import { ChangeSignatureFormView } from './ChangeSignatureFormView';
 
 export interface RefactorApi {
     postMessage(message: RefactorRequest): void;
@@ -54,6 +55,7 @@ export const App: React.FC<{ api: RefactorApi }> = ({ api }) => {
         case 'pushDown': return <PushDownFormView form={form} palette={palette} onSubmit={submit} onCancel={cancel} />;
         case 'extractClass': return <ExtractClassFormView form={form} palette={palette} onSubmit={submit} onCancel={cancel} />;
         case 'moveTypeNamespace': return <MoveTypeNamespaceFormView form={form} onSubmit={submit} onCancel={cancel} />;
+        case 'changeSignature': return <ChangeSignatureFormView form={form} onSubmit={submit} onCancel={cancel} />;
         case 'convertType': return <ConvertTypeFormView form={form} onSubmit={submit} onCancel={cancel} />;
         case 'useBaseType': return <UseBaseTypeFormView form={form} onSubmit={submit} onCancel={cancel} />;
     }

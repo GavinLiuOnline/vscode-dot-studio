@@ -150,6 +150,7 @@
   "command.shinobi.refactor.convertType.title": "转换抽象类 / 接口...",
   "command.shinobi.refactor.extractClass.title": "提取类...",
   "command.shinobi.refactor.moveTypeNamespace.title": "将类型移动到命名空间...",
+  "command.shinobi.refactor.changeSignature.title": "更改签名...",
   "config.shinobi.refactorings.disabled.markdownDescription": "不在灯泡和“重构”菜单（Ctrl+.）中提供的重构。命令仍保持注册，因此绑定到它们的快捷键仍然有效。",
   "config.shinobi.refactorings.disabled.label.extractInterface": "提取接口",
   "config.shinobi.refactorings.disabled.label.extractPartial": "将成员提取到分部类",
@@ -161,5 +162,6 @@
   "config.shinobi.refactorings.disabled.label.pushDown": "将成员下移",
   "config.shinobi.refactorings.disabled.label.useBaseType": "尽可能使用基类型",
   "config.shinobi.refactorings.disabled.label.convertType": "转换抽象类 / 接口",
-  "config.shinobi.refactorings.disabled.label.moveTypeNamespace": "将类型移动到命名空间"
+  "config.shinobi.refactorings.disabled.label.moveTypeNamespace": "将类型移动到命名空间",
+  "config.shinobi.refactorings.disabled.label.changeSignature": "更改签名"
 }

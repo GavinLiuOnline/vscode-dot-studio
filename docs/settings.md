@@ -18,7 +18,7 @@ Settings > Extensions > Shinobi .NET Studio, grouped as below.
 
 | Setting | Default | |
 |---|---|---|
-| `shinobi.refactorings.disabled` | `[]` | Refactorings of this extension that are not offered in the lightbulb and the Refactor menu (Ctrl+.), picked from a list: `extractInterface`, `extractPartial`, `extractSuperclass`, `extractClass`, `extractMethodChecked`, `extractLocalFunctionChecked`, `pullUp`, `pushDown`, `useBaseType`, `convertType`, `moveTypeNamespace`. The commands stay registered, so a key binding to one still works; the change applies at once |
+| `shinobi.refactorings.disabled` | `[]` | Refactorings of this extension that are not offered in the lightbulb and the Refactor menu (Ctrl+.), picked from a list: `extractInterface`, `extractPartial`, `extractSuperclass`, `extractClass`, `extractMethodChecked`, `extractLocalFunctionChecked`, `pullUp`, `pushDown`, `useBaseType`, `convertType`, `moveTypeNamespace`, `changeSignature`. The commands stay registered, so a key binding to one still works; the change applies at once |
 
 ### Error List
 

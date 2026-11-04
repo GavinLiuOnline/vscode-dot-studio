@@ -83,7 +83,7 @@ What this extension does compared with Visual Studio 2022, feature by feature: w
 | Move to namespace | [Move Type to Namespace](enhanced-refactorings.md#move-type-to-namespace): any namespace, with the usings of every place that uses the type | ✅ |
 | Extract members to a partial class, Extract Superclass, Extract Class, Pull Members Up, Push Members Down, Use Base Type Where Possible, Convert Abstract Class ↔ Interface (Rider's) | [Refactorings](enhanced-refactorings.md), each compiled before it is applied | ✅ |
 | Extract Method / Local Function | The server's own, plus a variant [checked by the compiler](enhanced-refactorings.md) that repairs unassigned `out` parameters | ✅ |
-| Change Signature | Not offered by the Roslyn server; planned as a [refactoring](enhanced-refactorings.md) with a form for the parameter list | ❌ |
+| Change Signature | [Change Signature](enhanced-refactorings.md#change-signature): reorder, add, remove, rename, retype; the callers, overrides, implementations and documentation follow | ✅ |
 | Task List (`// TODO`) | VS Code's extensions for TODO comments | ❌ |
 | `.resx` editor | Not offered | ❌ |
 | Git | VS Code's Source Control view | ➖ |

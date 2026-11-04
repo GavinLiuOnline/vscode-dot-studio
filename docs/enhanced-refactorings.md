@@ -25,7 +25,7 @@ The entries sit in the group of the Refactor menu that fits them, so `editor.act
 | Convert Abstract Class ↔ Interface | No (Rider) | ✅ [Added](#convert-abstract-class--interface) |
 | Extract Class (members go to a new class the type delegates to) | No (Rider) | ✅ [Added](#extract-class) |
 | Move Type to Namespace (pick the namespace) | Yes | ✅ [Added](#move-type-to-namespace) |
-| Change Signature (add, remove, reorder parameters and update the callers) | Yes | 🔜 Planned: a form with the parameter list |
+| Change Signature (add, remove, reorder, rename, retype parameters and update the callers) | Yes | ✅ [Added](#change-signature) |
 | Extract Interface: generic constraints of the type | Yes | ✅ Added: the interface gets the type's `where` clauses |
 
 The order is by cost, cheapest first (Phase 45 in the [roadmap](roadmap.md)). Every refactoring here follows the same pattern: the lightbulb entry opens the form, the confirm button applies, Cancel or Esc changes nothing. A refactoring the C# server gets itself later is dropped from here. Ideas go to the [roadmap](roadmap.md) (Phase 45).
@@ -157,6 +157,22 @@ What it does:
 It refuses nested types, namespaces declared inside another namespace, partial types with several parts, and a type that shares a file-scoped namespace (or a file without namespace) with other types: move it to its own file first.
 
 **The result is compiled first** in every project it touches, and nothing is applied when it would add errors (a name that is now ambiguous, for one).
+
+## Change Signature
+
+Visual Studio's *Change Signature*. Put the cursor on the name of a method, a constructor or a local function, in its declaration or in a call, and press Ctrl+. > **Change signature...** (in the **Rewrite** group). The entry is not offered for methods declared in a library.
+
+The form lists the parameters in a table: move one up or down, rename it, give it another type, **Remove** it (a removed row stays visible and can be restored) or **Add parameter**. A new parameter needs a name, a type and either what every call passes for it, or a default value (it is then optional and the calls leave it out). A preview shows the new declaration; **Change Signature** is off while the list has a problem (a name that is no identifier or used twice, a required parameter behind an optional one, a `params` parameter that is not last) or nothing changed.
+
+What it does:
+- **The declaration, and the methods that must stay equal:** the methods it overrides or implements, and those that override or implement it (also in other files and projects), get the same parameters. The form lists them. A method that overrides or implements one from a library is refused.
+- **Every call:** the arguments follow the parameters (reordered, removed, the value for a new one). Where a parameter is left out in the middle (an optional one, a new one with a default value), the arguments behind it get their names. Named arguments stay named, and are renamed with the parameter. Constructor calls (`new T(...)`, `new(...)`, `: base(...)`, `: this(...)`) and calls of an extension method, in both forms (`x.Pad(1)` and `Pad(x, 1)`), change as well.
+- **A renamed parameter:** its uses in the body, the `nameof`s, the named arguments and `<paramref>` in the documentation.
+- **The documentation:** the `<param>` tags follow the new order, the tag of a removed parameter goes, a new parameter gets an empty tag.
+
+Limits: the first parameter (`this`) of an extension method stays where it is; the return type, `ref`/`out`/`in` modifiers and attributes are not edited; a reference that is not a call (a method group such as `list.Select(Add)`) is left as it is and counted in the message, the compiler check then lists what no longer fits. Removing a parameter removes the arguments too, and with them whatever side effects they had; reordering changes the order the arguments are evaluated in.
+
+**The result is compiled first** in every project it touches, and nothing is applied when it would add errors (an argument whose type no longer fits the new parameter type, for one).
 
 ## Convert Abstract Class ↔ Interface
 

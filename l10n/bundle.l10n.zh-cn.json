@@ -356,5 +356,9 @@
   "Move type to namespace...": "将类型移动到命名空间...",
   "Looking for the namespaces of the solution...": "正在查找解决方案的命名空间...",
   "Put the cursor on the name of a type to move it to another namespace.": "请将光标放在类型的名称上以将其移动到其他命名空间。",
-  "Move {0} to Namespace": "将 {0} 移动到命名空间"
+  "Move {0} to Namespace": "将 {0} 移动到命名空间",
+  "Change signature...": "更改签名...",
+  "Looking for the methods that change along...": "正在查找一并更改的方法...",
+  "Put the cursor on the name of a method or constructor to change its signature.": "请将光标放在方法或构造函数的名称上以更改其签名。",
+  "Change Signature of {0}": "更改 {0} 的签名"
 }

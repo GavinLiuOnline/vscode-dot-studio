@@ -44,6 +44,7 @@ import { USE_BASE_TYPE } from '../../../../services/refactoring/useBaseType';
 import { PUSH_DOWN } from '../../../../services/refactoring/pushDown';
 import { EXTRACT_CLASS } from '../../../../services/refactoring/extractClass';
 import { MOVE_TYPE_NAMESPACE } from '../../../../services/refactoring/moveTypeNamespace';
+import { CHANGE_SIGNATURE } from '../../../../services/refactoring/changeSignature';
 import { CONVERT_TYPE } from '../../../../services/refactoring/convertType';
 
 const uri = { fsPath: '/p/Order.cs', toString: () => 'file:///p/Order.cs' } as vscode.Uri;
@@ -240,6 +241,17 @@ describe('TypeRefactoring', () => {
         expect(await refactoring.provideCodeActions(lineOf('public enum Color'), at(4, 14))).toHaveLength(1);
     });
 
+    it('Change Signature is offered on a method line or a call, and not where the server refuses', async () => {
+        const refactoring = setup(CHANGE_SIGNATURE as never);
+        document.mockResolvedValueOnce({ typeName: 'Calc', methodName: 'Add', returnType: 'int', parameters: [], related: [], refusal: null });
+        const [action] = await refactoring.provideCodeActions(lineOf('    public int Add(int a, int b)'), at(4, 16));
+        expect(action.title).toBe('Change signature...');
+        expect(document.mock.calls[0][1]).toBe('Shinobi.Refactorings.ChangeSignatureInfoHandler');
+        document.mockResolvedValueOnce({ typeName: 'Console', methodName: 'WriteLine', returnType: 'void', parameters: [], related: [], refusal: 'WriteLine is declared in a library' });
+        expect(await refactoring.provideCodeActions(lineOf('    Console.WriteLine(x);'), at(4, 14))).toEqual([]);
+        expect(await refactoring.provideCodeActions(lineOf('    public int Total;'), at(4, 14))).toEqual([]);
+    });
+
     it('offers nothing, and does not ask the server, for a refactoring the user hides', async () => {
         const refactoring = setup(EXTRACT_CLASS as never);
         disabled.push('extractClass');
@@ -261,6 +273,7 @@ describe('TypeRefactoring', () => {
         expect(await kindOf(EXTRACT_CLASS, { typeName: 'Order', className: 'C', members: [] })).toBe('refactor.extract');
         expect(await kindOf(CONVERT_TYPE, { typeName: 'Order', direction: 'toInterface', implementers: [], bodies: [] })).toBe('refactor.rewrite');
         expect(await kindOf(PULL_UP, { typeName: 'Order', targets: [{ id: 'B' }], members: [], selected: [] })).toBe('refactor.move');
+        expect(await kindOf(CHANGE_SIGNATURE, { typeName: 'Calc', methodName: 'Add', returnType: 'int', parameters: [], related: [] }, 'int Add(int a)')).toBe('refactor.rewrite');
         expect(await kindOf(MOVE_TYPE_NAMESPACE, { typeName: 'Order', namespace: 'A', namespaces: [] })).toBe('refactor.move.namespace');
     });
 });
