@@ -4,6 +4,7 @@ import { RefactorChoice, RefactorForm } from '../../types/refactoring';
 import { RefactoringPanel } from '../../webview/providers/RefactoringPanel';
 import { CSharpServer } from './csharpServer';
 import { applyServerResult, ServerResult } from './applyResult';
+import { t } from '../../core/i18n';
 
 const log = logger('TypeRefactoring');
 
@@ -85,7 +86,7 @@ export class TypeRefactoring implements vscode.CodeActionProvider {
         let listed = info;
         if (this.spec.detailsHandler) {
             const detailsHandler = this.spec.detailsHandler;
-            const details = await vscode.window.withProgress({ location: vscode.ProgressLocation.Window, title: this.spec.detailsProgress ?? 'Looking through the solution...' },
+            const details = await vscode.window.withProgress({ location: vscode.ProgressLocation.Window, title: this.spec.detailsProgress ?? t('Looking through the solution...') },
                 () => this.server.document<unknown, typeof info>(uri, detailsHandler, { position }));
             listed = details ?? info;
         }
@@ -97,7 +98,7 @@ export class TypeRefactoring implements vscode.CodeActionProvider {
         const result = await this.server.document<RefactorChoice & { position: vscode.Position }, ServerResult | null>(
             uri, `${this.spec.handler}Handler`, { ...choice, position });
         if (!result) {
-            throw new Error('The language server gave no edits.');
+            throw new Error(t('The language server gave no edits.'));
         }
         await applyServerResult(uri, result, this.spec.actionTitle);
     }

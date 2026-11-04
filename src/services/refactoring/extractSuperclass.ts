@@ -1,5 +1,6 @@
 import { ExtractSuperclassForm } from '../../types/refactoring';
 import { TypeRefactoringSpec } from './typeRefactoring';
+import { t } from '../../core/i18n';
 
 export const EXTRACT_SUPERCLASS_COMMAND = 'shinobi.refactor.extractSuperclass';
 
@@ -10,9 +11,9 @@ export const EXTRACT_SUPERCLASS_COMMAND = 'shinobi.refactor.extractSuperclass';
  */
 export const EXTRACT_SUPERCLASS: TypeRefactoringSpec<ExtractSuperclassForm> = {
     command: EXTRACT_SUPERCLASS_COMMAND,
-    actionTitle: 'Extract superclass (choose members)...',
+    actionTitle: t('Extract superclass (choose members)...'),
     handler: 'Shinobi.Refactorings.ExtractSuperclass',
     kind: 'extractSuperclass',
-    notOnTypeMessage: 'Put the cursor on the name of a class to extract a superclass.',
-    formOf: info => ({ title: `Extract Superclass from ${info.typeName}`, form: { kind: 'extractSuperclass', ...info } }),
+    notOnTypeMessage: t('Put the cursor on the name of a class to extract a superclass.'),
+    formOf: info => ({ title: t('Extract Superclass from {0}', info.typeName), form: { kind: 'extractSuperclass', ...info } }),
 };

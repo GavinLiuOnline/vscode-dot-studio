@@ -1,5 +1,6 @@
 import { PushDownForm } from '../../types/refactoring';
 import { TypeRefactoringSpec } from './typeRefactoring';
+import { t } from '../../core/i18n';
 
 export const PUSH_DOWN_COMMAND = 'shinobi.refactor.pushDown';
 
@@ -9,11 +10,11 @@ export const PUSH_DOWN_COMMAND = 'shinobi.refactor.pushDown';
  */
 export const PUSH_DOWN: TypeRefactoringSpec<PushDownForm> = {
     command: PUSH_DOWN_COMMAND,
-    actionTitle: 'Push members down...',
+    actionTitle: t('Push members down...'),
     handler: 'Shinobi.Refactorings.PushDown',
     kind: 'pushDown',
-    notOnTypeMessage: 'Put the cursor on the name of a class or one of its members to push members down.',
+    notOnTypeMessage: t('Put the cursor on the name of a class or one of its members to push members down.'),
     onMembers: true,
     hideWhenRefused: true,
-    formOf: info => ({ title: `Push Members Down from ${info.typeName}`, form: { kind: 'pushDown', ...info } }),
+    formOf: info => ({ title: t('Push Members Down from {0}', info.typeName), form: { kind: 'pushDown', ...info } }),
 };

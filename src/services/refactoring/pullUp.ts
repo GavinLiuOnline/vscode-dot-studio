@@ -1,5 +1,6 @@
 import { PullUpForm } from '../../types/refactoring';
 import { TypeRefactoringSpec } from './typeRefactoring';
+import { t } from '../../core/i18n';
 
 export const PULL_UP_COMMAND = 'shinobi.refactor.pullUp';
 
@@ -9,11 +10,11 @@ export const PULL_UP_COMMAND = 'shinobi.refactor.pullUp';
  */
 export const PULL_UP: TypeRefactoringSpec<PullUpForm> = {
     command: PULL_UP_COMMAND,
-    actionTitle: 'Pull members up...',
+    actionTitle: t('Pull members up...'),
     handler: 'Shinobi.Refactorings.PullUp',
     kind: 'pullUp',
-    notOnTypeMessage: 'Put the cursor on the name of a class or one of its members to pull members up.',
+    notOnTypeMessage: t('Put the cursor on the name of a class or one of its members to pull members up.'),
     onMembers: true,
     hideWhenRefused: true,
-    formOf: info => ({ title: `Pull Members Up from ${info.typeName}`, form: { kind: 'pullUp', ...info } }),
+    formOf: info => ({ title: t('Pull Members Up from {0}', info.typeName), form: { kind: 'pullUp', ...info } }),
 };

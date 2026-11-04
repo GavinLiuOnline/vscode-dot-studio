@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { logger } from '../../core/logger';
 import { refreshProjectForNewFile } from './newFileRefresh';
+import { t } from '../../core/i18n';
 
 const log = logger('ApplyResult');
 
@@ -17,15 +18,15 @@ export async function applyServerResult(uri: vscode.Uri, result: ServerResult, t
     // The server compiled the result before handing it out: edits that would add compiler errors are not applied
     if (result.errors?.length) {
         const shown = result.errors.slice(0, 8);
-        const more = result.errors.length > shown.length ? `\n... and ${result.errors.length - shown.length} more` : '';
+        const more = result.errors.length > shown.length ? t('\n... and {0} more', result.errors.length - shown.length) : '';
         log.warn(`${title} refused, new errors: ${result.errors.join(' | ')}`);
         void vscode.window.showErrorMessage(
-            `${title.replace(/\.\.\.$/, '')} was not applied: the result would not compile (${result.errors.length} new error${result.errors.length === 1 ? '' : 's'}). Nothing was changed.`,
+            t('{0} was not applied: the result would not compile ({1}). Nothing was changed.', title.replace(/\.\.\.$/, ''), t(result.errors.length === 1 ? '{0} new error' : '{0} new errors', result.errors.length)),
             { modal: true, detail: shown.join('\n') + more });
         return false;
     }
     if (result.newFilePath && fs.existsSync(result.newFilePath)) {
-        void vscode.window.showErrorMessage(`${result.newFilePath} already exists; pick another name.`);
+        void vscode.window.showErrorMessage(t('{0} already exists; pick another name.', result.newFilePath));
         return false;
     }
     const document = await vscode.workspace.openTextDocument(uri);

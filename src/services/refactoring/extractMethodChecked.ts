@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { logger } from '../../core/logger';
 import { applyServerResult, ServerEdit, ServerResult } from './applyResult';
 import { CSharpServer } from './csharpServer';
+import { t } from '../../core/i18n';
 
 const log = logger('ExtractMethodChecked');
 
@@ -16,13 +17,13 @@ export interface CheckedExtraction {
 
 export const EXTRACT_METHOD_CHECKED: CheckedExtraction = {
     command: 'shinobi.refactor.extractMethodChecked',
-    title: 'Extract method (checked)...',
+    title: t('Extract method (checked)...'),
     nativeTitle: /^extract method$/i,
 };
 
 export const EXTRACT_LOCAL_FUNCTION_CHECKED: CheckedExtraction = {
     command: 'shinobi.refactor.extractLocalFunctionChecked',
-    title: 'Extract local function (checked)...',
+    title: t('Extract local function (checked)...'),
     nativeTitle: /^extract local function$/i,
 };
 
@@ -105,7 +106,7 @@ export class ExtractMethodChecked implements vscode.CodeActionProvider {
     async run(uri: vscode.Uri, range: vscode.Range): Promise<void> {
         const native = (await this.nativeActions(uri, range)).find(action => this.extraction.nativeTitle.test(action.title));
         if (!native) {
-            void vscode.window.showInformationMessage('The language server offers nothing to extract for this selection.');
+            void vscode.window.showInformationMessage(t('The language server offers nothing to extract for this selection.'));
             return;
         }
         const resolved = native.edit ? native : await this.server.request<LspAction>('codeAction/resolve', native);
