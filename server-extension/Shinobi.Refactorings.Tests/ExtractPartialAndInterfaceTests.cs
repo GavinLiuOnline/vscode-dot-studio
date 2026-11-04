@@ -19,6 +19,36 @@ public class ExtractPartialAndInterfaceTests
         """;
 
     [Fact]
+    public async Task The_new_part_keeps_the_modifiers_of_the_type_and_of_the_types_around_it()
+    {
+        const string source = """
+            namespace App;
+
+            internal sealed class Outer
+            {
+                internal static class Tools
+                {
+                    public static int One() => 1;
+                    public static int Two() => 2;
+                }
+            }
+            """;
+        var h = new Harness(("Outer.cs", source));
+        var document = h.Document("Outer.cs");
+        var position = Harness.At(source, "class Tools", "Tools");
+        var info = (await new ExtractPartialInfoHandler().ExecuteAsync(new TypeAt(position), null!, document, default))!;
+        var ids = info.Members.Where(m => m.Signature.Contains("Two")).Select(m => m.Id).ToList();
+
+        var result = (await new ExtractPartialHandler().ExecuteAsync(new ExtractPartialRequest(position, "Part", ids), null!, document, default))!;
+
+        Assert.Null(result.Errors);
+        Assert.Contains("internal sealed partial class Outer", result.NewFileContent);
+        Assert.Contains("internal static partial class Tools", result.NewFileContent);
+        Assert.Contains("internal static partial class Tools", Harness.Apply(source, result));
+        Assert.Empty(await h.ErrorsAfter(document, result));
+    }
+
+    [Fact]
     public async Task Extract_partial_moves_members_to_a_file_of_the_type_and_the_result_compiles()
     {
         var h = new Harness(("Order.cs", Source));

@@ -257,7 +257,9 @@ internal static class PartialSupport
             var indent = new string(' ', depth * 4);
             var keyword = type is RecordDeclarationSyntax { ClassOrStructKeyword.RawKind: not 0 } record
                 ? $"{record.Keyword.Text} {record.ClassOrStructKeyword.Text}" : type.Keyword.Text;
-            sb.Append(indent).Append("partial ").Append(keyword).Append(' ').Append(type.Identifier.Text).Append(type.TypeParameterList?.ToString() ?? "").Append(eol);
+            // the part says what the type is: accessibility, static, abstract, sealed... (partial goes last)
+            var modifiers = string.Concat(type.Modifiers.Where(m => !m.IsKind(SyntaxKind.PartialKeyword)).Select(m => m.Text + " "));
+            sb.Append(indent).Append(modifiers).Append("partial ").Append(keyword).Append(' ').Append(type.Identifier.Text).Append(type.TypeParameterList?.ToString() ?? "").Append(eol);
             sb.Append(indent).Append('{').Append(eol);
             depth++;
         }
