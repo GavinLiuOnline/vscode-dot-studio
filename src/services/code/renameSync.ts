@@ -39,22 +39,67 @@ export async function typeFollowsRenamedFiles(files: readonly { oldUri: vscode.U
     }
 }
 
+/** How long the rename box may stay open before we stop waiting for its result, and how long the server gets to report the new name */
+const WATCH_MS = 120_000;
+const SETTLE_MS = 400;
+const CHECKS = 4;
+
 /**
  * F2 on the type of a file named after it: the rename of VS Code runs as it always does, then the file is offered the new name.
- * (A symbol rename raises no event, so the command wraps the rename.) Anywhere else F2 is the plain rename.
+ * (A symbol rename raises no event, so the command wraps the rename and watches the file for the change.) Anywhere else F2 is the plain rename.
  */
 export async function renameSymbol(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     const named = editor?.document.languageId === 'csharp' ? await typeNamedAfterFile(editor) : undefined;
-    await vscode.commands.executeCommand('editor.action.rename');
     if (!editor || !named) {
+        await vscode.commands.executeCommand('editor.action.rename');
         return;
     }
+    const uri = editor.document.uri;
+    log.info(`F2 on the type ${named.oldName} of ${path.basename(uri.fsPath)}: the file is offered the new name after the rename`);
+    // the command may return before the rename box closes (and the box may stay open for a while): the file is watched
+    const renamed = watchTypeRename(uri, named.start, named.oldName);
+    await vscode.commands.executeCommand('editor.action.rename');
     try {
-        await offerFileRename(editor.document.uri, named.start, named.oldName);
+        const newName = await renamed;
+        if (!newName) {
+            log.info(`The type ${named.oldName} was not renamed (cancelled?), the file keeps its name`);
+            return;
+        }
+        await offerFileRename(uri, newName);
     } catch (error) {
-        log.warn(`Renaming the file of ${editor.document.uri.fsPath} failed: ${error instanceof Error ? error.message : String(error)}`);
+        log.warn(`Renaming the file of ${uri.fsPath} failed: ${error instanceof Error ? error.message : String(error)}`);
     }
+}
+
+/** The new name of the type that starts at `start`, once the file changed and the server reports it; undefined when no rename came within the time */
+function watchTypeRename(uri: vscode.Uri, start: vscode.Position, oldName: string): Promise<string | undefined> {
+    return new Promise(resolve => {
+        let settle: ReturnType<typeof setTimeout> | undefined;
+        const finish = (name?: string) => {
+            subscription.dispose();
+            clearTimeout(limit);
+            if (settle) { clearTimeout(settle); }
+            resolve(name);
+        };
+        const check = async (left: number): Promise<void> => {
+            const type = typeStartingAt(await symbolsOf(uri), start);
+            if (type && type.name !== oldName) {
+                finish(type.name);
+            } else if (left > 1) {
+                // the server may not have the change yet
+                settle = setTimeout(() => void check(left - 1), SETTLE_MS);
+            }
+        };
+        const subscription = vscode.workspace.onDidChangeTextDocument(event => {
+            if (event.document.uri.toString() !== uri.toString() || event.contentChanges.length === 0) {
+                return;
+            }
+            if (settle) { clearTimeout(settle); }
+            settle = setTimeout(() => void check(CHECKS), SETTLE_MS);
+        });
+        const limit = setTimeout(() => finish(undefined), WATCH_MS);
+    });
 }
 
 /** The type under the cursor when the file carries its name */
@@ -65,12 +110,8 @@ async function typeNamedAfterFile(editor: vscode.TextEditor): Promise<{ start: v
     return type?.selectionRange.contains(editor.selection.active) ? { start: type.selectionRange.start, oldName } : undefined;
 }
 
-async function offerFileRename(uri: vscode.Uri, start: vscode.Position, oldName: string): Promise<void> {
-    const type = typeStartingAt(await symbolsOf(uri), start);
-    if (!type || type.name === oldName) {
-        return;
-    }
-    const newPath = path.join(path.dirname(uri.fsPath), type.name + path.extname(uri.fsPath));
+async function offerFileRename(uri: vscode.Uri, newTypeName: string): Promise<void> {
+    const newPath = path.join(path.dirname(uri.fsPath), newTypeName + path.extname(uri.fsPath));
     if (typeNamesOfRename(uri.fsPath, newPath) === undefined) {
         return;
     }
