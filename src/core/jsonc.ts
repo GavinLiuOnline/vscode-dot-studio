@@ -14,7 +14,8 @@ export interface JsoncParseResult {
 
 export function parseJsonc(text: string): JsoncParseResult {
     const parseErrors: ParseError[] = [];
-    const value = parse(text, parseErrors, { allowTrailingComma: true, disallowComments: false });
+    // Visual Studio writes launchSettings.json (and others) with a byte order mark, which the parser takes for an invalid symbol
+    const value = parse(text.replace(/^\uFEFF/, ''), parseErrors, { allowTrailingComma: true, disallowComments: false });
     const errors = parseErrors.map(e => `${printParseErrorCode(e.error)} at offset ${e.offset}`);
     return { value, errors };
 }

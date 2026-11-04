@@ -3,6 +3,10 @@ import { parseJsonc, removeArrayItems, upsertArrayItem } from '../../../core/jso
 const isStartup = (item: any) => item?.name === 'Startup';
 
 describe('parseJsonc', () => {
+    it('reads a file that starts with a byte order mark (Visual Studio writes launchSettings.json with one)', () => {
+        expect(parseJsonc('\uFEFF{ "profiles": { "a": {} } }')).toEqual({ value: { profiles: { a: {} } }, errors: [] });
+    });
+
     it('parses comments and trailing commas', () => {
         const result = parseJsonc(`{
             // comment
