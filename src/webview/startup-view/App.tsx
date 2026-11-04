@@ -4,6 +4,7 @@ import {
 } from '../../types/startupProjects';
 import { Select } from '../shared/Select';
 import { ProfileTable } from './ProfileTable';
+import { t } from '../shared/i18n';
 
 export interface StartupProjectsApi {
     postMessage(message: StartupProjectsRequest): void;
@@ -40,7 +41,7 @@ function draftOf(state: StartupProjectsState, profile: StartupProfileEntry | und
 /** "Startup", then "Startup 2", ...: a name no profile has */
 function freshName(profiles: readonly StartupProfileEntry[]): string {
     for (let n = 1; ; n++) {
-        const name = n === 1 ? 'Startup' : `Startup ${n}`;
+        const name = n === 1 ? t('Startup') : t('Startup {0}', n);
         if (!profiles.some(profile => sameName(profile.name, name))) {
             return name;
         }
@@ -88,7 +89,7 @@ export const App: React.FC<{ api: StartupProjectsApi }> = ({ api }) => {
     useEffect(() => setMode(undefined), [hasActive]);
 
     if (!state) {
-        return <h1>Configure Startup Projects</h1>;
+        return <h1>{t('Configure Startup Projects')}</h1>;
     }
 
     const shownMode = mode ?? (state.active ? 'multiple' : 'single');
@@ -100,7 +101,7 @@ export const App: React.FC<{ api: StartupProjectsApi }> = ({ api }) => {
     const shown = draft ?? baseline;
     const dirty = current === 'new' || JSON.stringify(shown) !== JSON.stringify(baseline);
     const duplicate = state.profiles.some(profile => profile !== original && sameName(profile.name, shown.name));
-    const nameProblem = !shown.name.trim() ? 'Give the profile a name.' : duplicate ? 'A profile with this name exists.' : undefined;
+    const nameProblem = !shown.name.trim() ? t('Give the profile a name.') : duplicate ? t('A profile with this name exists.') : undefined;
     const edit = (patch: Partial<Draft>) => setDraft({ ...shown, ...patch });
     const select = (selection: Selection) => { setSelected(selection); setDraft(undefined); };
 
@@ -120,10 +121,10 @@ export const App: React.FC<{ api: StartupProjectsApi }> = ({ api }) => {
 
     return (
         <>
-            <h1>Configure Startup Projects</h1>
+            <h1>{t('Configure Startup Projects')}</h1>
             {error && (
                 <div className="error" role="alert">
-                    {error} <button className="action" onClick={() => setError(undefined)}>Dismiss</button>
+                    {error} <button className="action" onClick={() => setError(undefined)}>{t('Dismiss')}</button>
                 </div>
             )}
             {state.unreadable.map(message => <div key={message} className="error" role="alert">{message}</div>)}
@@ -132,25 +133,25 @@ export const App: React.FC<{ api: StartupProjectsApi }> = ({ api }) => {
                 <label>
                     <input type="radio" name="mode" checked={shownMode === 'single'}
                         onChange={() => { setMode('single'); if (state.active) { api.postMessage({ type: 'useSingle' }); } }} />
-                    {' '}Single startup project
+                    {' '}{t('Single startup project')}
                 </label>
             </div>
             <div style={{ maxWidth: 360, margin: '4px 0 8px 24px' }}>
-                <Select aria-label="Single startup project" value={single} disabled={startable.length === 0}
-                    options={single || startable.length === 0 ? startable : [{ value: '', label: '(none)' }, ...startable]}
+                <Select aria-label={t('Single startup project')} value={single} disabled={startable.length === 0}
+                    options={single || startable.length === 0 ? startable : [{ value: '', label: t('(none)') }, ...startable]}
                     onChange={project => { if (project) { setMode('single'); api.postMessage({ type: 'setSingle', project }); } }} />
             </div>
             <div className="check">
                 <label>
                     <input type="radio" name="mode" checked={shownMode === 'multiple'} onChange={() => setMode('multiple')} />
-                    {' '}Multiple startup projects
+                    {' '}{t('Multiple startup projects')}
                 </label>
             </div>
 
             {shownMode === 'multiple' && (
                 <>
-                    <h2>Profiles</h2>
-                    <ul className="names" aria-label="Profiles">
+                    <h2>{t('Profiles')}</h2>
+                    <ul className="names" aria-label={t('Profiles')}>
                         {state.profiles.map(profile => {
                             const isSelected = profile === original;
                             const isActive = state.active?.name === profile.name && state.active.shared === profile.shared;
@@ -159,34 +160,34 @@ export const App: React.FC<{ api: StartupProjectsApi }> = ({ api }) => {
                                     <button className="template" aria-selected={isSelected}
                                         onClick={() => select({ name: profile.name, shared: profile.shared })}>
                                         {profile.name}
-                                        <span className="meta">{[profile.shared ? '' : 'user file', isActive ? 'active' : ''].filter(Boolean).join(', ')}</span>
+                                        <span className="meta">{[profile.shared ? '' : t('user file'), isActive ? t('active') : ''].filter(Boolean).join(', ')}</span>
                                     </button>
                                 </li>
                             );
                         })}
-                        {current === 'new' && <li><span className="name">(new profile)</span></li>}
+                        {current === 'new' && <li><span className="name">{t('(new profile)')}</span></li>}
                     </ul>
                     <div className="toolbar">
-                        <button className="action" onClick={() => select('new')}>New profile</button>
+                        <button className="action" onClick={() => select('new')}>{t('New profile')}</button>
                         <button className="action" disabled={!original}
-                            onClick={() => original && api.postMessage({ type: 'deleteProfile', name: original.name, shared: original.shared })}>Delete</button>
+                            onClick={() => original && api.postMessage({ type: 'deleteProfile', name: original.name, shared: original.shared })}>{t('Delete')}</button>
                     </div>
 
                     <div className="field">
-                        <label htmlFor="profile-name">Profile name</label>
+                        <label htmlFor="profile-name">{t('Profile name')}</label>
                         <input id="profile-name" type="text" style={{ maxWidth: 360 }} value={shown.name} onChange={e => edit({ name: e.target.value })} />
                         {nameProblem && <span className="hint" role="status">{nameProblem}</span>}
                     </div>
                     <div className="check">
                         <label>
                             <input type="checkbox" checked={shown.shared} onChange={e => edit({ shared: e.target.checked })} />
-                            {' '}Share profile (the .slnLaunch file next to the solution, for source control; otherwise a file only you have)
+                            {' '}{t('Share profile (the .slnLaunch file next to the solution, for source control; otherwise a file only you have)')}
                         </label>
                     </div>
                     <ProfileTable projects={state.projects} rows={shown.rows} onChange={rows => edit({ rows })} />
                     <div className="buttons">
-                        {dirty && <span className="status" role="status">Unsaved changes</span>}
-                        <button className="action primary" disabled={!dirty || !!nameProblem || pending} onClick={apply}>Apply</button>
+                        {dirty && <span className="status" role="status">{t('Unsaved changes')}</span>}
+                        <button className="action primary" disabled={!dirty || !!nameProblem || pending} onClick={apply}>{t('Apply')}</button>
                     </div>
                 </>
             )}

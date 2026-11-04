@@ -29,6 +29,7 @@ import { handleAddAssemblyReference, handleAddProjectReference, handleManageNuGe
 import { createFile, createFolder } from './actions/fileActions';
 import { moveNodes } from './actions/dragDrop';
 import { handleMultiAction, multiSelectActions } from './actions/multiSelect';
+import { t } from '../../core/i18n';
 
 const log = logger('SolutionActionService');
 
@@ -314,7 +315,7 @@ export class SolutionActionService {
         }
         const projectPath = projectForPath(nodeId.path);
         if (!projectPath) {
-            vscode.window.showInformationMessage('Code Cleanup works on files and folders of a project of the solution.');
+            vscode.window.showInformationMessage(t('Code Cleanup works on files and folders of a project of the solution.'));
             return;
         }
         await runCodeCleanup({ kind: nodeId.type, path: nodeId.path, projectPath });
@@ -323,14 +324,14 @@ export class SolutionActionService {
     private static async _handleBuild(nodeId: NodeId, action: DotnetTaskAction): Promise<void> {
         try {
             if (!SolutionService.getActiveSolution()) {
-                vscode.window.showErrorMessage('No active solution found');
+                vscode.window.showErrorMessage(t('No active solution found'));
                 return;
             }
 
             const targetPath = nodeId.path;
             if (!targetPath) {
                 log.error('Cannot extract solution or project path from nodeId:', nodeId);
-                vscode.window.showErrorMessage('Error: Cannot determine solution or project path for build action');
+                vscode.window.showErrorMessage(t('Error: Cannot determine solution or project path for build action'));
                 return;
             }
 
@@ -338,7 +339,7 @@ export class SolutionActionService {
             log.info(`Started ${action} task for ${targetPath}`);
         } catch (error) {
             log.error(`Error during ${action}:`, error);
-            vscode.window.showErrorMessage(`Error during ${action}: ${error}`);
+            vscode.window.showErrorMessage(t('Error during {0}: {1}', action, error));
         }
     }
 

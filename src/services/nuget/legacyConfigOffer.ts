@@ -3,6 +3,7 @@ import * as path from 'path';
 import { logger } from '../../core/logger';
 import { Settings } from '../shared/settings';
 import { moveLegacyConfig, needsLegacyConfigMove } from './legacyNugetConfig';
+import { t } from '../../core/i18n';
 
 const log = logger('LegacyNuGetConfig');
 const DECLINED_KEY = 'shinobi.nugetConfigMove.declined';
@@ -77,9 +78,13 @@ export async function offerLegacyConfigMove(solutionPath: string, reason: 'open'
     try {
         const target = moveLegacyConfig(solutionDir, choice === move ? 'move' : 'copy');
         log.info(`${choice === move ? 'Moved' : 'Copied'} .nuget/NuGet.Config to ${target}`);
-        vscode.window.showInformationMessage(`${choice === move ? 'Moved' : 'Copied'} to ${path.basename(target)}. Restore again to use its package sources.`);
+        vscode.window.showInformationMessage(choice === move
+            ? t('Moved to {0}. Restore again to use its package sources.', path.basename(target))
+            : t('Copied to {0}. Restore again to use its package sources.', path.basename(target)));
     } catch (error) {
         log.error('Moving the NuGet.Config failed:', error);
-        vscode.window.showErrorMessage(`Could not ${choice.toLowerCase()} the NuGet.Config: ${error instanceof Error ? error.message : error}`);
+        vscode.window.showErrorMessage(choice === move
+            ? t('Could not move the NuGet.Config: {0}', error instanceof Error ? error.message : error)
+            : t('Could not copy the NuGet.Config: {0}', error instanceof Error ? error.message : error));
     }
 }

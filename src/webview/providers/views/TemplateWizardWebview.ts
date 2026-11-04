@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { allScrollbarsCss } from './scrollbar';
 import { getNonce } from './nonce';
+import { webviewLanguage } from '../../../core/i18n';
 
 export class TemplateWizardWebview {
 
@@ -10,7 +11,7 @@ export class TemplateWizardWebview {
         const nonce = getNonce();
 
         return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${webviewLanguage()}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

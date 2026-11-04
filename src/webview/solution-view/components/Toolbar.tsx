@@ -1,6 +1,7 @@
 import React from 'react';
 import { ToolbarAction, ToolbarChoice, ToolbarState } from '../../../types/toolbar';
 import { MenuButton, MenuItem } from '../../shared/MenuButton';
+import { t } from '../../shared/i18n';
 
 interface ToolbarProps {
     state: ToolbarState | null;
@@ -17,16 +18,16 @@ const buttonStyle: React.CSSProperties = {
 
 const icon = (name: string) => <span className={`codicon codicon-${name}`} aria-hidden="true" />;
 
-const startItems: readonly MenuItem[] = [
-    { id: 'debug', label: 'Start Debugging' },
-    { id: 'startWithoutDebugging', label: 'Start Without Debugging' },
-    { id: 'startWithHotReload', label: 'Start with Hot Reload' },
-    { id: 'attachToProcess', label: 'Attach to Process...', separatorBefore: true },
+const startItems = (): readonly MenuItem[] => [
+    { id: 'debug', label: t('Start Debugging') },
+    { id: 'startWithoutDebugging', label: t('Start Without Debugging') },
+    { id: 'startWithHotReload', label: t('Start with Hot Reload') },
+    { id: 'attachToProcess', label: t('Attach to Process...'), separatorBefore: true },
 ];
 
-const moreItems: readonly MenuItem[] = [
-    { id: 'openSolution', label: 'Open Solution...' },
-    { id: 'newSolution', label: 'Create New Project...' },
+const moreItems = (): readonly MenuItem[] => [
+    { id: 'openSolution', label: t('Open Solution...') },
+    { id: 'newSolution', label: t('Create New Project...') },
 ];
 
 /** The configuration menu like Visual Studio's dropdown: the solution's configurations, the platforms when there are several, and the rest */
@@ -36,8 +37,8 @@ function configurationItems(state: ToolbarState | null): MenuItem[] {
     return [
         ...configurations.map(name => ({ id: `configuration:${name}`, label: name, checked: name === (state?.activeConfiguration ?? 'Debug') })),
         ...(platforms.length > 1 ? platforms.map((name, index) => ({ id: `platform:${name}`, label: name, checked: name === state?.activePlatform, separatorBefore: index === 0 })) : []),
-        { id: 'startupProfile', label: 'Startup Profile...', separatorBefore: true },
-        { id: 'configurationManager', label: 'Configuration Manager...' },
+        { id: 'startupProfile', label: t('Startup Profile...'), separatorBefore: true },
+        { id: 'configurationManager', label: t('Configuration Manager...') },
     ];
 }
 
@@ -45,7 +46,7 @@ function configurationItems(state: ToolbarState | null): MenuItem[] {
 function frameworkItems(state: ToolbarState | null): MenuItem[] {
     return [
         ...(state?.frameworks ?? []).map(option => ({ id: `framework:${option.value}`, label: option.label, checked: option.checked })),
-        { id: 'startupProfile', label: 'Startup Profile...', separatorBefore: !!state?.frameworks?.length },
+        { id: 'startupProfile', label: t('Startup Profile...'), separatorBefore: !!state?.frameworks?.length },
     ];
 }
 
@@ -70,40 +71,40 @@ export const Toolbar: React.FC<ToolbarProps> = ({ state, onAction, onChoose }) =
     const act = (id: string) => onAction(id as ToolbarAction);
     const pressed = !!state?.showAllFiles;
     return (
-        <div role="toolbar" aria-label="Solution Explorer" style={{
+        <div role="toolbar" aria-label={t('Solution Explorer')} style={{
             display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '2px', padding: '0px 6px', flexShrink: 0,
             background: 'var(--vscode-sideBar-background)',
         }}>
-            <MenuButton label="Solution Configuration" items={configurationItems(state)} onSelect={pick} align="left" className="toolbar-button" style={buttonStyle}>
+            <MenuButton label={t('Solution Configuration')} items={configurationItems(state)} onSelect={pick} align="left" className="toolbar-button" style={buttonStyle}>
                 <span>{state?.configuration ?? 'Debug'}</span>
                 {icon('chevron-down')}
             </MenuButton>
-            <MenuButton label="Target Framework or Startup Profile" items={frameworkItems(state)} onSelect={pick} align="left" className="toolbar-button" style={buttonStyle}>
-                <span>{state?.startup ?? 'Auto'}</span>
+            <MenuButton label={t('Target Framework or Startup Profile')} items={frameworkItems(state)} onSelect={pick} align="left" className="toolbar-button" style={buttonStyle}>
+                <span>{state?.startup ?? t('Auto')}</span>
                 {icon('chevron-down')}
             </MenuButton>
             <span style={{ flex: 1 }} />
             <span style={{ display: 'inline-flex' }}>
-                <button type="button" className="toolbar-button" title="Start Debugging" aria-label="Start Debugging"
+                <button type="button" className="toolbar-button" title={t('Start Debugging')} aria-label={t('Start Debugging')}
                     style={{ ...buttonStyle, color: 'var(--vscode-debugIcon-startForeground, var(--vscode-foreground))' }} onClick={() => onAction('debug')}>
                     {icon('debug-start')}
                 </button>
-                <MenuButton label="More ways to start" items={startItems} onSelect={act} className="toolbar-button" style={{ ...buttonStyle, minWidth: '16px', padding: '0 2px' }}>
+                <MenuButton label={t('More ways to start')} items={startItems()} onSelect={act} className="toolbar-button" style={{ ...buttonStyle, minWidth: '16px', padding: '0 2px' }}>
                     {icon('chevron-down')}
                 </MenuButton>
             </span>
-            <button type="button" className="toolbar-button" title="Sync with Active Document: show the file open in the editor in the tree" aria-label="Sync with Active Document"
+            <button type="button" className="toolbar-button" title={t('Sync with Active Document: show the file open in the editor in the tree')} aria-label={t('Sync with Active Document')}
                 style={buttonStyle} onClick={() => onAction('sync')}>
                 {icon('target')}
             </button>
-            <button type="button" className="toolbar-button" title="Show All Files" aria-label="Show All Files" aria-pressed={pressed}
+            <button type="button" className="toolbar-button" title={t('Show All Files')} aria-label={t('Show All Files')} aria-pressed={pressed}
                 style={{ ...buttonStyle, ...(pressed ? { background: 'var(--vscode-toolbar-activeBackground)' } : {}) }} onClick={() => onAction('showAllFiles')}>
                 {icon('files')}
             </button>
-            <button type="button" className="toolbar-button" title="Collapse All" aria-label="Collapse All" style={buttonStyle} onClick={() => onAction('collapseAll')}>
+            <button type="button" className="toolbar-button" title={t('Collapse All')} aria-label={t('Collapse All')} style={buttonStyle} onClick={() => onAction('collapseAll')}>
                 {icon('collapse-all')}
             </button>
-            <MenuButton label="More" items={moreItems} onSelect={act} className="toolbar-button" style={buttonStyle}>
+            <MenuButton label={t('More')} items={moreItems()} onSelect={act} className="toolbar-button" style={buttonStyle}>
                 {icon('ellipsis')}
             </MenuButton>
         </div>

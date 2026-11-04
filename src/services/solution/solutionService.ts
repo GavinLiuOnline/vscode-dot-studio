@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { SolutionFileParser } from '../../parsers/solutionFileParser';
 import { SolutionFile } from '../../types/solution';
+import { t } from '../../core/i18n';
 import { Solution } from '../../core/Solution';
 import { SolutionDiscovery } from './solutionDiscovery';
 import { logger } from '../../core/logger';
@@ -109,7 +110,7 @@ export class SolutionService {
 
     private static reportLoadError(solutionPath: string, error: unknown): void {
         const reason = error instanceof Error ? error.message : String(error);
-        const message = `Could not load ${path.basename(solutionPath)}: ${reason}`;
+        const message = t('Could not load {0}: {1}', path.basename(solutionPath), reason);
         log.error(message);
         if (message !== this.lastLoadError) {
             this.lastLoadError = message;

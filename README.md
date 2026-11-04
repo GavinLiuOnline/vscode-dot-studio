@@ -25,6 +25,10 @@ A C# extension is needed for editing and debugging, see [Requirements](#requirem
 
 ## Features
 
+### Languages
+
+The interface is localized in English and Simplified Chinese. It follows VS Code's display language, so nothing has to be configured: with a Chinese VS Code the commands, settings, views and messages are Chinese. `package.nls.json` and `package.nls.zh-cn.json` hold the manifest strings, `l10n/bundle.l10n*.json` the messages, and `src/webview/shared/i18n.ts` the webviews' strings.
+
 ### Solution Explorer
 
 `.sln` and `.slnx` solutions as Visual Studio shows them: solution folders and items, projects with Dependencies, Visual Studio's file nesting (`Index.cshtml` › `Index.cshtml.cs`) and your file icon theme. Errors and warnings show on files, folders and projects. Set the startup project, rename, cut/copy/paste, drag and drop, multi-select, Sync with Active Document, type to find. The tree shows the project's items: Show All Files greys out what a project does not contain, Exclude From Project and Include In Project take files and folders out and put them back, and linked files appear with a link badge.

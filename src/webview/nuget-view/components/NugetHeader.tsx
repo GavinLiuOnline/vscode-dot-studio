@@ -1,5 +1,6 @@
 // import React, { useEffect, useState } from "react";
 import { formatAuthors, LocalNuGetPackage } from "../shared";
+import { t } from '../../shared/i18n';
 
 interface NugetHeaderProps {
     selectedPackage: LocalNuGetPackage;
@@ -22,7 +23,7 @@ export default function NugetHeader({ selectedPackage }: NugetHeaderProps) {
                 color: 'var(--vscode-descriptionForeground)',
                 marginBottom: '8px'
             }}>
-                by {formatAuthors(selectedPackage.authors)}
+                {t('by {0}', formatAuthors(selectedPackage.authors))}
             </div>
         )}
     </div>

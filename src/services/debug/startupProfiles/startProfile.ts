@@ -7,6 +7,7 @@ import { SolutionService } from '../../solution/solutionService';
 import { UnloadedProjects } from '../../solution/unloadedProjects';
 import { StartupProfile } from './slnLaunch';
 import { ActiveProfileRef, ProfileFile, ProfileSource, readStartupProfiles, StartupChoice } from './startupChoice';
+import { t } from '../../../core/i18n';
 
 const log = logger('StartupProfiles');
 
@@ -130,7 +131,7 @@ async function writeProfileStartup(profile: StartupProfile, solutionPath: string
     const launches = planned.launches.filter(launch => !UnloadedProjects.isUnloaded(solutionPath, launch.projectPath));
     // Once per profile and set of missing projects, not on every refresh
     const warning = missing.length > 0
-        ? `The startup profile "${profile.name}" names projects the solution does not have, they are skipped: ${missing.join(', ')}`
+        ? t('The startup profile "{0}" names projects the solution does not have, they are skipped: {1}', profile.name, missing.join(', '))
         : '';
     if (warning && warning !== lastWarning) {
         void vscode.window.showWarningMessage(warning);
@@ -171,13 +172,12 @@ async function doRefreshStartup(): Promise<void> {
         const solution = SolutionService.getActiveSolution();
         const fallback = solution ? defaultStartupProject(solution) : undefined;
         if (fallback && await DebugConfigService.updateStartupConfiguration(fallback)) {
-            const message = `F5 starts ${projectName(fallback)}, the first project of the solution that can be started: `
-                + 'no startup project was set before the startup profile. Set as Startup Project chooses another.';
+            const message = t('F5 starts {0}, the first project of the solution that can be started: no startup project was set before the startup profile. Set as Startup Project chooses another.', projectName(fallback));
             log.info(message);
             void vscode.window.showInformationMessage(message);
         } else {
             DebugConfigService.removeStartupProfileConfiguration();
-            const message = 'The startup profile is no longer used and the solution has no project that can be started: F5 has nothing to start.';
+            const message = t('The startup profile is no longer used and the solution has no project that can be started: F5 has nothing to start.');
             log.info(message);
             void vscode.window.showInformationMessage(message);
         }
@@ -220,14 +220,14 @@ export function currentSingle() {
 export async function selectStartupProfile(): Promise<void> {
     const solution = SolutionService.getActiveSolution();
     if (!solution) {
-        vscode.window.showInformationMessage('Open a solution first.');
+        vscode.window.showInformationMessage(t('Open a solution first.'));
         return;
     }
     const solutionPath = solution.solutionPath;
     const files = readStartupProfiles(solutionPath);
     for (const file of [files.shared, files.user]) {
         if (file.error) {
-            void vscode.window.showErrorMessage(`${path.basename(file.path)} cannot be read: ${file.error}`);
+            void vscode.window.showErrorMessage(t('{0} cannot be read: {1}', path.basename(file.path), file.error));
         }
     }
     const resolved = StartupChoice.resolve(solutionPath);
@@ -236,11 +236,11 @@ export async function selectStartupProfile(): Promise<void> {
     const singleProject = DebugConfigService.getStartupProject() ?? StartupChoice.rememberedSingle(solutionPath)?.projectPath;
     const items = startupPickItems(singleProject, files, active);
     if (items.length === 0) {
-        vscode.window.showInformationMessage('There is no startup project and no startup profile yet.');
+        vscode.window.showInformationMessage(t('There is no startup project and no startup profile yet.'));
         return;
     }
 
-    const picked = await vscode.window.showQuickPick(items, { placeHolder: 'What F5 starts', matchOnDetail: true });
+    const picked = await vscode.window.showQuickPick(items, { placeHolder: t('What F5 starts'), matchOnDetail: true });
     if (!picked) {
         return;
     }

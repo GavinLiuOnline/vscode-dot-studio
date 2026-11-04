@@ -1,11 +1,11 @@
 import { NodeMarker } from '../../../../types';
+import { plural, t } from '../../../shared/i18n';
 
 /** Tooltip text, e.g. "2 errors, 5 warnings" */
 export function describeMarker(marker: NodeMarker): string {
-    const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
     return [
-        marker.errors ? plural(marker.errors, 'error') : undefined,
-        marker.warnings ? plural(marker.warnings, 'warning') : undefined,
-        marker.infos ? plural(marker.infos, 'info') : undefined,
+        marker.errors ? plural(marker.errors, t('error')) : undefined,
+        marker.warnings ? plural(marker.warnings, t('warning')) : undefined,
+        marker.infos ? plural(marker.infos, t('info')) : undefined,
     ].filter(Boolean).join(', ');
 }

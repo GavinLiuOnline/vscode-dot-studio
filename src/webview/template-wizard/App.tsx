@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { TemplateOption, WizardInit, WizardMessage, WizardRequest, WizardTemplate } from '../../types/templateWizard';
 import { Select } from '../shared/Select';
+import { t } from '../shared/i18n';
 
 export interface WizardApi {
     postMessage(message: WizardRequest): void;
@@ -36,10 +37,10 @@ const TemplateList: React.FC<{
     showRecent: boolean;
 }> = ({ templates, selectedId, onSelect, onConfirm, showRecent }) => {
     if (templates.length === 0) {
-        return <div className="empty">No templates match.</div>;
+        return <div className="empty">{t('No templates match.')}</div>;
     }
-    const recent = showRecent ? templates.filter(t => t.recent) : [];
-    const rest = showRecent ? templates.filter(t => !t.recent) : templates;
+    const recent = showRecent ? templates.filter(template => template.recent) : [];
+    const rest = showRecent ? templates.filter(template => !template.recent) : templates;
     const row = (template: WizardTemplate) => (
         <button
             key={template.id}
@@ -54,10 +55,10 @@ const TemplateList: React.FC<{
         </button>
     );
     return (
-        <div role="listbox" aria-label="Templates">
-            {recent.length > 0 && <div className="group">Recently used</div>}
+        <div role="listbox" aria-label={t('Templates')}>
+            {recent.length > 0 && <div className="group">{t('Recently used')}</div>}
             {recent.map(row)}
-            {recent.length > 0 && <div className="group">All templates</div>}
+            {recent.length > 0 && <div className="group">{t('All templates')}</div>}
             {rest.map(row)}
         </div>
     );
@@ -99,7 +100,7 @@ const OptionsForm: React.FC<{ template: WizardTemplate; values: Values; onChange
             {main.map(field)}
             {more.length > 0 && (
                 <details>
-                    <summary>More options ({more.length})</summary>
+                    <summary>{t('More options ({0})', more.length)}</summary>
                     {more.map(field)}
                 </details>
             )}
@@ -173,11 +174,11 @@ export const App: React.FC<{ api: WizardApi }> = ({ api }) => {
         }
     };
 
-    const categories = useMemo(() => [...new Set((init?.templates ?? []).map(t => t.tags[0]).filter(Boolean))].sort(), [init]);
-    const visible = useMemo(() => (init?.templates ?? []).filter(t => matches(t, search, category)), [init, search, category]);
+    const categories = useMemo(() => [...new Set((init?.templates ?? []).map(template => template.tags[0]).filter(Boolean))].sort(), [init]);
+    const visible = useMemo(() => (init?.templates ?? []).filter(template => matches(template, search, category)), [init, search, category]);
 
     if (!init) {
-        return <>{error ? <div className="error">{error}</div> : <p>Loading templates...</p>}</>;
+        return <>{error ? <div className="error">{error}</div> : <p>{t('Loading templates...')}</p>}</>;
     }
 
     const isProject = init.kind === 'project';
@@ -198,9 +199,9 @@ export const App: React.FC<{ api: WizardApi }> = ({ api }) => {
     const chooser = (
         <>
             <div className="toolbar">
-                <input type="text" placeholder="Search templates" aria-label="Search templates" value={search} onChange={e => setSearch(e.target.value)} autoFocus />
-                <Select aria-label="Category" value={category} onChange={setCategory}
-                    options={[{ value: '', label: 'All categories' }, ...categories.map(c => ({ value: c, label: c }))]} />
+                <input type="text" placeholder={t('Search templates')} aria-label={t('Search templates')} value={search} onChange={e => setSearch(e.target.value)} autoFocus />
+                <Select aria-label={t('Category')} value={category} onChange={setCategory}
+                    options={[{ value: '', label: t('All categories') }, ...categories.map(c => ({ value: c, label: c }))]} />
             </div>
             <div className="layout">
                 <div className="templates">
@@ -219,7 +220,7 @@ export const App: React.FC<{ api: WizardApi }> = ({ api }) => {
                             <div className="description">{selected.description}</div>
                         </>
                     ) : (
-                        <div className="description">Select a template to see what it creates.</div>
+                        <div className="description">{t('Select a template to see what it creates.')}</div>
                     )}
                 </div>
             </div>
@@ -228,7 +229,7 @@ export const App: React.FC<{ api: WizardApi }> = ({ api }) => {
 
     const nameField = selected?.needsName !== false && (
         <div className="field">
-            <label htmlFor="name">{isProject ? 'Project name' : 'Name'}</label>
+            <label htmlFor="name">{isProject ? t('Project name') : t('Name')}</label>
             <input
                 id="name"
                 type="text"
@@ -248,7 +249,7 @@ export const App: React.FC<{ api: WizardApi }> = ({ api }) => {
     );
 
     const errorBox = error && <div className="error" role="alert">{error}</div>;
-    const cancel = <button className="action" onClick={() => api.postMessage({ type: 'cancel' })}>Cancel</button>;
+    const cancel = <button className="action" onClick={() => api.postMessage({ type: 'cancel' })}>{t('Cancel')}</button>;
 
     if (!isProject) {
         return (
@@ -264,7 +265,7 @@ export const App: React.FC<{ api: WizardApi }> = ({ api }) => {
                 {errorBox}
                 <div className="buttons">
                     {cancel}
-                    <button className="action primary" disabled={!selected || nameMissing || busy} onClick={create}>{busy ? 'Adding...' : 'Add'}</button>
+                    <button className="action primary" disabled={!selected || nameMissing || busy} onClick={create}>{busy ? t('Adding...') : t('Add')}</button>
                 </div>
             </>
         );
@@ -278,7 +279,7 @@ export const App: React.FC<{ api: WizardApi }> = ({ api }) => {
                 {errorBox}
                 <div className="buttons">
                     {cancel}
-                    <button className="action primary" disabled={!selected} onClick={() => setPage('configure')}>Next</button>
+                    <button className="action primary" disabled={!selected} onClick={() => setPage('configure')}>{t('Next')}</button>
                 </div>
             </>
         );
@@ -286,40 +287,40 @@ export const App: React.FC<{ api: WizardApi }> = ({ api }) => {
 
     return (
         <>
-            <h1>Configure your new project</h1>
+            <h1>{t('Configure your new project')}</h1>
             <h2>{selected.name}</h2>
             {nameField}
             <div className="field">
-                <label htmlFor="location">Location</label>
+                <label htmlFor="location">{t('Location')}</label>
                 {init.newSolution ? (
                     <div className="toolbar">
                         <input id="location" type="text" value={location} onChange={e => { setLocation(e.target.value); setLocationEdited(true); }} />
-                        <button className="action" onClick={() => api.postMessage({ type: 'browseFolder', current: location })}>Browse...</button>
+                        <button className="action" onClick={() => api.postMessage({ type: 'browseFolder', current: location })}>{t('Browse...')}</button>
                     </div>
                 ) : (
                     <input id="location" type="text" value={location} onChange={e => { setLocation(e.target.value); setLocationEdited(true); }} />
                 )}
-                <div className="hint">{init.newSolution ? 'The folder the solution goes in' : 'Relative to the solution folder'}</div>
+                <div className="hint">{init.newSolution ? t('The folder the solution goes in') : t('Relative to the solution folder')}</div>
             </div>
             {init.newSolution && (
                 <>
                     <div className="field">
-                        <label htmlFor="solution-name">Solution name</label>
+                        <label htmlFor="solution-name">{t('Solution name')}</label>
                         <input id="solution-name" type="text" value={sameDirectory ? name : solutionName} disabled={sameDirectory}
                             onChange={e => { setSolutionName(e.target.value); setSolutionNameEdited(true); }} />
                     </div>
                     <div className="check">
                         <input id="same-directory" type="checkbox" checked={sameDirectory} onChange={e => setSameDirectory(e.target.checked)} />
-                        <label htmlFor="same-directory">Place solution and project in the same directory</label>
+                        <label htmlFor="same-directory">{t('Place solution and project in the same directory')}</label>
                     </div>
                 </>
             )}
             <OptionsForm template={selected} values={values} onChange={(option, value) => setValues(v => ({ ...v, [option]: value }))} />
             {errorBox}
             <div className="buttons">
-                <button className="action" disabled={busy} onClick={() => setPage('choose')}>Back</button>
+                <button className="action" disabled={busy} onClick={() => setPage('choose')}>{t('Back')}</button>
                 {cancel}
-                <button className="action primary" disabled={nameMissing || busy} onClick={create}>{busy ? 'Creating...' : 'Create'}</button>
+                <button className="action primary" disabled={nameMissing || busy} onClick={create}>{busy ? t('Creating...') : t('Create')}</button>
             </div>
         </>
     );

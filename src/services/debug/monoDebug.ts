@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { logger } from '../../core/logger';
+import { t } from '../../core/i18n';
 
 const log = logger('MonoDebug');
 const execFileAsync = promisify(execFile);
@@ -35,7 +36,7 @@ export async function ensureMonoDebugging(): Promise<boolean> {
     if (!await hasMono()) {
         log.warn('mono was not found on the PATH');
         void vscode.window.showErrorMessage(
-            'Running .NET Framework projects on this system needs Mono. Install it with your package manager so that the `mono` command works.');
+            t('Running .NET Framework projects on this system needs Mono. Install it with your package manager so that the `mono` command works.'));
         return false;
     }
     if (vscode.extensions.getExtension(MONO_DEBUG_EXTENSION)) {
@@ -44,7 +45,7 @@ export async function ensureMonoDebugging(): Promise<boolean> {
 
     const install = `Install ${MONO_DEBUG_EXTENSION}`;
     const choice = await vscode.window.showWarningMessage(
-        `Running and debugging .NET Framework projects on this system needs the Mono Debug extension (${MONO_DEBUG_EXTENSION}).`,
+        t('Running and debugging .NET Framework projects on this system needs the Mono Debug extension ({0}).', MONO_DEBUG_EXTENSION),
         install
     );
     if (choice !== install) {

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { logger } from '../../core/logger';
+import { t } from '../../core/i18n';
 
 const log = logger('CSharpExtensionCheck');
 
@@ -39,8 +40,8 @@ export async function checkCSharpExtension(context: vscode.ExtensionContext): Pr
     const install = `Install ${id}`;
     const dismiss = "Don't Show Again";
     const choice = await vscode.window.showWarningMessage(
-        'A C# extension is needed to debug projects and update namespaces. ' +
-        `Install ${CSHARP_EXTENSIONS.microsoft} or ${CSHARP_EXTENSIONS.openSource}.`,
+        t('A C# extension is needed to debug projects and update namespaces. Install {0} or {1}.',
+            CSHARP_EXTENSIONS.microsoft, CSHARP_EXTENSIONS.openSource),
         install,
         dismiss
     );
@@ -76,8 +77,7 @@ export async function checkOmniSharpForSlnx(solutionPath: string): Promise<void>
 
     const useRoslyn = 'Use Roslyn';
     const choice = await vscode.window.showWarningMessage(
-        'OmniSharp cannot load .slnx solutions, so C# IntelliSense will not work. ' +
-        'Switch this workspace to the Roslyn language server ("dotnet.server.useOmnisharp": false)?',
+        t('OmniSharp cannot load .slnx solutions, so C# IntelliSense will not work. Switch this workspace to the Roslyn language server ("dotnet.server.useOmnisharp": false)?'),
         useRoslyn
     );
     if (choice !== useRoslyn) {
@@ -87,7 +87,7 @@ export async function checkOmniSharpForSlnx(solutionPath: string): Promise<void>
     await config.update('server.useOmnisharp', false, vscode.ConfigurationTarget.Workspace);
 
     const reload = 'Reload Window';
-    if (await vscode.window.showInformationMessage('Reload the window to start the Roslyn language server.', reload) === reload) {
+    if (await vscode.window.showInformationMessage(t('Reload the window to start the Roslyn language server.'), reload) === reload) {
         await vscode.commands.executeCommand('workbench.action.reloadWindow');
     }
 }

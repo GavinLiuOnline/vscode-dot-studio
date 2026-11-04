@@ -20,6 +20,11 @@ export interface MenuCommand {
 
 export const COMMAND_PREFIX = 'shinobi.solutionExplorer.';
 
+/** package.nls key of a menu command's title (package.json holds `%key%`) */
+export const commandTitleNlsKey = (action: MenuCommandAction | string) => `command.${COMMAND_PREFIX}${action}.title`;
+/** package.nls key of a submenu's label */
+export const submenuLabelNlsKey = (id: SubmenuId | string) => `submenu.${COMMAND_PREFIX}${id}.label`;
+
 /** Context key holding the type of the focused tree node, empty when the tree isn't focused or a rename is in progress */
 /** `contextValue` of project nodes that can be the startup project */
 export const EXECUTABLE_PROJECT = 'executable';
@@ -427,7 +432,7 @@ export function buildMenuContributions() {
 
     const commands = actions.map(action => ({
         command: COMMAND_PREFIX + action,
-        title: menuCommands[action].title,
+        title: `%${commandTitleNlsKey(action)}%`,
         category: '.NET',
     }));
 
@@ -445,7 +450,7 @@ export function buildMenuContributions() {
     const webviewContextEntries = mergeSubmenuEntries(webviewContext);
 
     const submenuIds = Object.keys(submenus) as SubmenuId[];
-    const generatedSubmenus = submenuIds.map(id => ({ id: submenuId(id), label: submenus[id].label }));
+    const generatedSubmenus = submenuIds.map(id => ({ id: submenuId(id), label: `%${submenuLabelNlsKey(id)}%` }));
     const submenuItems = Object.fromEntries(submenuIds.map(id => [
         submenuId(id),
         submenus[id].items.map((action, index) => ({ command: COMMAND_PREFIX + action, group: `01_group@${index + 1}` })),
@@ -467,6 +472,18 @@ export function buildMenuContributions() {
     });
 
     return { commands, webviewContext: webviewContextEntries, submenus: generatedSubmenus, submenuItems, commandPalette, keybindings };
+}
+
+/** English strings of the generated command titles and submenu labels, for package.nls.json */
+export function buildMenuNls(): Record<string, string> {
+    const entries: Record<string, string> = {};
+    for (const action of Object.keys(menuCommands) as MenuCommandAction[]) {
+        entries[commandTitleNlsKey(action)] = menuCommands[action].title;
+    }
+    for (const id of Object.keys(submenus) as SubmenuId[]) {
+        entries[submenuLabelNlsKey(id)] = submenus[id].label;
+    }
+    return entries;
 }
 
 /** Returns a copy of package.json with the context menu contributions replaced by freshly generated ones */

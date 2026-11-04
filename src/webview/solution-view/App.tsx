@@ -5,6 +5,7 @@ import { useVsCodeApi } from './hooks/useVsCodeApi';
 import { LoadingBar } from '../shared/LoadingBar';
 import { blocksVsCodeMenu } from '../shared/altKey';
 import { IconThemeContext, IconThemeFonts } from './components/TreeNode/IconThemeContext';
+import { t } from '../shared/i18n';
 
 
 export const App: React.FC = React.memo(() => {
@@ -34,14 +35,14 @@ export const App: React.FC = React.memo(() => {
         return (
             <div className="solution-explorer" style={{ position: 'relative', height: '100vh' }}>
                 <LoadingBar visible={true} />
-                <div className="loading">Loading the solution...</div>
+                <div className="loading">{t('Loading the solution...')}</div>
             </div>
         );
     }
 
     if (!solutionData) {
         // The host asked for the data when the view opened; a failed load says why instead of "No solution found"
-        return <div className="error" role="alert">{loadError ? `Could not load the solution: ${loadError}` : 'No solution found'}</div>;
+        return <div className="error" role="alert">{loadError ? t('Could not load the solution: {0}', loadError) : t('No solution found')}</div>;
     }
 
     return (
@@ -51,6 +52,16 @@ export const App: React.FC = React.memo(() => {
                 <LoadingBar visible={refreshing} />
                 <Toolbar state={toolbar} onAction={toolbarAction} onChoose={toolbarChoose} />
                 <div className="content">
+                    {solutionData.projects.length === 0 && (
+                        // An empty folder has no solution yet: offer what the toolbar's menu has, right where the tree would be
+                        <div className="no-solution">
+                            <p>{t('No solution in this folder')}</p>
+                            <div className="no-solution-buttons">
+                                <button type="button" className="action primary" onClick={() => toolbarAction('newSolution')}>{t('Create New Project...')}</button>
+                                <button type="button" className="action" onClick={() => toolbarAction('openSolution')}>{t('Open Solution...')}</button>
+                            </div>
+                        </div>
+                    )}
                     <SolutionTree
                         projects={solutionData.projects}
                         onProjectAction={handleProjectAction}
@@ -70,7 +81,7 @@ export const App: React.FC = React.memo(() => {
                             fontSize: '12px',
                             opacity: '0.8'
                         }}>
-                            Updating solution...
+                            {t('Updating solution...')}
                         </div>
                     )}
                 </div>

@@ -5,6 +5,7 @@ import * as path from 'path';
 import { execFile, ChildProcess } from 'child_process';
 import { logger } from '../../../core/logger';
 import { CleanupSeverity, CleanupTarget, cleanupSteps, unusedUsingsSeverityFor } from './cleanupSteps';
+import { t } from '../../../core/i18n';
 
 const log = logger('CodeCleanup');
 
@@ -73,7 +74,7 @@ async function dotnetVersion(cwd: string): Promise<string> {
 export async function runCodeCleanup(target: CleanupTarget): Promise<void> {
     const name = path.basename(target.path);
     if (target.kind === 'file' && !target.path.toLowerCase().endsWith('.cs')) {
-        vscode.window.showInformationMessage('Code Cleanup works on C# files.');
+        vscode.window.showInformationMessage(t('Code Cleanup works on C# files.'));
         return;
     }
 
@@ -84,7 +85,7 @@ export async function runCodeCleanup(target: CleanupTarget): Promise<void> {
     try {
         planned = cleanupSteps(target, severity);
     } catch (error) {
-        vscode.window.showErrorMessage(`Code Cleanup: ${error instanceof Error ? error.message : error}`);
+        vscode.window.showErrorMessage(t('Code Cleanup: {0}', error instanceof Error ? error.message : error));
         return;
     }
     const version = await dotnetVersion(planned.cwd);
@@ -111,13 +112,13 @@ export async function runCodeCleanup(target: CleanupTarget): Promise<void> {
 
                     if (result.cancelled || token.isCancellationRequested) {
                         log.info('Code Cleanup cancelled');
-                        vscode.window.showInformationMessage(`Code Cleanup of ${name} was cancelled${reports.length ? ', files changed by earlier steps stay changed' : ''}.`);
+                        vscode.window.showInformationMessage(t('Code Cleanup of {0} was cancelled{1}.', name, reports.length ? ', files changed by earlier steps stay changed' : ''));
                         return;
                     }
                     if (result.code !== 0) {
                         const reason = failureReason(result.stdout, result.stderr);
                         log.error(`Step "${step.label}" failed (exit ${result.code}): ${reason}`);
-                        const choice = await vscode.window.showErrorMessage(`Code Cleanup failed at "${step.label}": ${reason}`, 'Show Output');
+                        const choice = await vscode.window.showErrorMessage(t('Code Cleanup failed at "{0}": {1}', step.label, reason), 'Show Output');
                         if (choice === 'Show Output') {
                             output.show();
                         }
@@ -133,8 +134,8 @@ export async function runCodeCleanup(target: CleanupTarget): Promise<void> {
                 const changed = changedFilesFromReports(reports);
                 log.info(`Code Cleanup finished, ${changed.length} files changed`);
                 vscode.window.showInformationMessage(changed.length === 0
-                    ? `Code Cleanup finished: nothing to change in ${name}`
-                    : `Code Cleanup finished: ${changed.length} ${changed.length === 1 ? 'file' : 'files'} changed`);
+                    ? t('Code Cleanup finished: nothing to change in {0}', name)
+                    : t('Code Cleanup finished: {0} {1} changed', changed.length, changed.length === 1 ? t('file') : t('files')));
             });
     } finally {
         fs.promises.rm(reportRoot, { recursive: true, force: true }).catch(() => undefined);

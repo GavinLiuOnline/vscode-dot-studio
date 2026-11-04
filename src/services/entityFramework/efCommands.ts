@@ -5,6 +5,7 @@ import { SolutionService } from '../solution/solutionService';
 import { DebugConfigService } from '../debug/debugConfigService';
 import { solutionWorkspaceFolder } from '../solution/workspaceFolders';
 import { EfAction, efArgs, efStartup, migrationNameProblem, parseDbContexts } from './efArgs';
+import { t } from '../../core/i18n';
 
 /** What the Entity Framework commands need from VS Code and the tool; replaced in tests */
 export interface EfDeps {
@@ -69,7 +70,7 @@ export async function runEfAction(action: EfAction, project: string, deps: EfDep
 const vscodeDeps: EfDeps = {
     hasTool: cwd => execDotnet(['ef', '--version'], { cwd, timeout: 30000 }).then(() => true, () => false),
     offerToolInstall: async () => {
-        const answer = await vscode.window.showErrorMessage('The dotnet-ef tool is not installed (a global tool, or a local one in a tool manifest).', 'Install dotnet-ef');
+        const answer = await vscode.window.showErrorMessage(t('The dotnet-ef tool is not installed (a global tool, or a local one in a tool manifest).'), 'Install dotnet-ef');
         if (answer === 'Install dotnet-ef') {
             await vscode.tasks.executeTask(new vscode.Task({ type: 'shinobi-dotnet-ef' }, solutionWorkspaceFolder() ?? vscode.TaskScope.Workspace,
                 'Install dotnet-ef', 'shinobi-dotnet', new vscode.ProcessExecution('dotnet', ['tool', 'install', '--global', 'dotnet-ef'])));
@@ -79,7 +80,7 @@ const vscodeDeps: EfDeps = {
     solutionStartup: () => DebugConfigService.getStartupProject(),
     listContexts: (args, cwd) => Promise.resolve(vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Looking for DbContexts...' },
         () => execDotnet(args, { cwd, timeout: 180000 }).then(result => result.stdout))),
-    askName: validate => Promise.resolve(vscode.window.showInputBox({ prompt: 'Name of the migration', placeHolder: 'AddCustomerTable', validateInput: validate })),
+    askName: validate => Promise.resolve(vscode.window.showInputBox({ prompt: t('Name of the migration'), placeHolder: t('AddCustomerTable'), validateInput: validate })),
     pick: (items, placeHolder) => Promise.resolve(vscode.window.showQuickPick(items, { placeHolder })),
     confirm: async (message, button) => (await vscode.window.showWarningMessage(message, { modal: true }, button)) === button,
     run: async (args, cwd, label) => {

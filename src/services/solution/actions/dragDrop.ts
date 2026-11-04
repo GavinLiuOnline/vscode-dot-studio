@@ -10,6 +10,7 @@ import { NodeIdString } from '../../../types/nodeId';
 import type { DropResult } from '../solutionExpansionService';
 import { pasteOne } from './fileActions';
 import { addDroppedReferences } from './referenceActions';
+import { t } from '../../../core/i18n';
 
 const log = logger('dragDrop');
 
@@ -31,7 +32,7 @@ export async function moveNodes(nodeIdStrings: readonly NodeIdString[], targetNo
     const verdict = target && known.length === dragged.length ? canDrop(known, target, copy) : undefined;
     if (!verdict?.container || verdict.nodes.length === 0) {
         log.info(`Drop of ${nodeIdStrings.length} node(s) refused`);
-        vscode.window.showWarningMessage('The items cannot be dropped there.');
+        vscode.window.showWarningMessage(t('The items cannot be dropped there.'));
         return undefined;
     }
     if (verdict.effect === 'link') {
@@ -73,7 +74,7 @@ export async function moveNodes(nodeIdStrings: readonly NodeIdString[], targetNo
         }
     } catch (error) {
         log.error('Drop failed:', error);
-        vscode.window.showErrorMessage(`Could not move: ${error instanceof Error ? error.message : error}`);
+        vscode.window.showErrorMessage(t('Could not move: {0}', error instanceof Error ? error.message : error));
     }
     // What went through before an error is shown too
     return dropped.length > 0 ? { container: verdict.container.nodeId, nodes: dropped } : undefined;

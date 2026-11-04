@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { logger } from '../../core/logger';
+import { t } from '../../core/i18n';
 
 const log = logger('TypeRename');
 
@@ -68,7 +69,7 @@ async function typeRenameEdit(oldPath: string, newPath: string): Promise<vscode.
     }
 
     const choice = await vscode.window.showInformationMessage(
-        `Would you also like to rename the type '${oldName}' to '${newName}' and all references to it?`,
+        t('Would you also like to rename the type \'{0}\' to \'{1}\' and all references to it?', oldName, newName),
         { modal: true },
         'Yes',
         'No'

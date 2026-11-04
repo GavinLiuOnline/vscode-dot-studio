@@ -10,6 +10,9 @@
 !out/webview/codicons/**
 !out/server-extension/Shinobi.Refactorings.dll
 !package.json
+!package.nls.json
+!package.nls.*.json
+!l10n/**
 !README.md
 !CHANGELOG.md
 !LICENCE.md

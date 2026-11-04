@@ -54,6 +54,7 @@ import { startWithHotReload } from './services/debug/hotReload/startWithHotReloa
 import { initDevCertCheck, trustDevCertificate } from './services/debug/devCert/devCertCheck';
 import { StartupChoice } from './services/debug/startupProfiles/startupChoice';
 import { refreshStartup, selectStartupProfile, startupProfilesChanged } from './services/debug/startupProfiles/startProfile';
+import { t } from './core/i18n';
 
 const logger = loggerFn('Extensions');
 
@@ -63,7 +64,7 @@ async function startDebugWithStartupProject(): Promise<void> {
         await vscode.commands.executeCommand('workbench.action.debug.start');
     } catch (error) {
         logger.error('Error starting debug:', error);
-        vscode.window.showErrorMessage(`Error starting debug: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        vscode.window.showErrorMessage(t('Error starting debug: {0}', error instanceof Error ? error.message : 'Unknown error'));
     }
 }
 
@@ -198,17 +199,40 @@ export function activate(context: vscode.ExtensionContext) {
     );
     context.subscriptions.push(nugetCustomEditorProvider);
 
-    // Register webview providers for both sidebar and secondary-sidebar locations
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
             SolutionWebviewProvider.viewType,
             solutionWebviewProvider
-        ),
-        vscode.window.registerWebviewViewProvider(
-            'shinobi-solution-webview-secondary-sidebar',
-            solutionWebviewProvider
         )
     );
+
+    // The view is contributed once, to the activity bar container; only "vscode.moveViews" can put it in the secondary
+    // sidebar (hosts whose VS Code core has no secondary-sidebar containers, e.g. Trae, would otherwise warn about the
+    // view's container not existing and fall back to the Explorer)
+    // Where a view container sits is workbench state, not something the manifest sets: a container can be left in the
+    // panel (moved there once), which hides it away from the left and right sidebars. Resetting it puts it back in its
+    // default place, the activity bar, i.e. the left sidebar; the reset also opens the container, so the editor takes
+    // the focus back afterwards.
+    const resetSolutionExplorerContainer = () => Promise.resolve(
+        vscode.commands.executeCommand('workbench.view.extension.shinobi-solution-explorer.resetViewContainerLocation')
+    ).then(() => vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup'));
+    const applySolutionExplorerLocation = () => {
+        const secondarySidebar = vscode.workspace.getConfiguration('shinobi.solutionExplorer').get<string>('location') === 'secondary-sidebar';
+        void (secondarySidebar
+            ? Promise.resolve(vscode.commands.executeCommand('vscode.moveViews', {
+                viewIds: [SolutionWebviewProvider.viewType],
+                destinationId: 'shinobi-solution-explorer-secondary-sidebar'
+            // No right sidebar in this host: the view belongs in the left one
+            })).catch(resetSolutionExplorerContainer)
+            : resetSolutionExplorerContainer()
+        ).catch(() => { /* host without these commands: the view stays where it is */ });
+    };
+    applySolutionExplorerLocation();
+    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => {
+        if (event.affectsConfiguration('shinobi.solutionExplorer.location')) {
+            applySolutionExplorerLocation();
+        }
+    }));
 
     // Register custom editor provider
     context.subscriptions.push(
@@ -255,7 +279,7 @@ export function activate(context: vscode.ExtensionContext) {
             }));
 
             const selection = await vscode.window.showQuickPick(quickPickItems, {
-                placeHolder: 'Select target framework'
+                placeHolder: t('Select target framework')
             });
 
             if (selection) {
@@ -272,7 +296,7 @@ export function activate(context: vscode.ExtensionContext) {
             const active = BuildConfiguration.active;
             const picked = await vscode.window.showQuickPick(
                 BuildConfiguration.available.map(name => ({ label: name, description: name === active ? '(current)' : undefined })),
-                { placeHolder: 'Solution configuration' }
+                { placeHolder: t('Solution configuration') }
             );
             if (picked) {
                 await BuildConfiguration.set(picked.label);
@@ -282,7 +306,7 @@ export function activate(context: vscode.ExtensionContext) {
             const active = BuildConfiguration.activePlatform;
             const picked = await vscode.window.showQuickPick(
                 BuildConfiguration.availablePlatforms.map(name => ({ label: name, description: name === active ? '(current)' : undefined })),
-                { placeHolder: 'Solution platform' }
+                { placeHolder: t('Solution platform') }
             );
             if (picked) {
                 await BuildConfiguration.setPlatform(picked.label);
@@ -334,9 +358,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('shinobi.solution.showAllFiles', () => solutionWebviewProvider.toggleShowAllFiles()),
         // Visual Studio's View > Solution Explorer (Ctrl+Alt+L) and View > Error List
         vscode.commands.registerCommand('shinobi.solution.focusSolutionExplorer', () => vscode.commands.executeCommand(
-            vscode.workspace.getConfiguration('shinobi.solutionExplorer').get('location') === 'secondary-sidebar'
-                ? 'shinobi-solution-webview-secondary-sidebar.focus'
-                : `${SolutionWebviewProvider.viewType}.focus`)),
+            `${SolutionWebviewProvider.viewType}.focus`)),
         // Visual Studio's File > Open > Solution: another solution of the workspace, or any solution file
         vscode.commands.registerCommand('shinobi.solution.open', async () => {
             const folders = vscode.workspace.workspaceFolders ?? [];
@@ -351,7 +373,7 @@ export function activate(context: vscode.ExtensionContext) {
                     solutionPath: solutionPath as string | undefined,
                 })),
                 browse,
-            ], { title: 'Open Solution', placeHolder: 'Pick a solution' });
+            ], { title: t('Open Solution'), placeHolder: t('Pick a solution') });
             let solutionPath = picked?.solutionPath;
             if (picked === browse) {
                 const [file] = await vscode.window.showOpenDialog({

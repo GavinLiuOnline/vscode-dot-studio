@@ -9,6 +9,7 @@ import { parsePsOutput, parseWindowsProcesses, ProcessEntry } from './processLis
 import { parseLsof, parseNetstat, parseSs, PortsByPid } from './listeningPorts';
 import { findDotnetProcesses, SolutionProjectRef } from './dotnetProcesses';
 import { AttachItem, buildAttachItems } from './attachItems';
+import { t } from '../../../core/i18n';
 
 const log = logger('AttachToProcess');
 
@@ -66,7 +67,7 @@ function solutionProjects(): SolutionProjectRef[] {
 export async function attachToProcess(): Promise<void> {
     if (!hasCSharpExtension()) {
         vscode.window.showWarningMessage(
-            `Attach to Process needs a C# extension for the debugger. Install ${recommendedCSharpExtension()}.`);
+            t('Attach to Process needs a C# extension for the debugger. Install {0}.', recommendedCSharpExtension()));
         return;
     }
 
@@ -76,12 +77,12 @@ export async function attachToProcess(): Promise<void> {
         items = buildAttachItems(findDotnetProcesses(entries, { projects: solutionProjects(), selfPid: process.pid }), ports);
     } catch (error) {
         log.error('Listing the processes failed:', error);
-        vscode.window.showErrorMessage(`Could not list the running processes: ${error instanceof Error ? error.message : String(error)}`);
+        vscode.window.showErrorMessage(t('Could not list the running processes: {0}', error instanceof Error ? error.message : String(error)));
         return;
     }
 
     if (items.length === 0) {
-        vscode.window.showInformationMessage('No running .NET processes found. Start the app first, then attach.');
+        vscode.window.showInformationMessage(t('No running .NET processes found. Start the app first, then attach.'));
         return;
     }
 
@@ -103,6 +104,6 @@ export async function attachToProcess(): Promise<void> {
         processId: picked.pid,
     });
     if (!started) {
-        vscode.window.showErrorMessage(`Could not attach the debugger to ${picked.label}.`);
+        vscode.window.showErrorMessage(t('Could not attach the debugger to {0}.', picked.label));
     }
 }

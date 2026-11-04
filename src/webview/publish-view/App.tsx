@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FolderSettings, PublishInit, PublishMessage, PublishProfileView, PublishRequest } from '../../types/publish';
 import { Select } from '../shared/Select';
+import { t } from '../shared/i18n';
 
 export interface PublishApi {
     postMessage(message: PublishRequest): void;
@@ -24,18 +25,18 @@ export function normalize(settings: FolderSettings, hostRuntime: string): Folder
 }
 
 const fileOptions = (settings: FolderSettings) => [
-    settings.deleteExistingFiles && 'Delete existing files',
-    settings.singleFile && 'Single file',
-    settings.readyToRun && 'ReadyToRun',
-    settings.trimmed && 'Trimmed',
-].filter(Boolean).join(', ') || 'None';
+    settings.deleteExistingFiles && t('Delete existing files'),
+    settings.singleFile && t('Single file'),
+    settings.readyToRun && t('ReadyToRun'),
+    settings.trimmed && t('Trimmed'),
+].filter(Boolean).join(', ') || t('None');
 
 const FolderField: React.FC<{ id: string; label: string; value: string; onChange(value: string): void; onBrowse(): void }> = ({ id, label, value, onChange, onBrowse }) => (
     <div className="field">
         <label htmlFor={id}>{label}</label>
         <div className="toolbar">
             <input id={id} type="text" value={value} onChange={e => onChange(e.target.value)} />
-            <button className="action" onClick={onBrowse}>Browse...</button>
+            <button className="action" onClick={onBrowse}>{t('Browse...')}</button>
         </div>
     </div>
 );
@@ -76,31 +77,31 @@ const SettingsForm: React.FC<{
 
     return (
         <section>
-            <h2>Profile settings</h2>
-            <SelectField id="configuration" label="Configuration" value={settings.configuration}
+            <h2>{t('Profile settings')}</h2>
+            <SelectField id="configuration" label={t('Configuration')} value={settings.configuration}
                 options={configurations.map(c => [c, c])} onChange={configuration => update({ configuration })} />
-            <SelectField id="framework" label="Target framework" value={settings.targetFramework ?? ''}
+            <SelectField id="framework" label={t('Target framework')} value={settings.targetFramework ?? ''}
                 options={frameworks.map(f => [f, f])} onChange={targetFramework => update({ targetFramework })} />
-            <SelectField id="deployment" label="Deployment mode" value={settings.selfContained ? 'self-contained' : 'framework-dependent'}
-                options={[['framework-dependent', 'Framework-dependent'], ['self-contained', 'Self-contained']]}
+            <SelectField id="deployment" label={t('Deployment mode')} value={settings.selfContained ? 'self-contained' : 'framework-dependent'}
+                options={[['framework-dependent', t('Framework-dependent')], ['self-contained', t('Self-contained')]]}
                 onChange={mode => update({ selfContained: mode === 'self-contained' })} />
-            <SelectField id="runtime" label="Target runtime" value={settings.runtimeIdentifier ?? ''}
-                options={[['', 'Portable'], ...init.runtimes.map((r): [string, string] => [r, r])]}
+            <SelectField id="runtime" label={t('Target runtime')} value={settings.runtimeIdentifier ?? ''}
+                options={[['', t('Portable')], ...init.runtimes.map((r): [string, string] => [r, r])]}
                 onChange={runtime => update({ runtimeIdentifier: runtime || undefined, ...(runtime ? {} : { selfContained: false }) })} />
-            <FolderField id="location" label="Target location" value={settings.publishDir}
+            <FolderField id="location" label={t('Target location')} value={settings.publishDir}
                 onChange={publishDir => update({ publishDir })} onBrowse={() => onBrowse(settings.publishDir)} />
-            <h2>File publish options</h2>
-            <Check id="delete-existing" label="Delete all existing files prior to publish" checked={settings.deleteExistingFiles}
+            <h2>{t('File publish options')}</h2>
+            <Check id="delete-existing" label={t('Delete all existing files prior to publish')} checked={settings.deleteExistingFiles}
                 onChange={deleteExistingFiles => update({ deleteExistingFiles })} />
-            <Check id="single-file" label="Produce single file" checked={settings.singleFile} disabled={!settings.runtimeIdentifier}
+            <Check id="single-file" label={t('Produce single file')} checked={settings.singleFile} disabled={!settings.runtimeIdentifier}
                 onChange={singleFile => update({ singleFile })} />
-            <Check id="ready-to-run" label="Enable ReadyToRun compilation" checked={settings.readyToRun} disabled={!settings.runtimeIdentifier}
+            <Check id="ready-to-run" label={t('Enable ReadyToRun compilation')} checked={settings.readyToRun} disabled={!settings.runtimeIdentifier}
                 onChange={readyToRun => update({ readyToRun })} />
-            <Check id="trim" label="Trim unused code" checked={settings.trimmed} disabled={!settings.selfContained}
+            <Check id="trim" label={t('Trim unused code')} checked={settings.trimmed} disabled={!settings.selfContained}
                 onChange={trimmed => update({ trimmed })} />
             <div className="buttons">
-                <button className="action" onClick={onCancel}>Cancel</button>
-                <button className="action primary" disabled={!settings.publishDir.trim()} onClick={() => onSave(settings)}>Save</button>
+                <button className="action" onClick={onCancel}>{t('Cancel')}</button>
+                <button className="action primary" disabled={!settings.publishDir.trim()} onClick={() => onSave(settings)}>{t('Save')}</button>
             </div>
         </section>
     );
@@ -117,12 +118,12 @@ const NewProfile: React.FC<{ init: PublishInit; pickedFolder?: string; onBrowse(
     }, [pickedFolder]);
     return (
         <section>
-            <h2>Publish to a folder</h2>
-            <p className="note">Publishes the app to a local folder or file share, for copying to a server or a container. Other targets (Azure, container registries, FTP, IIS) come later.</p>
-            <FolderField id="new-location" label="Folder location" value={location} onChange={setLocation} onBrowse={() => onBrowse(location)} />
+            <h2>{t('Publish to a folder')}</h2>
+            <p className="note">{t('Publishes the app to a local folder or file share, for copying to a server or a container. Other targets (Azure, container registries, FTP, IIS) come later.')}</p>
+            <FolderField id="new-location" label={t('Folder location')} value={location} onChange={setLocation} onBrowse={() => onBrowse(location)} />
             <div className="buttons">
-                {onCancel && <button className="action" onClick={onCancel}>Cancel</button>}
-                <button className="action primary" disabled={!location.trim()} onClick={() => onFinish(location.trim())}>Finish</button>
+                {onCancel && <button className="action" onClick={onCancel}>{t('Cancel')}</button>}
+                <button className="action primary" disabled={!location.trim()} onClick={() => onFinish(location.trim())}>{t('Finish')}</button>
             </div>
         </section>
     );
@@ -132,27 +133,27 @@ const Summary: React.FC<{ profile: PublishProfileView; status?: Status; api: Pub
     if (profile.target !== 'Folder') {
         return (
             <p className="note">
-                This profile publishes with {profile.target} (Azure, a container registry, FTP or IIS), which is not supported yet; it is planned.
-                Visual Studio can publish it. <a className="link" onClick={() => api.postMessage({ type: 'openProfile', profile: profile.name })}>Open .pubxml</a>
+                {t('This profile publishes with {0} (Azure, a container registry, FTP or IIS), which is not supported yet; it is planned.', profile.target)}{' '}
+                {t('Visual Studio can publish it.')} <a className="link" onClick={() => api.postMessage({ type: 'openProfile', profile: profile.name })}>{t('Open .pubxml')}</a>
             </p>
         );
     }
     const { settings } = profile;
     return (
         <>
-            {status?.kind === 'publishing' && <div className="status">Publishing... the output is in the terminal.</div>}
+            {status?.kind === 'publishing' && <div className="status">{t('Publishing... the output is in the terminal.')}</div>}
             {status?.kind === 'published' && (status.succeeded
-                ? <div className="status ok">Published. <a className="link" onClick={() => api.postMessage({ type: 'openFolder', profile: profile.name })}>Open folder</a></div>
-                : <div className="status failed">Publish failed. See the terminal and the Error List.</div>)}
-            {!status && <div className="status">{profile.lastPublished ? `Last published ${new Date(profile.lastPublished).toLocaleString()}.` : 'Ready to publish.'}</div>}
+                ? <div className="status ok">{t('Published.')} <a className="link" onClick={() => api.postMessage({ type: 'openFolder', profile: profile.name })}>{t('Open folder')}</a></div>
+                : <div className="status failed">{t('Publish failed. See the terminal and the Error List.')}</div>)}
+            {!status && <div className="status">{profile.lastPublished ? t('Last published {0}.', new Date(profile.lastPublished).toLocaleString()) : t('Ready to publish.')}</div>}
             <dl className="summary">
-                <dt>Target</dt><dd>Folder</dd>
-                <dt>Target location</dt><dd>{profile.publishFolder}</dd>
-                <dt>Configuration</dt><dd>{settings.configuration}</dd>
-                <dt>Target framework</dt><dd>{settings.targetFramework ?? 'Default'}</dd>
-                <dt>Deployment mode</dt><dd>{settings.selfContained ? 'Self-contained' : 'Framework-dependent'}</dd>
-                <dt>Target runtime</dt><dd>{settings.runtimeIdentifier ?? 'Portable'}</dd>
-                <dt>File publish options</dt><dd>{fileOptions(settings)}</dd>
+                <dt>{t('Target')}</dt><dd>{t('Folder')}</dd>
+                <dt>{t('Target location')}</dt><dd>{profile.publishFolder}</dd>
+                <dt>{t('Configuration')}</dt><dd>{settings.configuration}</dd>
+                <dt>{t('Target framework')}</dt><dd>{settings.targetFramework ?? t('Default')}</dd>
+                <dt>{t('Deployment mode')}</dt><dd>{settings.selfContained ? t('Self-contained') : t('Framework-dependent')}</dd>
+                <dt>{t('Target runtime')}</dt><dd>{settings.runtimeIdentifier ?? t('Portable')}</dd>
+                <dt>{t('File publish options')}</dt><dd>{fileOptions(settings)}</dd>
             </dl>
         </>
     );
@@ -198,7 +199,7 @@ export const App: React.FC<{ api: PublishApi }> = ({ api }) => {
     }, [api]);
 
     if (!init) {
-        return <h1>Publish</h1>;
+        return <h1>{t('Publish')}</h1>;
     }
     const profile = init.profiles.find(p => p.name === selected);
     const browse = (current: string) => {
@@ -209,7 +210,7 @@ export const App: React.FC<{ api: PublishApi }> = ({ api }) => {
 
     return (
         <>
-            <h1>Publish {init.projectName}</h1>
+            <h1>{t('Publish {0}', init.projectName)}</h1>
             {error && <div className="error">{error}</div>}
             {!profile || mode === 'new' ? (
                 <NewProfile init={init} pickedFolder={pickedFolder} onBrowse={browse}
@@ -222,22 +223,22 @@ export const App: React.FC<{ api: PublishApi }> = ({ api }) => {
             ) : (
                 <section>
                     <div className="toolbar">
-                        <Select aria-label="Publish profile" value={profile.name} onChange={setSelected}
+                        <Select aria-label={t('Publish profile')} value={profile.name} onChange={setSelected}
                             options={init.profiles.map(p => ({ value: p.name, label: p.name }))} />
                         <button className="action primary" disabled={publishing || profile.target !== 'Folder'}
                             onClick={() => api.postMessage({ type: 'publish', profile: profile.name })}>
-                            {publishing ? 'Publishing...' : 'Publish'}
+                            {publishing ? t('Publishing...') : t('Publish')}
                         </button>
-                        <button className="action" onClick={() => setMode('new')}>New profile</button>
+                        <button className="action" onClick={() => setMode('new')}>{t('New profile')}</button>
                     </div>
                     <div className="toolbar">
-                        <a className="link" onClick={() => api.postMessage({ type: 'renameProfile', profile: profile.name })}>Rename</a>
-                        <a className="link" onClick={() => api.postMessage({ type: 'deleteProfile', profile: profile.name })}>Delete</a>
-                        <a className="link" onClick={() => api.postMessage({ type: 'openProfile', profile: profile.name })}>Open .pubxml</a>
+                        <a className="link" onClick={() => api.postMessage({ type: 'renameProfile', profile: profile.name })}>{t('Rename')}</a>
+                        <a className="link" onClick={() => api.postMessage({ type: 'deleteProfile', profile: profile.name })}>{t('Delete')}</a>
+                        <a className="link" onClick={() => api.postMessage({ type: 'openProfile', profile: profile.name })}>{t('Open .pubxml')}</a>
                     </div>
                     <Summary profile={profile} status={status[profile.name]} api={api} />
                     {profile.target === 'Folder' && (
-                        <button className="action" onClick={() => { setPickedFolder(undefined); setMode('settings'); }}>Show all settings</button>
+                        <button className="action" onClick={() => { setPickedFolder(undefined); setMode('settings'); }}>{t('Show all settings')}</button>
                     )}
                 </section>
             )}

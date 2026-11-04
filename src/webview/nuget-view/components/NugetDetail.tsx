@@ -1,6 +1,7 @@
 // import React, { useEffect, useState } from "react";
 import { formatAuthors, LocalNuGetPackage } from "../shared";
 import { PackageAdvisory } from "../../../services/nuget/types";
+import { t } from "../../shared/i18n";
 
 interface NugetDetailProps {
     selectedPackage: LocalNuGetPackage;
@@ -16,8 +17,10 @@ export default function NugetDetail({ selectedPackage, advisory, mappedSources }
                 <div role="alert" style={{ marginBottom: '16px', padding: '8px 12px', border: '1px solid var(--vscode-errorForeground)', borderRadius: '4px' }}>
                     <div style={{ fontWeight: 'bold', color: 'var(--vscode-errorForeground)', marginBottom: '4px' }}>
                         {advisory.vulnerableVersions && (advisory.vulnerableVersions.length > 1 || advisory.vulnerableVersions[0] !== ((selectedPackage as { version?: string }).version ?? selectedPackage.currentVersion))
-                            ? `Version${advisory.vulnerableVersions.length > 1 ? 's' : ''} ${advisory.vulnerableVersions.join(', ')} in use ${advisory.vulnerableVersions.length > 1 ? 'have' : 'has'} known vulnerabilities`
-                            : 'This version has known vulnerabilities'}
+                            ? (advisory.vulnerableVersions.length > 1
+                                ? t('Versions {0} in use have known vulnerabilities', advisory.vulnerableVersions.join(', '))
+                                : t('Version {0} in use has known vulnerabilities', advisory.vulnerableVersions[0]))
+                            : t('This version has known vulnerabilities')}
                     </div>
                     {advisory.vulnerabilities.map(vulnerability => (
                         <div key={vulnerability.url}>
@@ -29,18 +32,18 @@ export default function NugetDetail({ selectedPackage, advisory, mappedSources }
             {advisory?.deprecation && (
                 <div role="alert" style={{ marginBottom: '16px', padding: '8px 12px', border: '1px solid var(--vscode-editorWarning-foreground)', borderRadius: '4px' }}>
                     <div style={{ fontWeight: 'bold', color: 'var(--vscode-editorWarning-foreground)', marginBottom: '4px' }}>
-                        This package is deprecated ({advisory.deprecation.reasons.join(', ')})
+                        {t('This package is deprecated ({0})', advisory.deprecation.reasons.join(', '))}
                     </div>
                     {advisory.deprecation.alternative && (
-                        <div>Use {advisory.deprecation.alternative.id}{advisory.deprecation.alternative.range ? ` ${advisory.deprecation.alternative.range}` : ''} instead.</div>
+                        <div>{t('Use {0}{1} instead.', advisory.deprecation.alternative.id, advisory.deprecation.alternative.range ? ` ${advisory.deprecation.alternative.range}` : '')}</div>
                     )}
                 </div>
             )}
             {mappedSources && (
                 <div style={{ marginBottom: '16px', color: mappedSources.length === 0 ? 'var(--vscode-editorWarning-foreground)' : 'var(--vscode-descriptionForeground)' }}>
                     {mappedSources.length === 0
-                        ? 'Package source mapping: no source is mapped for this package, so restore cannot find it (NU1100). Add a pattern for it to a packageSource in NuGet.Config.'
-                        : `Package source mapping: ${mappedSources.join(', ')}`}
+                        ? t('Package source mapping: no source is mapped for this package, so restore cannot find it (NU1100). Add a pattern for it to a packageSource in NuGet.Config.')
+                        : t('Package source mapping: {0}', mappedSources.join(', '))}
                 </div>
             )}
             {/* Description Section - Special placement at top */}
@@ -52,7 +55,7 @@ export default function NugetDetail({ selectedPackage, advisory, mappedSources }
                         color: 'var(--vscode-foreground)',
                         fontSize: '13px'
                     }}>
-                        Description
+                        {t('Description')}
                     </div>
                     <div style={{
                         lineHeight: '1.5',
@@ -111,7 +114,7 @@ export default function NugetDetail({ selectedPackage, advisory, mappedSources }
                             fontWeight: '500',
                             color: 'var(--vscode-foreground)'
                         }}>
-                            Version
+                            {t('Version')}
                         </div>
                         <div style={{
                             flex: 1,
@@ -138,7 +141,7 @@ export default function NugetDetail({ selectedPackage, advisory, mappedSources }
                                 fontWeight: '500',
                                 color: 'var(--vscode-foreground)'
                             }}>
-                                Authors
+                                {t('Authors')}
                             </div>
                             <div style={{
                                 flex: 1,
@@ -166,7 +169,7 @@ export default function NugetDetail({ selectedPackage, advisory, mappedSources }
                                 fontWeight: '500',
                                 color: 'var(--vscode-foreground)'
                             }}>
-                                Tags
+                                {t('Tags')}
                             </div>
                             <div style={{
                                 flex: 1,
@@ -194,7 +197,7 @@ export default function NugetDetail({ selectedPackage, advisory, mappedSources }
                                 fontWeight: '500',
                                 color: 'var(--vscode-foreground)'
                             }}>
-                                Downloads
+                                {t('Downloads')}
                             </div>
                             <div style={{
                                 flex: 1,
@@ -222,7 +225,7 @@ export default function NugetDetail({ selectedPackage, advisory, mappedSources }
                                 fontWeight: '500',
                                 color: 'var(--vscode-foreground)'
                             }}>
-                                Project URL
+                                {t('Project URL')}
                             </div>
                             <div style={{
                                 flex: 1,
@@ -259,7 +262,7 @@ export default function NugetDetail({ selectedPackage, advisory, mappedSources }
                                 fontWeight: '500',
                                 color: 'var(--vscode-foreground)'
                             }}>
-                                License
+                                {t('License')}
                             </div>
                             <div style={{
                                 flex: 1,

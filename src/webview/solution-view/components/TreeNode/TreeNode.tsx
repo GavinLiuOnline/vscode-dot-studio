@@ -8,6 +8,7 @@ import { sln } from '../../../../core/utils';
 import { ENTITY_FRAMEWORK_PROJECT, IN_TEST_PROJECT } from '../../../../core/contextMenus';
 import { isDraggable } from '../../../../core/dropRules';
 import { describeMarker } from './diagnosticMarker';
+import { t } from '../../../shared/i18n';
 import { IconThemeContext, themeFontFamily } from './IconThemeContext';
 import { fontGlyph, resolveThemeIcon } from '../../../shared/iconTheme';
 
@@ -437,7 +438,7 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
                         <span
                             className={`node-name ${node.isStartupProject ? 'startup-project' : ''} ${marker ? `diagnostic-${marker.severity}` : ''}`}
                             {...(marker ? markerProps : { title: node.name })}
-                        >{node.isUnloaded ? `${node.name} (unloaded)` : node.name}</span>
+                        >{node.isUnloaded ? `${node.name} ${t('(unloaded)')}` : node.name}</span>
                     </>
                 )}
             </div>

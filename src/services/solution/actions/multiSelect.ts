@@ -9,6 +9,7 @@ import { runTask } from '../../build/runTask';
 import { multiDeleteQuestion } from '../../project/items/linkedItems';
 import { clipboard, projectsLinking } from './fileActions';
 import { removeDependencyFromCsproj } from './referenceActions';
+import { t } from '../../../core/i18n';
 
 const log = logger('multiSelect');
 
@@ -36,21 +37,21 @@ export async function handleMultiAction(action: ProjectActionCmd['action'], node
                 }
                 break;
             case 'removeProject':
-                if (solution && await confirm(`Remove ${nodes.length} projects from the solution? Their files stay on disk.`, 'Remove')) {
+                if (solution && await confirm(t('Remove {0} projects from the solution? Their files stay on disk.', nodes.length), 'Remove')) {
                     for (const node of nodes) {
                         await solution.removeProject(node.path);
                     }
                 }
                 break;
             case 'removeSolutionItem':
-                if (solution && await confirm(`Remove ${nodes.length} items from the solution? The files stay on disk.`, 'Remove')) {
+                if (solution && await confirm(t('Remove {0} items from the solution? The files stay on disk.', nodes.length), 'Remove')) {
                     for (const node of nodes) {
                         await solution.removeSolutionItem(node.path);
                     }
                 }
                 break;
             case 'removeDependency':
-                if (await confirm(`Remove ${nodes.length} references from their projects?`, 'Remove')) {
+                if (await confirm(t('Remove {0} references from their projects?', nodes.length), 'Remove')) {
                     for (const node of nodes) {
                         const info = NodeIdService.getDependencyInfoFromNode(node);
                         if (info) {
@@ -79,6 +80,6 @@ export async function handleMultiAction(action: ProjectActionCmd['action'], node
         }
     } catch (error) {
         log.error(`${action} on ${nodes.length} nodes failed:`, error);
-        vscode.window.showErrorMessage(`${action} failed: ${error instanceof Error ? error.message : error}`);
+        vscode.window.showErrorMessage(t('{0} failed: {1}', action, error instanceof Error ? error.message : error));
     }
 }

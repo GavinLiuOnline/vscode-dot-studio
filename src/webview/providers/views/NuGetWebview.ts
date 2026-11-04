@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { allScrollbarsCss } from './scrollbar';
 import { getNonce } from './nonce';
+import { t, webviewLanguage } from '../../../core/i18n';
 export class NuGetWebview {
 
     /** `includePrerelease`: how "Include prerelease" starts (setting `shinobi.nuget.includePrerelease`) */
@@ -20,12 +21,12 @@ export class NuGetWebview {
         const nonce = getNonce();
 
         return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${webviewLanguage()}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' ${webview.cspSource}; script-src 'nonce-${nonce}'; font-src ${webview.cspSource}; img-src ${webview.cspSource} https: data:; connect-src https://api.nuget.org; form-action 'none'; base-uri 'none';">
-    <title>NuGet Package Manager</title>
+    <title>${t('NuGet Package Manager')}</title>
     <link href="${codiconsCss}" rel="stylesheet">
     <style>
         ${allScrollbarsCss()}

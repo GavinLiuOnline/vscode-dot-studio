@@ -4,6 +4,7 @@ import { logger } from '../../core/logger';
 import { WizardInit, WizardMessage, WizardRequest } from '../../types/templateWizard';
 import { TemplateWizardWebview } from './views/TemplateWizardWebview';
 import { createItem, createNewSolution, createProject, newItemWizard, newProjectWizard, newSolutionWizard } from '../../services/templates/templateService';
+import { t } from '../../core/i18n';
 
 const log = logger('TemplateWizard');
 
@@ -82,7 +83,7 @@ export class TemplateWizardPanel {
 /** "Add New Project...": into the solution root, or a solution folder ("a/b") */
 export function openNewProjectWizard(solutionFolderPath?: string): void {
     TemplateWizardPanel.open(
-        'Add New Project',
+        t('Add New Project'),
         () => newProjectWizard(solutionFolderPath),
         async request => {
             const error = await createProject(request.templateId, request.name.trim(), request.location ?? request.name, request.values, solutionFolderPath);
@@ -93,7 +94,7 @@ export function openNewProjectWizard(solutionFolderPath?: string): void {
 /** "Add New Item..." in `folder` of `projectPath`; the new file opens */
 export function openNewItemWizard(folder: string, projectPath: string): void {
     TemplateWizardPanel.open(
-        `Add New Item: ${path.basename(folder)}`,
+        t('Add New Item: {0}', path.basename(folder)),
         () => newItemWizard(folder, projectPath),
         async request => {
             const result = await createItem(request.templateId, folder, request.name.trim(), projectPath, request.values);
@@ -106,6 +107,6 @@ export function openNewItemWizard(folder: string, projectPath: string): void {
 
 /** Visual Studio's "Create a new project": a new solution with its first project, which then opens */
 export function openNewSolutionWizard(): void {
-    TemplateWizardPanel.open('Create a New Project', newSolutionWizard, request => createNewSolution(request));
+    TemplateWizardPanel.open(t('Create a New Project'), newSolutionWizard, request => createNewSolution(request));
 }
 

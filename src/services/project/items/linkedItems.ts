@@ -1,5 +1,6 @@
 import { ProjectFileEditor as Xml } from '../../../parsers/projectFileEditor';
 import { resolveItem, sameFile } from './itemPaths';
+import { t } from '../../../core/i18n';
 
 /**
  * Linked files (`<Compile Include="..\Shared\x.cs" Link="x.cs" />`): the file lives outside the project folder, the
@@ -58,11 +59,12 @@ export function linkedDeleteDetail(filePath: string, projectNames: readonly stri
 
 /** The confirmation of Delete on several nodes, some of them linked files */
 export function multiDeleteQuestion(count: number, linkedFiles: readonly string[]): string {
-    const question = `Delete ${count} items? They are moved to the trash.`;
+    const question = t('Delete {0} items? They are moved to the trash.', count);
     if (linkedFiles.length === 0) {
         return question;
     }
-    return `${question} ${linkedFiles.length === 1 ? 'One of them is a linked file' : `${linkedFiles.length} of them are linked files`}: `
-        + `the real ${linkedFiles.length === 1 ? 'file' : 'files'} outside the project ${linkedFiles.length === 1 ? 'is' : 'are'} deleted `
-        + `(${linkedFiles.join(', ')}). To remove only a link, use Remove Link on it.`;
+    const files = linkedFiles.join(', ');
+    return linkedFiles.length === 1
+        ? `${question} ${t('One of them is a linked file: the real file outside the project is deleted ({0}). To remove only a link, use Remove Link on it.', files)}`
+        : `${question} ${t('{0} of them are linked files: the real files outside the project are deleted ({1}). To remove only a link, use Remove Link on it.', linkedFiles.length, files)}`;
 }

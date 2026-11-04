@@ -8,6 +8,7 @@ import { ProjectFileEditor } from '../../../parsers/projectFileEditor';
 import { addProjectReferences } from '../../project/projectReferences';
 import { removeDependencyEdit } from '../../project/dependencyRemoval';
 import { uninstallPackages } from '../../nuget/centralPackageOperations';
+import { t } from '../../../core/i18n';
 
 const log = logger('referenceActions');
 
@@ -20,7 +21,7 @@ export async function handleManageNuGetPackages(nodeId: NodeId): Promise<void> {
         const projectPath = nodeId.path;
         if (!projectPath) {
             log.error('Cannot extract project path from nodeId:', nodeId);
-            vscode.window.showErrorMessage('Error: Cannot determine project path');
+            vscode.window.showErrorMessage(t('Error: Cannot determine project path'));
             return;
         }
 
@@ -31,7 +32,7 @@ export async function handleManageNuGetPackages(nodeId: NodeId): Promise<void> {
         log.info(`Opened NuGet Package Manager for: ${projectPath}`);
     } catch (error) {
         log.error('Error opening NuGet webview:', error);
-        vscode.window.showErrorMessage(`Error opening NuGet webview: ${error}`);
+        vscode.window.showErrorMessage(t('Error opening NuGet webview: {0}', error));
     }
 }
 
@@ -41,7 +42,7 @@ export async function handleManageNuGetPackagesForSolution(nodeId: NodeId): Prom
         const solutionPath = nodeId.path;
         if (!solutionPath) {
             log.error('Cannot extract solution path from nodeId:', nodeId);
-            vscode.window.showErrorMessage('Error: Cannot determine solution path');
+            vscode.window.showErrorMessage(t('Error: Cannot determine solution path'));
             return;
         }
 
@@ -52,7 +53,7 @@ export async function handleManageNuGetPackagesForSolution(nodeId: NodeId): Prom
         log.info(`Opened NuGet Package Manager for solution: ${solutionPath}`);
     } catch (error) {
         log.error('Error opening solution NuGet manager:', error);
-        vscode.window.showErrorMessage(`Error opening solution NuGet manager: ${error}`);
+        vscode.window.showErrorMessage(t('Error opening solution NuGet manager: {0}', error));
     }
 }
 
@@ -65,7 +66,7 @@ export async function handleAddProjectReference(nodeId: NodeId): Promise<void> {
         const projectPath = nodeId.path;
         if (!projectPath) {
             log.error('Cannot extract project path from nodeId:', nodeId);
-            vscode.window.showErrorMessage('Error: Cannot determine project path');
+            vscode.window.showErrorMessage(t('Error: Cannot determine project path'));
             return;
         }
         log.info(`Adding project reference for project: ${projectPath}`);
@@ -90,7 +91,7 @@ export async function handleAddProjectReference(nodeId: NodeId): Promise<void> {
         }
     } catch (error) {
         log.error('Error adding project reference:', error);
-        vscode.window.showErrorMessage(`Error adding project reference: ${error}`);
+        vscode.window.showErrorMessage(t('Error adding project reference: {0}', error));
     }
 }
 
@@ -102,7 +103,7 @@ export async function handleAddAssemblyReference(nodeId: NodeId): Promise<void> 
         const projectPath = nodeId.path;
         if (!projectPath) {
             log.error('Cannot extract project path from nodeId:', nodeId);
-            vscode.window.showErrorMessage('Error: Cannot determine project path');
+            vscode.window.showErrorMessage(t('Error: Cannot determine project path'));
             return;
         }
 
@@ -140,7 +141,7 @@ export async function handleAddAssemblyReference(nodeId: NodeId): Promise<void> 
         }
     } catch (error) {
         log.error('Error adding assembly reference:', error);
-        vscode.window.showErrorMessage(`Error adding assembly reference: ${error}`);
+        vscode.window.showErrorMessage(t('Error adding assembly reference: {0}', error));
     }
 }
 
@@ -153,7 +154,7 @@ export async function handleRestoreDependencies(nodeId: NodeId): Promise<void> {
         const projectPath = nodeId.path;
         if (!projectPath) {
             log.error('Cannot extract project path from nodeId:', nodeId);
-            vscode.window.showErrorMessage('Error: Cannot determine project path');
+            vscode.window.showErrorMessage(t('Error: Cannot determine project path'));
             return;
         }
         log.info(`Restoring dependencies for project: ${projectPath}`);
@@ -162,7 +163,7 @@ export async function handleRestoreDependencies(nodeId: NodeId): Promise<void> {
         log.info(`Started restore task for ${projectPath}`);
     } catch (error) {
         log.error('Error restoring dependencies:', error);
-        vscode.window.showErrorMessage(`Error restoring dependencies: ${error}`);
+        vscode.window.showErrorMessage(t('Error restoring dependencies: {0}', error));
     }
 }
 
@@ -177,7 +178,7 @@ export async function handleRemoveDependency(nodeId: NodeId): Promise<void> {
         const dependencyInfo = NodeIdService.getDependencyInfoFromNode(nodeId);
         if (!dependencyInfo) {
             log.error('Cannot extract dependency info from nodeId:', nodeId);
-            vscode.window.showErrorMessage('Error: Cannot determine dependency information');
+            vscode.window.showErrorMessage(t('Error: Cannot determine dependency information'));
             return;
         }
 
@@ -187,7 +188,7 @@ export async function handleRemoveDependency(nodeId: NodeId): Promise<void> {
 
         // Confirm removal with user
         const result = await vscode.window.showWarningMessage(
-            `Are you sure you want to remove ${dependencyName} from the project?`,
+            t('Are you sure you want to remove {0} from the project?', dependencyName),
             { modal: true },
             'Remove'
         );
@@ -204,12 +205,12 @@ export async function handleRemoveDependency(nodeId: NodeId): Promise<void> {
         if (success) {
             log.info(`Successfully removed ${dependencyName} from ${projectName}`);
         } else {
-            vscode.window.showErrorMessage(`Failed to remove ${dependencyName} from ${projectName}`);
+            vscode.window.showErrorMessage(t('Failed to remove {0} from {1}', dependencyName, projectName));
         }
 
     } catch (error) {
         log.error('Error removing dependency:', error);
-        vscode.window.showErrorMessage(`Error removing dependency: ${error}`);
+        vscode.window.showErrorMessage(t('Error removing dependency: {0}', error));
     }
 }
 
@@ -252,6 +253,6 @@ export async function addDroppedReferences(projectPath: string, references: read
         vscode.window.showWarningMessage(result.refused.join(' '));
     }
     if (result.error) {
-        vscode.window.showErrorMessage(`Could not add the project reference: ${result.error}`);
+        vscode.window.showErrorMessage(t('Could not add the project reference: {0}', result.error));
     }
 }

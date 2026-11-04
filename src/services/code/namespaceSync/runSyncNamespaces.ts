@@ -7,6 +7,7 @@ import { hasCSharpExtension, recommendedCSharpExtension } from '../../shared/csh
 import { NamespaceService } from '../namespaceService';
 import { candidateFiles } from './syncPlan';
 import { SyncAction, SyncDeps, syncNamespaces, syncSummary } from './namespaceSync';
+import { t } from '../../../core/i18n';
 
 const log = logger('NamespaceSync');
 
@@ -117,20 +118,20 @@ export async function runSyncNamespaces(node: { kind: 'project' | 'folder'; path
     const name = path.basename(node.path);
     if (!hasCSharpExtension()) {
         vscode.window.showWarningMessage(
-            `Sync Namespaces needs a C# extension. Install ${recommendedCSharpExtension()}.`);
+            t('Sync Namespaces needs a C# extension. Install {0}.', recommendedCSharpExtension()));
         return;
     }
 
     const root = node.kind === 'project' ? path.dirname(node.path) : node.path;
     const files = await listCSharpFiles(root);
     if (files.length === 0) {
-        vscode.window.showInformationMessage(`No C# files to sync in ${name}.`);
+        vscode.window.showInformationMessage(t('No C# files to sync in {0}.', name));
         return;
     }
 
     const sync = 'Sync';
     const choice = await vscode.window.showInformationMessage(
-        `Sync namespaces of ${files.length} ${files.length === 1 ? 'file' : 'files'} in ${name} to match their folders? Other files that use them are updated too.`,
+        t('Sync namespaces of {0} {1} in {2} to match their folders? Other files that use them are updated too.', files.length, files.length === 1 ? 'file' : 'files', name),
         { modal: true }, sync);
     if (choice !== sync) {
         return;

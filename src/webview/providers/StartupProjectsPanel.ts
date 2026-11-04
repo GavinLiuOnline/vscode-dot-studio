@@ -11,6 +11,7 @@ import { currentSingle, refreshStartup } from '../../services/debug/startupProfi
 import { planRequest, toEntry } from '../../services/debug/startupProfiles/requests';
 import { StartupProfileEntry, StartupProjectsMessage, StartupProjectsRequest, StartupProjectsState } from '../../types/startupProjects';
 import { TemplateWizardWebview } from './views/TemplateWizardWebview';
+import { t } from '../../core/i18n';
 
 const log = logger('StartupProjectsPanel');
 
@@ -22,7 +23,7 @@ export class StartupProjectsPanel {
     /** Opens (or shows) the Configure Startup Projects tab */
     static show(): void {
         if (!SolutionService.getActiveSolution()) {
-            vscode.window.showInformationMessage('Open a solution to configure its startup projects.');
+            vscode.window.showInformationMessage(t('Open a solution to configure its startup projects.'));
             return;
         }
         if (this.current) {
@@ -40,7 +41,7 @@ export class StartupProjectsPanel {
     private readonly subscriptions: vscode.Disposable[] = [];
 
     private constructor(extensionUri: vscode.Uri) {
-        const title = 'Configure Startup Projects';
+        const title = t('Configure Startup Projects');
         this.panel = vscode.window.createWebviewPanel('shinobi.startupProjects', title, vscode.ViewColumn.Active, {
             enableScripts: true,
             retainContextWhenHidden: true,

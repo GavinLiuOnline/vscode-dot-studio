@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '../../shared/i18n';
 
 interface TwoPanelProps<T> {
     /** The package list (with its keyboard handling) */
@@ -42,7 +43,7 @@ export function TwoPanel<T>({ left, onKeyDown, selection, children }: TwoPanelPr
                         color: 'var(--vscode-descriptionForeground)',
                         fontStyle: 'italic'
                     }}>
-                        Select a package to view details
+                        {t('Select a package to view details')}
                     </div>
                 )}
             </div>

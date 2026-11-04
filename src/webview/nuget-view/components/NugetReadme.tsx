@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Markdown from "markdown-to-jsx";
 import { readmeElement } from "../readmeSafety";
+import { t } from "../../shared/i18n";
 
 interface NugetReadmeProps {
     packageId: string;
@@ -21,7 +22,7 @@ export default function NugetReadme({ packageId, version, readmeUrl }: NugetRead
         setError(null);
         if (!readmeUrl) {
             setLoading(false);
-            setText("No README available for this package.");
+            setText(t("No README available for this package."));
             return () => controller.abort();
         }
 
@@ -32,9 +33,9 @@ export default function NugetReadme({ packageId, version, readmeUrl }: NugetRead
                 if (res.ok) {
                     return res.text();
                 } else if (res.status === 404) {
-                    return "No README found for this package.";
+                    return t("No README found for this package.");
                 } else {
-                    throw new Error(`Failed to fetch README: ${res.status}`);
+                    throw new Error(t("Failed to fetch README: {0}", res.status));
                 }
             })
             .then((content) => {
@@ -46,7 +47,7 @@ export default function NugetReadme({ packageId, version, readmeUrl }: NugetRead
             .catch((err) => {
                 if (current) {
                     setError(err.message);
-                    setText("Failed to load README.");
+                    setText(t("Failed to load README."));
                     setLoading(false);
                 }
             });
@@ -64,7 +65,7 @@ export default function NugetReadme({ packageId, version, readmeUrl }: NugetRead
                 textAlign: 'center',
                 color: 'var(--vscode-descriptionForeground)'
             }}>
-                Loading README...
+                {t('Loading README...')}
             </div>
         );
     }
@@ -75,7 +76,7 @@ export default function NugetReadme({ packageId, version, readmeUrl }: NugetRead
                 padding: '16px',
                 color: 'var(--vscode-errorForeground)'
             }}>
-                Error: {error}
+                {t('Error: {0}', error)}
             </div>
         );
     }
