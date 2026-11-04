@@ -583,7 +583,9 @@ export class SolutionExpansionService {
             }
 
             // Restore expansion states and load children for valid nodes
-            for (const expandedId of validExpansionPaths) {
+            // Parents before their children: a folder is found in the tree only once the folder around it has loaded its children
+            const inOrder = [...validExpansionPaths].sort((a, b) => (NodeIdService.parse(a).path?.length ?? 0) - (NodeIdService.parse(b).path?.length ?? 0));
+            for (const expandedId of inOrder) {
                 const nodeType = NodeIdService.parse(expandedId).type;
                 if (nodeType) {
                     log.debug(`Restoring expansion for: ${expandedId} (${nodeType})`);
@@ -591,7 +593,8 @@ export class SolutionExpansionService {
                     // Set expanded = true in the tree
                     const updateSuccess = SolutionTreeService.updateNodeInTree(treeData, expandedId, { expanded: true });
                     if (!updateSuccess) {
-                        log.error(`Failed to update expansion state for node: ${expandedId}`);
+                        // a folder that is gone (or not in the tree any more) is expected after a rebuild or a delete: no error on every refresh
+                        log.debug(`Failed to update expansion state for node: ${expandedId}`);
                         continue;
                     }
 
