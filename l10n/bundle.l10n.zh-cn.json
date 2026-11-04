@@ -344,5 +344,10 @@
   "Updating {0} package(s)": "正在更新 {0} 个包",
   "Consolidating": "正在统一版本",
   "Add New Item to {0}": "向 {0} 添加新项",
-  "An empty {0}": "空的 {0}"
+  "An empty {0}": "空的 {0}",
+  "Convert abstract class to interface...": "将抽象类转换为接口...",
+  "Convert interface to abstract class...": "将接口转换为抽象类...",
+  "Put the cursor on the name of an abstract class or an interface to convert it.": "请将光标放在抽象类或接口的名称上以进行转换。",
+  "Convert {0} to an Abstract Class": "将 {0} 转换为抽象类",
+  "Convert {0} to an Interface": "将 {0} 转换为接口"
 }

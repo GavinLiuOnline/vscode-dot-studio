@@ -20,6 +20,10 @@ export interface TypeRefactoringSpec<Form extends RefactorForm = RefactorForm> {
     kind: Form['kind'];
     /** Said when the cursor is not where the refactoring works */
     notOnTypeMessage: string;
+    /** The lines that can declare the type the refactoring works on (a class, struct or record by default) */
+    declarationPattern?: RegExp;
+    /** The entry's title when it depends on what the server found (its direction) */
+    actionTitleOf?(info: Record<string, unknown>): string;
     /** The entry is offered on the name of a member as well (the server decides where), not only on a line that declares a type */
     onMembers?: boolean;
     /** The entry is not offered where the server refuses the refactoring (otherwise it is, and the reason shows when it is picked) */
@@ -53,7 +57,7 @@ export class TypeRefactoring implements vscode.CodeActionProvider {
 
     async provideCodeActions(document: vscode.TextDocument, range: vscode.Range): Promise<vscode.CodeAction[]> {
         const line = document.lineAt(range.start.line).text;
-        if (!TYPE_DECLARATION.test(line) && !(this.spec.onMembers && MEMBER_DECLARATION.test(line))) {
+        if (!(this.spec.declarationPattern ?? TYPE_DECLARATION).test(line) && !(this.spec.onMembers && MEMBER_DECLARATION.test(line))) {
             return [];
         }
         try {
@@ -61,8 +65,9 @@ export class TypeRefactoring implements vscode.CodeActionProvider {
             if (!info || (this.spec.hideWhenRefused && info.refusal)) {
                 return [];
             }
-            const action = new vscode.CodeAction(this.spec.actionTitle, vscode.CodeActionKind.RefactorExtract);
-            action.command = { command: this.spec.command, title: this.spec.actionTitle, arguments: [document.uri, range.start] };
+            const title = this.spec.actionTitleOf?.(info as Record<string, unknown>) ?? this.spec.actionTitle;
+            const action = new vscode.CodeAction(title, vscode.CodeActionKind.RefactorExtract);
+            action.command = { command: this.spec.command, title, arguments: [document.uri, range.start] };
             return [action];
         } catch (error) {
             // No C# extension, a server that is still starting: no action, no noise

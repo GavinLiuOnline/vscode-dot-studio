@@ -16,7 +16,7 @@ Refactorings that need choices ask them in a form in the editor area, like a dia
 | Pull Members Up (pick members and the base class or interface, with a warning for members that use what stays) | Yes | ✅ [Added](#pull-members-up) |
 | Use Base Type Where Possible (a checkbox of Extract Interface and Extract Superclass, and an action on a type's name) | No (Rider) | ✅ [Added](#use-base-type-where-possible) |
 | Push Members Down (pick members and the derived types, or leave an abstract declaration) | No (Rider) | ✅ [Added](#push-members-down) |
-| Convert Abstract Class ↔ Interface | No (Rider) | 🔜 Planned |
+| Convert Abstract Class ↔ Interface | No (Rider) | ✅ [Added](#convert-abstract-class--interface) |
 | Extract Class (members go to a new class the type delegates to) | No (Rider) | 🔜 Planned, last: it rewrites references |
 | Move Type to Namespace (pick the namespace) | Yes | 🔜 Planned: a small form |
 | Change Signature (add, remove, reorder parameters and update the callers) | Yes | 🔜 Planned: a form with the parameter list |
@@ -113,6 +113,19 @@ The form has:
 What it does: the chosen members are copied (with their comments) to the end of each chosen derived class, the usings they need that the derived class's file lacks are added there, and the members leave the class (or become abstract declarations). A `private` member of the class that a pushed member uses stays and becomes `protected`, so the derived class can reach it. It refuses a member a chosen derived class has already (the same name and, for methods, the same parameter types).
 
 **The result is compiled first**, in every project it touches. What the refactoring does not rewrite shows up as errors and nothing is applied: code that used the member through the class (`animal.Rest()`, CS1061), a derived class that was not chosen and now misses an abstract member (CS0534), an interface the class implemented with the member (CS0535). Push down to those classes as well, or implement the member there first.
+
+## Convert Abstract Class ↔ Interface
+
+Rider's refactoring. Put the cursor on the name of an abstract class or an interface and press Ctrl+. > **Convert abstract class to interface...** (or **Convert interface to abstract class...**, the title follows the direction).
+
+The form says what changes and lists the classes of this solution's source that derive from the class or implement the interface; they are rewritten too:
+- **Abstract class → interface:** the declaration becomes `interface`, `public`, `abstract` and `virtual` leave the members, and the classes that derive from it lose `override` on what implements its members. Members with a body can only stay as default interface members (C# 8): the form asks for it with a checkbox, and without it nothing is converted.
+- **Interface → abstract class:** the members become `public abstract` and the classes that implement it get `override` on what implemented its members and name it first in their base list.
+- The type keeps its name; rename it (F2) to follow your naming. Every use of it stays valid.
+
+What it refuses, with the reasons listed and the form not opened: an abstract class with state (fields, automatic properties, events with their own field), constructors or finalizers, nested types, operators, static, `new`, `sealed`, `extern` or non-public members, explicit interface implementations, or a base class; an interface that extends other interfaces or has static or non-public members; a class that already has another base class, and structs, records or other interfaces that use the type.
+
+**The result is compiled first** in every project it touches; if it would not compile nothing is changed and the errors are listed.
 
 ## Use Base Type Where Possible
 

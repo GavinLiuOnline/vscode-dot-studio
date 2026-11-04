@@ -37,6 +37,7 @@ import { EXTRACT_SUPERCLASS } from '../../../../services/refactoring/extractSupe
 import { PULL_UP } from '../../../../services/refactoring/pullUp';
 import { USE_BASE_TYPE } from '../../../../services/refactoring/useBaseType';
 import { PUSH_DOWN } from '../../../../services/refactoring/pushDown';
+import { CONVERT_TYPE } from '../../../../services/refactoring/convertType';
 
 const uri = { fsPath: '/p/Order.cs', toString: () => 'file:///p/Order.cs' } as vscode.Uri;
 const position = new vscode.Position(4, 14);
@@ -195,5 +196,22 @@ describe('TypeRefactoring', () => {
         expect(document.mock.calls[0][1]).toBe('Shinobi.Refactorings.PushDownInfoHandler');
         document.mockResolvedValueOnce({ typeName: 'Loner', derived: [], members: [], selected: [], refusal: 'No class derives from Loner' });
         expect(await refactoring.provideCodeActions(lineOf('public class Loner'), at(4, 14))).toEqual([]);
+    });
+
+    it('Convert is offered on an abstract class and on an interface, with the title of the direction, and shows the reasons it refuses', async () => {
+        const refactoring = setup(CONVERT_TYPE as never);
+        document.mockResolvedValueOnce({ direction: 'toInterface', typeName: 'Shape', implementers: [], bodies: [], canUseDefaultMembers: true });
+        const [toInterface] = await refactoring.provideCodeActions(lineOf('public abstract class Shape'), at(4, 24));
+        expect(toInterface.title).toBe('Convert abstract class to interface...');
+        document.mockResolvedValueOnce({ direction: 'toClass', typeName: 'IShape', implementers: [], bodies: [], canUseDefaultMembers: true });
+        const [toClass] = await refactoring.provideCodeActions(lineOf('public interface IShape'), at(4, 18));
+        expect(toClass.title).toBe('Convert interface to abstract class...');
+
+        // a refusal is not hidden: it is said when the entry is picked
+        document.mockReset();
+        document.mockResolvedValueOnce({ direction: 'toInterface', typeName: 'Shape', implementers: [], bodies: [], canUseDefaultMembers: true, refusal: "Shape: 'private int _size' is a field; an interface has no state." });
+        await refactoring.run(uri, position);
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(expect.stringContaining('is a field'));
+        expect(picked).not.toHaveBeenCalled();
     });
 });

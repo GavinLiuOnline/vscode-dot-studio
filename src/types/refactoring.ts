@@ -124,6 +124,24 @@ export interface PushDownChoice {
     leaveAbstract: boolean;
 }
 
+/** What Convert Abstract Class <-> Interface shows: what is rewritten and, for a class with members that have a body, the choice to keep them */
+export interface ConvertTypeForm {
+    kind: 'convertType';
+    direction: 'toInterface' | 'toClass';
+    typeName: string;
+    /** The classes that derive from the class or implement the interface */
+    implementers: { name: string; where: string }[];
+    /** The members with a body: an interface has them as default interface members */
+    bodies: string[];
+    canUseDefaultMembers: boolean;
+}
+
+export interface ConvertTypeChoice {
+    kind: 'convertType';
+    /** Abstract class to interface: members with a body stay as default interface members */
+    defaultMembers: boolean;
+}
+
 /** A base class or interface a type's uses could name instead */
 export interface UseBaseTypeTarget {
     id: string;
@@ -149,8 +167,8 @@ export interface UseBaseTypeChoice {
 }
 
 /** The forms the tab can show; every refactoring that needs choices adds one */
-export type RefactorForm = ExtractInterfaceForm | ExtractPartialForm | ExtractSuperclassForm | PullUpForm | UseBaseTypeForm | PushDownForm;
-export type RefactorChoice = ExtractInterfaceChoice | ExtractPartialChoice | ExtractSuperclassChoice | PullUpChoice | UseBaseTypeChoice | PushDownChoice;
+export type RefactorForm = ExtractInterfaceForm | ExtractPartialForm | ExtractSuperclassForm | PullUpForm | UseBaseTypeForm | PushDownForm | ConvertTypeForm;
+export type RefactorChoice = ExtractInterfaceChoice | ExtractPartialChoice | ExtractSuperclassChoice | PullUpChoice | UseBaseTypeChoice | PushDownChoice | ConvertTypeChoice;
 
 /** What a token of the C# preview is; `plain` has no colour */
 export type TokenKind = 'keyword' | 'interface' | 'class' | 'method' | 'property' | 'parameter' | 'plain';

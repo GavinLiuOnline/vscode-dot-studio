@@ -146,5 +146,6 @@
   "command.shinobi.refactor.pullUp.title": "将成员上移...",
   "command.shinobi.refactor.useBaseType.title": "尽可能使用基类型...",
   "command.shinobi.refactor.pushDown.title": "将成员下移...",
-  "command.shinobi.refactor.extractSuperclass.title": "提取超类..."
+  "command.shinobi.refactor.extractSuperclass.title": "提取超类...",
+  "command.shinobi.refactor.convertType.title": "转换抽象类 / 接口..."
 }

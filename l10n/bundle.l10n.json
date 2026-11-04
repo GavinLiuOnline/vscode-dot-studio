@@ -344,5 +344,10 @@
   "Updating {0} package(s)": "Updating {0} package(s)",
   "Consolidating": "Consolidating",
   "Add New Item to {0}": "Add New Item to {0}",
-  "An empty {0}": "An empty {0}"
+  "An empty {0}": "An empty {0}",
+  "Convert abstract class to interface...": "Convert abstract class to interface...",
+  "Convert interface to abstract class...": "Convert interface to abstract class...",
+  "Put the cursor on the name of an abstract class or an interface to convert it.": "Put the cursor on the name of an abstract class or an interface to convert it.",
+  "Convert {0} to an Abstract Class": "Convert {0} to an Abstract Class",
+  "Convert {0} to an Interface": "Convert {0} to an Interface"
 }
