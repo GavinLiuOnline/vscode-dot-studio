@@ -72,7 +72,7 @@
   "config.shinobi.solutionExplorer.location.enumDescription.2": "Don't move the Solution Explorer: keep it wherever you drag it",
   "config.shinobi.solutionExplorer.fileNesting.markdownDescription": "How files nest under related files, like the File Nesting button in Visual Studio's Solution Explorer.",
   "config.shinobi.solutionExplorer.fileNesting.enumDescription.0": "No nesting: every file shows in its folder",
-  "config.shinobi.solutionExplorer.fileNesting.enumDescription.1": "Visual Studio's default rules: code-behind (Index.cshtml.cs), designer files, configuration variants (appsettings.Development.json), resources",
+  "config.shinobi.solutionExplorer.fileNesting.enumDescription.1": "Visual Studio's default rules: code-behind (Index.cshtml.cs), designer files, configuration variants (appsettings.Development.json), resources, parts of a partial class (Order.Lines.cs under Order.cs)",
   "config.shinobi.solutionExplorer.fileNesting.enumDescription.2": "The default rules plus web assets: compiled, minified and map files under their source (site.ts > site.js > site.min.js)",
   "config.shinobi.solutionExplorer.trackActiveItem.markdownDescription": "Select the active editor's file in the Solution Explorer whenever you switch files, like Visual Studio's *Track Active Item in Solution Explorer*. Without it, use *Sync with Active Document* (`Ctrl+[, S`).",
   "config.shinobi.solution.offerSlnxConversion.markdownDescription": "When a `.sln` opens, offer to convert it to `.slnx`, the current solution format (*Don't Ask Again* turns it off for one solution).",

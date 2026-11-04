@@ -137,6 +137,7 @@ export class FileNestingService {
             ?? this.findSuffixParent(fileName, dir)
             ?? this.findConfigurationParent(fileName, dir)
             ?? this.findResourceParent(fileName, dir)
+            ?? this.findPartialParent(fileName, dir)
             ?? this.findDeclarationParent(fileName, dir)
             ?? this.findGeneratorParent(fileName, dir)
             ?? null;
@@ -212,6 +213,25 @@ export class FileNestingService {
         return codeExtensions
             .map(ext => dir.find(match[1] + ext))
             .find(parent => parent !== undefined);
+    }
+
+    /**
+     * `Order.Lines.cs` nests under `Order.cs`: the way parts of a partial class are named (Extract Members to Partial Class writes
+     * `Order.Part.cs`), the longest existing name first
+     */
+    private static findPartialParent(fileName: string, dir: Directory): FileEntry | undefined {
+        const ext = path.extname(fileName);
+        if (!codeExtensions.includes(ext.toLowerCase())) {
+            return undefined;
+        }
+        const segments = path.basename(fileName, ext).split('.');
+        for (let i = segments.length - 1; i >= 1; i--) {
+            const parent = dir.find(segments.slice(0, i).join('.') + ext);
+            if (parent) {
+                return parent;
+            }
+        }
+        return undefined;
     }
 
     /** The web rules: the first existing source of a compiled, minified or map file */

@@ -16,6 +16,25 @@ describe('FileNestingService', () => {
       expect(result.map(f => f.name).sort()).toEqual(['Program.cs', 'Startup.cs', 'appsettings.json']);
     });
 
+    it('nests the parts of a partial class (Order.Lines.cs) under Order.cs, the longest existing name first', () => {
+      const files = [
+        { name: 'Order.cs', path: '/p/Order.cs' },
+        { name: 'Order.Lines.cs', path: '/p/Order.Lines.cs' },
+        { name: 'Order.Lines.Totals.cs', path: '/p/Order.Lines.Totals.cs' },
+        { name: 'Customer.Part.cs', path: '/p/Customer.Part.cs' },
+        { name: 'Item.Extra.vb', path: '/p/Item.Extra.vb' },
+        { name: 'Item.cs', path: '/p/Item.cs' },
+      ];
+
+      const result = FileNestingService.nestFiles(files);
+
+      expect(result.map(f => f.name)).toEqual(['Customer.Part.cs', 'Item.cs', 'Item.Extra.vb', 'Order.cs']);
+      const order = result.find(f => f.name === 'Order.cs')!;
+      expect(order.children!.map(f => f.name)).toEqual(['Order.Lines.cs']);
+      expect(order.children![0].children!.map(f => f.name)).toEqual(['Order.Lines.Totals.cs']);
+      expect(FileNestingService.nestFiles(files, 'off')).toHaveLength(6);
+    });
+
     it('should nest code-behind files correctly', () => {
       const files = [
         { name: 'Index.cshtml', path: '/project/Views/Index.cshtml' },

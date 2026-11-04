@@ -72,7 +72,7 @@
   "config.shinobi.solutionExplorer.location.enumDescription.2": "不移动解决方案资源管理器：保留在您拖放到的位置",
   "config.shinobi.solutionExplorer.fileNesting.markdownDescription": "文件如何嵌套在相关文件下，类似 Visual Studio 解决方案资源管理器中的“文件嵌套”按钮。",
   "config.shinobi.solutionExplorer.fileNesting.enumDescription.0": "不嵌套：每个文件都显示在所在文件夹中",
-  "config.shinobi.solutionExplorer.fileNesting.enumDescription.1": "Visual Studio 的默认规则：代码隐藏文件（Index.cshtml.cs）、设计器文件、配置变体（appsettings.Development.json）、资源",
+  "config.shinobi.solutionExplorer.fileNesting.enumDescription.1": "Visual Studio 的默认规则：代码隐藏文件（Index.cshtml.cs）、设计器文件、配置变体（appsettings.Development.json）、资源、分部类的各部分（Order.Lines.cs 位于 Order.cs 之下）",
   "config.shinobi.solutionExplorer.fileNesting.enumDescription.2": "默认规则外加 Web 资源：编译、压缩和映射文件显示在源文件下（site.ts > site.js > site.min.js）",
   "config.shinobi.solutionExplorer.trackActiveItem.markdownDescription": "切换文件时，在解决方案资源管理器中选择活动编辑器的文件，类似 Visual Studio 的*在解决方案资源管理器中跟踪活动项*。未启用时，可使用*与活动文档同步*（`Ctrl+[, S`）。",
   "config.shinobi.solution.offerSlnxConversion.markdownDescription": "打开 `.sln` 时，提示将其转换为 `.slnx`（当前解决方案格式）（*不再询问*会针对该解决方案关闭此提示）。",
