@@ -358,6 +358,7 @@ const zhCN: Record<string, string> = {
     '{0} places': '{0} 处',
     '{0}, next to {1}': '{0}，位于 {1} 旁边',
     '{0}, {1} in the parameters of public methods': '{0}，其中 {1} 处在公共方法的参数中',
+    'Show them in the Error List': '在错误列表中显示它们',
 };
 
 const format = (text: string, args: Array<string | number>): string =>

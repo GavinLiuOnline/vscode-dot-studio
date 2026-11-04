@@ -299,7 +299,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('shinobi.solution.selectConfiguration', async () => {
             const active = BuildConfiguration.active;
             const picked = await vscode.window.showQuickPick(
-                BuildConfiguration.available.map(name => ({ label: name, description: name === active ? '(current)' : undefined })),
+                BuildConfiguration.available.map(name => ({ label: name, description: name === active ? t('(current)') : undefined })),
                 { placeHolder: t('Solution configuration') }
             );
             if (picked) {
@@ -309,7 +309,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('shinobi.solution.selectPlatform', async () => {
             const active = BuildConfiguration.activePlatform;
             const picked = await vscode.window.showQuickPick(
-                BuildConfiguration.availablePlatforms.map(name => ({ label: name, description: name === active ? '(current)' : undefined })),
+                BuildConfiguration.availablePlatforms.map(name => ({ label: name, description: name === active ? t('(current)') : undefined })),
                 { placeHolder: t('Solution platform') }
             );
             if (picked) {
@@ -320,17 +320,17 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('shinobi.solution.configurationMenu', async () => {
             const active = BuildConfiguration.active;
             const items: Array<vscode.QuickPickItem & { run?: string }> = [
-                { label: 'Solution configuration', kind: vscode.QuickPickItemKind.Separator },
-                ...BuildConfiguration.available.map(name => ({ label: name, description: name === active ? '(current)' : undefined, run: `configuration:${name}` })),
+                { label: t('Solution configuration'), kind: vscode.QuickPickItemKind.Separator },
+                ...BuildConfiguration.available.map(name => ({ label: name, description: name === active ? t('(current)') : undefined, run: `configuration:${name}` })),
             ];
             if (BuildConfiguration.availablePlatforms.length > 1) {
-                items.push({ label: 'Platform', kind: vscode.QuickPickItemKind.Separator },
-                    ...BuildConfiguration.availablePlatforms.map(name => ({ label: name, description: name === BuildConfiguration.activePlatform ? '(current)' : undefined, run: `platform:${name}` })));
+                items.push({ label: t('Platform'), kind: vscode.QuickPickItemKind.Separator },
+                    ...BuildConfiguration.availablePlatforms.map(name => ({ label: name, description: name === BuildConfiguration.activePlatform ? t('(current)') : undefined, run: `platform:${name}` })));
             }
             items.push({ label: '', kind: vscode.QuickPickItemKind.Separator },
-                { label: '$(symbol-event) Startup Profile...', run: 'command:shinobi.solution.selectStartupProfile' },
-                { label: '$(settings-gear) Configuration Manager...', run: 'command:shinobi.configurationManager.open' });
-            const picked = await vscode.window.showQuickPick(items, { placeHolder: `Solution configuration: ${active}` });
+                { label: `$(symbol-event) ${t('Startup Profile...')}`, run: 'command:shinobi.solution.selectStartupProfile' },
+                { label: `$(settings-gear) ${t('Configuration Manager...')}`, run: 'command:shinobi.configurationManager.open' });
+            const picked = await vscode.window.showQuickPick(items, { placeHolder: t('Solution configuration: {0}', active) });
             const [kind, ...rest] = (picked?.run ?? '').split(':');
             const value = rest.join(':');
             if (kind === 'configuration') {
@@ -368,12 +368,12 @@ export function activate(context: vscode.ExtensionContext) {
             const folders = vscode.workspace.workspaceFolders ?? [];
             const found = (await Promise.all(folders.map(folder => SolutionDiscovery.findSolutionFiles(folder.uri.fsPath, 6)))).flat();
             const active = SolutionService.getActiveSolution()?.solutionPath;
-            const browse = { label: '$(folder-opened) Browse...', description: 'Any .sln or .slnx file', solutionPath: undefined as string | undefined };
+            const browse = { label: `$(folder-opened) ${t('Browse...')}`, description: t('Any .sln or .slnx file'), solutionPath: undefined as string | undefined };
             const picked = await vscode.window.showQuickPick([
                 ...found.map(solutionPath => ({
                     label: path.basename(solutionPath),
                     description: path.relative(path.dirname(rootOf(solutionPath) ?? ''), path.dirname(solutionPath)) || undefined,
-                    detail: solutionPath === active ? 'Open now' : undefined,
+                    detail: solutionPath === active ? t('Open now') : undefined,
                     solutionPath: solutionPath as string | undefined,
                 })),
                 browse,
@@ -383,7 +383,7 @@ export function activate(context: vscode.ExtensionContext) {
                 const [file] = await vscode.window.showOpenDialog({
                     canSelectMany: false,
                     filters: { Solutions: ['sln', 'slnx'] },
-                    openLabel: 'Open Solution',
+                    openLabel: t('Open Solution'),
                 }) ?? [];
                 solutionPath = file?.fsPath;
             }
@@ -397,7 +397,7 @@ export function activate(context: vscode.ExtensionContext) {
         ...checkedExtractions.flatMap(extraction => [
             vscode.languages.registerCodeActionsProvider({ language: 'csharp' }, extraction, ExtractMethodChecked.metadata),
             vscode.commands.registerCommand(extraction.extraction.command, (uri: vscode.Uri, range: vscode.Range) => extraction.run(uri, range).catch(error => {
-                void vscode.window.showErrorMessage(`${extraction.extraction.title.replace(/\.\.\.$/, '')} failed: ${error instanceof Error ? error.message : String(error)}`);
+                void vscode.window.showErrorMessage(t('{0} failed: {1}', extraction.extraction.title.replace(/\.\.\.$/, ''), error instanceof Error ? error.message : String(error)));
             })),
         ]),
         ...typeRefactorings.flatMap(refactoring => [

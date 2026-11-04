@@ -2,6 +2,7 @@ import * as path from 'path';
 import { PackageEdit } from './centralPackageEdits';
 import { CentralEntry, ProjectPackages, centralFiles, packageVersionFileFor } from './centralPackages';
 import { pathKey } from '../project/items/projectItems';
+import { t } from '../../core/i18n';
 
 /**
  * Plans what a package change writes under Central Package Management, without touching anything: which files get
@@ -213,17 +214,17 @@ export function confirmationText(plans: readonly VersionChangePlan[]): { message
         return undefined;
     }
     const line = (plan: VersionChangePlan) =>
-        `${plan.id} ${plan.version} (${plan.sharedFiles.map(file => path.basename(file)).join(', ')}): also ${plan.alsoChanges.join(', ')}`;
+        t('{0} {1} ({2}): also {3}', plan.id, plan.version, plan.sharedFiles.map(file => path.basename(file)).join(', '), plan.alsoChanges.join(', '));
     if (reaching.length === 1) {
         const [plan] = reaching;
         return {
-            message: `Change ${plan.id} to ${plan.version} for every project that uses it?`,
-            detail: `The version is set centrally in ${plan.sharedFiles.map(file => path.basename(file)).join(', ')}, so it also changes for ${plan.alsoChanges.join(', ')}.`,
+            message: t('Change {0} to {1} for every project that uses it?', plan.id, plan.version),
+            detail: t('The version is set centrally in {0}, so it also changes for {1}.', plan.sharedFiles.map(file => path.basename(file)).join(', '), plan.alsoChanges.join(', ')),
         };
     }
     return {
-        message: `Change the central versions of ${reaching.length} packages?`,
-        detail: `They are set centrally, so other projects change too:\n${reaching.map(line).join('\n')}`,
+        message: t('Change the central versions of {0} packages?', reaching.length),
+        detail: t('They are set centrally, so other projects change too:\n{0}', reaching.map(line).join('\n')),
     };
 }
 

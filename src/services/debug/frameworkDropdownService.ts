@@ -4,6 +4,7 @@ import { DebugConfigService } from './debugConfigService';
 import { logger } from '../../core/logger';
 import { Solution } from '../../core/Solution';
 import { FrameworkChoice } from '../project/frameworkChoice';
+import { t } from '../../core/i18n';
 
 const log = logger('FrameworkDropdownService');
 
@@ -53,9 +54,9 @@ export class FrameworkDropdownService {
             // Create framework options
             const options: FrameworkOption[] = [
                 {
-                    label: 'Auto',
-                    description: 'Automatically select the best framework for debugging',
-                    detail: 'Auto-selection mode',
+                    label: t('Auto'),
+                    description: t('Automatically select the best framework for debugging'),
+                    detail: t('Auto-selection mode'),
                     isSupported: true,
                     value: undefined
                 },

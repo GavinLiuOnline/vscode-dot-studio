@@ -78,7 +78,7 @@ const vscodeDeps: EfDeps = {
     },
     isExecutable: project => SolutionService.getActiveSolution()?.getProject(project)?.isExecutable ?? false,
     solutionStartup: () => DebugConfigService.getStartupProject(),
-    listContexts: (args, cwd) => Promise.resolve(vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Looking for DbContexts...' },
+    listContexts: (args, cwd) => Promise.resolve(vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: t('Looking for DbContexts...') },
         () => execDotnet(args, { cwd, timeout: 180000 }).then(result => result.stdout))),
     askName: validate => Promise.resolve(vscode.window.showInputBox({ prompt: t('Name of the migration'), placeHolder: t('AddCustomerTable'), validateInput: validate })),
     pick: (items, placeHolder) => Promise.resolve(vscode.window.showQuickPick(items, { placeHolder })),

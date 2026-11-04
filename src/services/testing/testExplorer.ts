@@ -19,6 +19,7 @@ import { connectVsTest, VsTestCase, vstestCaseNode, vstestResultNode, VsTestSess
 import { MONO_DEBUG_UNSUPPORTED, monoVsTestConsole, needsMono } from './monoVsTest';
 import { testingPlatformRunSettings, vstestRunSettings } from './runSettings';
 import { solutionWorkspaceFolder } from '../solution/workspaceFolders';
+import { t } from '../../core/i18n';
 
 const log = logger('TestExplorer');
 
@@ -252,7 +253,7 @@ export class TestExplorer implements vscode.Disposable {
             include = this.itemsAt(fsPath);
         }
         if (include.length === 0) {
-            vscode.window.showInformationMessage(`No tests found in ${path.basename(fsPath)}.`);
+            vscode.window.showInformationMessage(t('No tests found in {0}.', path.basename(fsPath)));
             return;
         }
 

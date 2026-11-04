@@ -1,4 +1,5 @@
 import * as path from 'path';
+import { t } from '../../../core/i18n';
 
 export type CleanupSeverity = 'info' | 'warn' | 'error';
 
@@ -46,10 +47,10 @@ export function cleanupSteps(target: CleanupTarget, severity: CleanupSeverity, u
     return {
         cwd,
         steps: [
-            { label: 'Formatting', args: ['format', 'whitespace', projectTarget, ...include] },
-            { label: 'Removing unused usings', args: ['format', 'style', projectTarget, '--diagnostics', 'IDE0005', '--severity', unusedUsingsSeverity, ...include] },
+            { label: t('Formatting'), args: ['format', 'whitespace', projectTarget, ...include] },
+            { label: t('Removing unused usings'), args: ['format', 'style', projectTarget, '--diagnostics', 'IDE0005', '--severity', unusedUsingsSeverity, ...include] },
             // IDE0130 (namespace does not match the folder) is Sync Namespaces' job: its fix crashes `dotnet format style` ("Changing document properties is not supported")
-            { label: 'Applying code style fixes', args: ['format', 'style', projectTarget, '--severity', severity, '--exclude-diagnostics', 'IDE0130', ...include] },
+            { label: t('Applying code style fixes'), args: ['format', 'style', projectTarget, '--severity', severity, '--exclude-diagnostics', 'IDE0130', ...include] },
         ],
     };
 }

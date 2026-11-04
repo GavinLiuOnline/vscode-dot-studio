@@ -194,7 +194,7 @@ export class PublishPanel {
                     canSelectFolders: true,
                     canSelectMany: false,
                     defaultUri: vscode.Uri.file(publishDirOf(this.projectPath, request.current || '.')),
-                    openLabel: 'Select Folder',
+                    openLabel: t('Select Folder'),
                 }) ?? [];
                 if (picked) {
                     // Inside the project the location stays relative, like Visual Studio's default

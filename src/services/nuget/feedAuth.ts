@@ -109,15 +109,15 @@ export function isInWorkspace(file: string): boolean {
 /** Asks for a token (and user name) and stores it as ClearTextPassword where NuGet will read it */
 async function enterNewToken(source: PackageSource, credential: SourceCredential, provider: string | undefined): Promise<void> {
     const username = await vscode.window.showInputBox({
-        prompt: `User name for '${source.name}'${provider === 'Azure DevOps' ? ' (any non-empty name works for Azure DevOps)' : ''}`,
+        prompt: provider === 'Azure DevOps' ? t("User name for '{0}' (any non-empty name works for Azure DevOps)", source.name) : t("User name for '{0}'", source.name),
         value: credential.kind !== 'none' ? credential.username ?? '' : provider === 'Azure DevOps' ? 'token' : '',
         ignoreFocusOut: true,
-        validateInput: value => value.trim() ? undefined : 'Enter a user name',
+        validateInput: value => value.trim() ? undefined : t('Enter a user name'),
     });
     if (!username) {
         return;
     }
-    const token = await vscode.window.showInputBox({ prompt: `Token or password for '${source.name}'`, password: true, ignoreFocusOut: true });
+    const token = await vscode.window.showInputBox({ prompt: t("Token or password for '{0}'", source.name), password: true, ignoreFocusOut: true });
     if (!token) {
         return;
     }

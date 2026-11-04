@@ -65,7 +65,7 @@ export class TemplateWizardPanel {
                     const [folder] = await vscode.window.showOpenDialog({
                         canSelectFiles: false, canSelectFolders: true, canSelectMany: false,
                         defaultUri: request.current ? vscode.Uri.file(request.current) : undefined,
-                        openLabel: 'Select Folder',
+                        openLabel: t('Select Folder'),
                     }) ?? [];
                     if (folder) {
                         await post({ type: 'folderPicked', path: folder.fsPath });

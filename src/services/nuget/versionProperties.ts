@@ -2,6 +2,7 @@ import * as path from 'path';
 import { PackageEdit, packagesUsingProperty, propertyDefinitions, propertyReference, propertyUseCount, writtenVersion } from './centralPackageEdits';
 import { ProjectState } from './centralPackagePlan';
 import { pathKey } from '../project/items/projectItems';
+import { t } from '../../core/i18n';
 
 /**
  * Central versions written as an MSBuild property (`<PackageVersion Include="Serilog" Version="$(SerilogVersion)" />`):
@@ -131,10 +132,10 @@ export function changesOnlyItself(entry: VersionProperty): boolean {
 }
 
 const REFUSALS: Record<PropertyRefusal, (entry: VersionProperty) => string> = {
-    notFound: entry => `${entry.property} is not defined in Directory.Build.props, Directory.Packages.props or a file they import.`,
-    conditional: entry => `${entry.property} is set under a condition.`,
-    differs: entry => `${entry.property} gets another value later (in a project file or another props file).`,
-    conflict: entry => `Other packages that follow ${entry.property} get other versions in this change.`,
+    notFound: entry => t('{0} is not defined in Directory.Build.props, Directory.Packages.props or a file they import.', entry.property),
+    conditional: entry => t('{0} is set under a condition.', entry.property),
+    differs: entry => t('{0} gets another value later (in a project file or another props file).', entry.property),
+    conflict: entry => t('Other packages that follow {0} get other versions in this change.', entry.property),
 };
 
 /**
@@ -143,23 +144,23 @@ const REFUSALS: Record<PropertyRefusal, (entry: VersionProperty) => string> = {
  */
 export function propertyQuestion(entry: VersionProperty): { message: string; detail: string; change?: string; only: string } {
     const { id, version } = entry.edit;
-    const only = `Set ${id} Only`;
-    const alone = `${only} writes ${version} instead of $(${entry.property}): ${id} no longer follows it.`;
+    const only = t('Set {0} Only', id);
+    const alone = t('{0} writes {1} instead of $({2}): {3} no longer follows it.', only, version, entry.property, id);
     if (!entry.definition) {
         return {
-            message: `${id}'s version is $(${entry.property}), which cannot be changed here.`,
+            message: t("{0}'s version is $({1}), which cannot be changed here.", id, entry.property),
             detail: `${REFUSALS[entry.refusal ?? 'notFound'](entry)} ${alone}`,
             only,
         };
     }
     const others = [
-        ...(entry.alsoPackages.length > 0 ? [`${entry.alsoPackages.join(', ')}${entry.alsoProjects.length > 0 ? ` (used by ${entry.alsoProjects.join(', ')})` : ''}`] : []),
-        ...(entry.otherUses > 0 ? [`${entry.otherUses} other use${entry.otherUses === 1 ? '' : 's'} of $(${entry.property})`] : []),
+        ...(entry.alsoPackages.length > 0 ? [entry.alsoProjects.length > 0 ? t('{0} (used by {1})', entry.alsoPackages.join(', '), entry.alsoProjects.join(', ')) : entry.alsoPackages.join(', ')] : []),
+        ...(entry.otherUses > 0 ? [t(entry.otherUses === 1 ? '{0} other use of $({1})' : '{0} other uses of $({1})', entry.otherUses, entry.property)] : []),
     ];
     return {
-        message: `${id}'s version is $(${entry.property}), which ${entry.alsoPackages.length > 0 ? 'other packages follow too' : 'is used elsewhere too'}.`,
-        detail: `Change ${entry.property} to ${version} in ${path.basename(entry.definition)}: this also changes ${others.join(' and ')}. ${alone}`,
-        change: `Change ${entry.property}`,
+        message: t("{0}'s version is $({1}), which {2}.", id, entry.property, entry.alsoPackages.length > 0 ? t('other packages follow too') : t('is used elsewhere too')),
+        detail: t('Change {0} to {1} in {2}: this also changes {3}. {4}', entry.property, version, path.basename(entry.definition), others.join(t(' and ')), alone),
+        change: t('Change {0}', entry.property),
         only,
     };
 }

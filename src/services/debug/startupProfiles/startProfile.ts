@@ -71,18 +71,18 @@ export function startupPickItems(
 ): StartupPick[] {
     const items: StartupPick[] = [];
     if (singleProject) {
-        items.push({ label: `Single: ${projectName(singleProject)}`, description: active ? undefined : '(current)', choice: { kind: 'single' } });
+        items.push({ label: t('Single: {0}', projectName(singleProject)), description: active ? undefined : t('(current)'), choice: { kind: 'single' } });
     }
     for (const source of ['shared', 'user'] as const) {
         for (const profile of files[source].profiles) {
             const isActive = active?.source === source && active.name === profile.name;
-            const description = [source === 'user' ? 'user file' : '', isActive ? '(current)' : ''].filter(Boolean).join(' ');
+            const description = [source === 'user' ? t('user file') : '', isActive ? t('(current)') : ''].filter(Boolean).join(' ');
             items.push({
                 label: profile.name,
                 description: description || undefined,
                 detail: profile.projects.filter(project => project.action !== 'None')
-                    .map(project => `${projectName(project.path)}${project.action === 'StartWithoutDebugging' ? ' (without debugging)' : ''}`)
-                    .join(', ') || 'Starts no project',
+                    .map(project => `${projectName(project.path)}${project.action === 'StartWithoutDebugging' ? t(' (without debugging)') : ''}`)
+                    .join(', ') || t('Starts no project'),
                 choice: { kind: 'profile', ref: { name: profile.name, source } },
             });
         }

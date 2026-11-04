@@ -76,9 +76,9 @@ export async function handleAddProjectReference(nodeId: NodeId): Promise<void> {
             canSelectMany: false,
             canSelectFiles: true,
             canSelectFolders: false,
-            openLabel: 'Add Project Reference',
+            openLabel: t('Add Project Reference'),
             filters: {
-                'Project Files': ['csproj', 'vbproj', 'fsproj']
+                [t('Project Files')]: ['csproj', 'vbproj', 'fsproj']
             }
         });
 
@@ -112,9 +112,9 @@ export async function handleAddAssemblyReference(nodeId: NodeId): Promise<void> 
             canSelectFiles: true,
             canSelectFolders: false,
             defaultUri: vscode.Uri.file(path.dirname(projectPath)),
-            openLabel: 'Add Reference',
+            openLabel: t('Add Reference'),
             filters: {
-                'Assemblies': ['dll', 'exe']
+                [t('Assemblies')]: ['dll', 'exe']
             }
         });
         if (!assemblyUris?.length) {

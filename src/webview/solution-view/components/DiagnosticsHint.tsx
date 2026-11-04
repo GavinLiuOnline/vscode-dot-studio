@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '../../shared/i18n';
 
 export interface DiagnosticsHintProps {
     /** The node's name (the native tooltip it replaces showed it, for names the row cuts off) */
@@ -29,7 +30,7 @@ export const DiagnosticsHint: React.FC<DiagnosticsHintProps> = ({ name, text, an
     return (
         <div className="diagnostics-hint" style={style} onMouseEnter={() => onHover(true)} onMouseLeave={() => onHover(false)}>
             <div className="diagnostics-hint-name">{name}</div>
-            <button className="diagnostics-hint-link" title="Show them in the Error List" onClick={onShow}>{text}</button>
+            <button className="diagnostics-hint-link" title={t('Show them in the Error List')} onClick={onShow}>{text}</button>
         </div>
     );
 };

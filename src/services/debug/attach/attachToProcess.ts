@@ -87,8 +87,8 @@ export async function attachToProcess(): Promise<void> {
     }
 
     const picked = await vscode.window.showQuickPick<AttachItem>(items, {
-        title: 'Attach to Process',
-        placeHolder: 'Select a .NET process (type a project name, port or pid)',
+        title: t('Attach to Process'),
+        placeHolder: t('Select a .NET process (type a project name, port or pid)'),
         matchOnDescription: true,
         matchOnDetail: true,
     });

@@ -461,10 +461,10 @@ export class DebugConfigService {
             const picked = await vscode.window.showQuickPick(
                 profiles.map(profile => ({
                     label: profile.name,
-                    description: profile.name === current ? `${profile.applicationUrl ?? ''} (current)`.trim() : profile.applicationUrl,
+                    description: profile.name === current ? t('{0} (current)', profile.applicationUrl ?? '').trim() : profile.applicationUrl,
                     profile,
                 })),
-                { placeHolder: `Launch profile for ${path.basename(projectDir)}`, ignoreFocusOut: true }
+                { placeHolder: t('Launch profile for {0}', path.basename(projectDir)), ignoreFocusOut: true }
             );
             return picked ? picked.profile : null;
         }

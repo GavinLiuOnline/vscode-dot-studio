@@ -64,9 +64,9 @@ export async function handleAddExistingProject(nodeId: NodeId): Promise<void> {
             canSelectFiles: true,
             canSelectFolders: false,
             filters: {
-                'Project Files': ['csproj', 'vbproj', 'fsproj']
+                [t('Project Files')]: ['csproj', 'vbproj', 'fsproj']
             },
-            openLabel: 'Add Project'
+            openLabel: t('Add Project')
         });
 
         if (projectFiles && projectFiles[0]) {
@@ -154,7 +154,7 @@ export async function handleAddSolutionItem(nodeId: NodeId): Promise<void> {
             canSelectMany: false,
             canSelectFiles: true,
             canSelectFolders: false,
-            openLabel: 'Add to Solution'
+            openLabel: t('Add to Solution')
         });
 
         // A project file belongs in the solution as a project, not as a plain item

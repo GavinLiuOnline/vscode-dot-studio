@@ -334,7 +334,7 @@ export async function handleBulkUpdatePackages(message: BulkUpdatePackagesCmd, w
         // Show progress notification
         const cancelled = await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
-            title: `Updating ${changes.length} package(s)`,
+            title: t('Updating {0} package(s)', changes.length),
             cancellable: false
         }, async () => {
             const { cancelled, results } = await changePackageVersions(changes);
@@ -410,7 +410,7 @@ export async function handleBulkConsolidatePackages(message: BulkConsolidatePack
         // Show progress notification
         const cancelled = await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
-            title: `Consolidating`,
+            title: t('Consolidating'),
             cancellable: false
         }, async () => {
             // Under CPM: one confirmation, the central version set, the overrides removed

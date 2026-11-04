@@ -12,6 +12,7 @@ import { optionArgs, readTemplates } from './templateCache';
 import { BUILTIN_ITEMS, builtinItemContent, itemBaseName, projectLanguage, replaceNamespace } from './itemTemplates';
 import { defaultProjectLocation, findProjectFile, isValidProjectName, mostCommonFramework, solutionLayout } from './newProject';
 import { solutionWorkspaceFolder } from '../solution/workspaceFolders';
+import { t } from '../../core/i18n';
 
 const log = logger('Templates');
 const RECENT_PROJECT_TEMPLATES = 'shinobi.recentProjectTemplates';
@@ -129,7 +130,7 @@ export async function newSolutionWizard(): Promise<WizardInit> {
         .sort((a, b) => (recent.indexOf(a.id) + 1 || Infinity) - (recent.indexOf(b.id) + 1 || Infinity) || a.name.localeCompare(b.name));
     return {
         kind: 'project',
-        title: 'Create a New Project',
+        title: t('Create a New Project'),
         templates: [...solutionTemplates, ...projectTemplates],
         location: solutionWorkspaceFolder()?.uri.fsPath ?? os.homedir(),
         preferredValues: {},
@@ -170,7 +171,7 @@ export async function newItemWizard(folder: string, projectPath: string): Promis
     const language = projectLanguage(projectPath);
     const builtins: WizardTemplate[] = language === 'C#'
         ? BUILTIN_ITEMS.map(item => ({
-            id: `${BUILTIN_PREFIX}${item.kind}`, name: item.label, description: `An empty ${item.kind}`, language: 'C#',
+            id: `${BUILTIN_PREFIX}${item.kind}`, name: item.label, description: t('An empty {0}', item.kind), language: 'C#',
             tags: ['Code'], defaultName: item.defaultName, needsName: true, options: [],
         }))
         : [];
@@ -183,7 +184,7 @@ export async function newItemWizard(folder: string, projectPath: string): Promis
     const namespace = await NamespaceService.calculateExpectedNamespace(path.join(folder, 'File.cs'), projectPath);
     return {
         kind: 'item',
-        title: `Add New Item to ${path.relative(path.dirname(path.dirname(projectPath)), folder) || path.basename(folder)}`,
+        title: t('Add New Item to {0}', path.relative(path.dirname(path.dirname(projectPath)), folder) || path.basename(folder)),
         templates: [...builtins, ...itemTemplates],
         location: folder,
         preferredValues: namespace ? { namespace } : {},

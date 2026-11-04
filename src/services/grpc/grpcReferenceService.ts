@@ -337,14 +337,14 @@ export async function removeGrpcReference(projectPath: string, protoPath: string
     return true;
 }
 
-const PICK_FILE = 'Browse for .proto File...';
-const ENTER_URL = 'Enter URL...';
+const PICK_FILE = t('Browse for .proto File...');
+const ENTER_URL = t('Enter URL...');
 
 const SERVICE_DESCRIPTIONS: Record<GrpcServices, string> = {
-    Client: 'Client classes to call the services',
-    Server: 'Base classes to implement the services',
-    Both: 'Client and server classes',
-    None: 'Only the message types',
+    Client: t('Client classes to call the services'),
+    Server: t('Base classes to implement the services'),
+    Both: t('Client and server classes'),
+    None: t('Only the message types'),
 };
 
 export const vscodeGrpcHost: GrpcHost = {
@@ -352,14 +352,14 @@ export const vscodeGrpcHost: GrpcHost = {
         const choice = await vscode.window.showQuickPick([PICK_FILE, ENTER_URL], { placeHolder: t('Where is the service description (.proto)?') });
         if (choice === PICK_FILE) {
             const picked = await vscode.window.showOpenDialog({
-                canSelectMany: false, openLabel: 'Add gRPC Reference', filters: { 'Protocol Buffers': ['proto'], 'All files': ['*'] },
+                canSelectMany: false, openLabel: t('Add gRPC Reference'), filters: { 'Protocol Buffers': ['proto'], [t('All files')]: ['*'] },
             });
             return picked?.[0] ? { kind: 'file', path: picked[0].fsPath } : undefined;
         }
         if (choice === ENTER_URL) {
             const url = await vscode.window.showInputBox({
                 prompt: t('Address of the .proto file, e.g. https://raw.githubusercontent.com/.../greet.proto'), ignoreFocusOut: true,
-                validateInput: value => /^https?:\/\/\S+$/i.test(value.trim()) ? undefined : 'Enter an http(s) URL',
+                validateInput: value => /^https?:\/\/\S+$/i.test(value.trim()) ? undefined : t('Enter an http(s) URL'),
             });
             return url ? { kind: 'url', url: url.trim() } : undefined;
         }

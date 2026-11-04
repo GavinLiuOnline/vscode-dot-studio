@@ -140,7 +140,7 @@ export async function runSyncNamespaces(node: { kind: 'project' | 'folder'; path
     await vscode.workspace.saveAll(false);
 
     const result = await vscode.window.withProgress(
-        { location: vscode.ProgressLocation.Notification, title: `Sync Namespaces: ${name}`, cancellable: true },
+        { location: vscode.ProgressLocation.Notification, title: t('Sync Namespaces: {0}', name), cancellable: true },
         (progress, token) => {
             let last = 0;
             return syncNamespaces(files, createDeps(node.kind === 'project' ? node.path : undefined), token, (index, total, file) => {

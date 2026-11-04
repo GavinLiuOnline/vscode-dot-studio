@@ -113,7 +113,7 @@ export async function handleRemoveLink(nodeId: NodeId): Promise<void> {
     if (!owner && linking.length > 1) {
         // The node id is the file: the tree row it was clicked in is not known
         const picked = await vscode.window.showQuickPick(linking.map(candidate => ({ label: candidate.name, project: candidate })),
-            { placeHolder: `${name} is linked by several projects: remove the link from which one?` });
+            { placeHolder: t('{0} is linked by several projects: remove the link from which one?', name) });
         if (!picked) {
             return;
         }
@@ -161,8 +161,8 @@ export async function handleAddExistingItem(nodeId: NodeId): Promise<void> {
         canSelectFiles: true,
         canSelectFolders: false,
         defaultUri: vscode.Uri.file(targetDir),
-        openLabel: 'Add',
-        title: 'Add Existing Item',
+        openLabel: t('Add'),
+        title: t('Add Existing Item'),
     });
     if (!files?.length) {
         return;
@@ -256,9 +256,9 @@ export async function handleItemMembership(nodeId: NodeId, exclude: boolean): Pr
         if (adding > INCLUDE_CONFIRM_LIMIT) {
             const choice = await vscode.window.showWarningMessage(t('Include {0} files?', adding), {
                 modal: true,
-                detail: `${path.basename(target)} is not excluded by a Remove item, so each file under it gets an Include item in the project file.`,
-            }, 'Include');
-            if (choice !== 'Include') {
+                detail: t('{0} is not excluded by a Remove item, so each file under it gets an Include item in the project file.', path.basename(target)),
+            }, t('Include'));
+            if (choice !== t('Include')) {
                 return;
             }
         }

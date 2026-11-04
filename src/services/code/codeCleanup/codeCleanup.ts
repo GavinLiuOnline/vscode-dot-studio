@@ -97,7 +97,7 @@ export async function runCodeCleanup(target: CleanupTarget): Promise<void> {
 
     try {
         await vscode.window.withProgress(
-            { location: vscode.ProgressLocation.Notification, title: `Code Cleanup: ${name}`, cancellable: true },
+            { location: vscode.ProgressLocation.Notification, title: t('Code Cleanup: {0}', name), cancellable: true },
             async (progress, token) => {
                 const reports: string[] = [];
                 for (const [index, step] of steps.entries()) {
