@@ -15,6 +15,7 @@ export const CONVERT_TYPE: TypeRefactoringSpec<ConvertTypeForm> = {
     actionTitleOf: info => info.direction === 'toClass' ? t('Convert interface to abstract class...') : t('Convert abstract class to interface...'),
     declarationPattern: /\b(class|interface)\s+[A-Za-z_]\w*/,
     handler: 'Shinobi.Refactorings.ConvertType',
+    actionKind: 'rewrite',
     kind: 'convertType',
     notOnTypeMessage: t('Put the cursor on the name of an abstract class or an interface to convert it.'),
     formOf: info => ({

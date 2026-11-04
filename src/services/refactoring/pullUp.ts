@@ -12,6 +12,7 @@ export const PULL_UP: TypeRefactoringSpec<PullUpForm> = {
     command: PULL_UP_COMMAND,
     actionTitle: t('Pull members up...'),
     handler: 'Shinobi.Refactorings.PullUp',
+    actionKind: 'move',
     kind: 'pullUp',
     notOnTypeMessage: t('Put the cursor on the name of a class or one of its members to pull members up.'),
     onMembers: true,

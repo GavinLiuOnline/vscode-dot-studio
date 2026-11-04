@@ -5,6 +5,7 @@ import { RefactoringPanel } from '../../webview/providers/RefactoringPanel';
 import { CSharpServer } from './csharpServer';
 import { applyServerResult, ServerResult } from './applyResult';
 import { t } from '../../core/i18n';
+import { isRefactoringDisabled } from './disabled';
 
 const log = logger('TypeRefactoring');
 
@@ -24,6 +25,8 @@ export interface TypeRefactoringSpec<Form extends RefactorForm = RefactorForm> {
     declarationPattern?: RegExp;
     /** The entry's title when it depends on what the server found (its direction) */
     actionTitleOf?(info: Record<string, unknown>): string;
+    /** Where the entry sits in the Refactor menu: extract (the default), rewrite, move or move.namespace */
+    actionKind?: 'extract' | 'rewrite' | 'move' | 'move.namespace';
     /** The entry is offered on the name of a member as well (the server decides where), not only on a line that declares a type */
     onMembers?: boolean;
     /** The entry is not offered where the server refuses the refactoring (otherwise it is, and the reason shows when it is picked) */
@@ -47,7 +50,18 @@ const MEMBER_DECLARATION = /[A-Za-z_]\w*\s*(\(|\{|=>|;|=|,)/;
  * in the editor area asks the choices, the server builds the edits, they are applied and saved.
  */
 export class TypeRefactoring implements vscode.CodeActionProvider {
-    static readonly metadata: vscode.CodeActionProviderMetadata = { providedCodeActionKinds: [vscode.CodeActionKind.RefactorExtract] };
+    static readonly metadata: vscode.CodeActionProviderMetadata = {
+        providedCodeActionKinds: [vscode.CodeActionKind.RefactorExtract, vscode.CodeActionKind.RefactorRewrite, vscode.CodeActionKind.RefactorMove],
+    };
+
+    private kind(): vscode.CodeActionKind {
+        switch (this.spec.actionKind) {
+            case 'rewrite': return vscode.CodeActionKind.RefactorRewrite;
+            case 'move': return vscode.CodeActionKind.RefactorMove;
+            case 'move.namespace': return vscode.CodeActionKind.RefactorMove.append('namespace');
+            default: return vscode.CodeActionKind.RefactorExtract;
+        }
+    }
 
     constructor(private readonly server: CSharpServer, readonly spec: TypeRefactoringSpec) {}
 
@@ -56,6 +70,10 @@ export class TypeRefactoring implements vscode.CodeActionProvider {
     }
 
     async provideCodeActions(document: vscode.TextDocument, range: vscode.Range): Promise<vscode.CodeAction[]> {
+        // hidden by the user: no question to the server either
+        if (isRefactoringDisabled(this.spec.command)) {
+            return [];
+        }
         const line = document.lineAt(range.start.line).text;
         if (!(this.spec.declarationPattern ?? TYPE_DECLARATION).test(line) && !(this.spec.onMembers && MEMBER_DECLARATION.test(line))) {
             return [];
@@ -66,7 +84,7 @@ export class TypeRefactoring implements vscode.CodeActionProvider {
                 return [];
             }
             const title = this.spec.actionTitleOf?.(info as Record<string, unknown>) ?? this.spec.actionTitle;
-            const action = new vscode.CodeAction(title, vscode.CodeActionKind.RefactorExtract);
+            const action = new vscode.CodeAction(title, this.kind());
             action.command = { command: this.spec.command, title, arguments: [document.uri, range.start] };
             return [action];
         } catch (error) {

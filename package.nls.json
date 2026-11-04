@@ -149,5 +149,17 @@
   "command.shinobi.refactor.extractSuperclass.title": "Extract Superclass...",
   "command.shinobi.refactor.convertType.title": "Convert Abstract Class / Interface...",
   "command.shinobi.refactor.extractClass.title": "Extract Class...",
-  "command.shinobi.refactor.moveTypeNamespace.title": "Move Type to Namespace..."
+  "command.shinobi.refactor.moveTypeNamespace.title": "Move Type to Namespace...",
+  "config.shinobi.refactorings.disabled.markdownDescription": "Refactorings that are not offered in the lightbulb and the Refactor menu (Ctrl+.). The commands stay registered, so a key binding to one still works.",
+  "config.shinobi.refactorings.disabled.label.extractInterface": "Extract Interface",
+  "config.shinobi.refactorings.disabled.label.extractPartial": "Extract Members to Partial Class",
+  "config.shinobi.refactorings.disabled.label.extractSuperclass": "Extract Superclass",
+  "config.shinobi.refactorings.disabled.label.extractClass": "Extract Class",
+  "config.shinobi.refactorings.disabled.label.extractMethodChecked": "Extract Method (checked)",
+  "config.shinobi.refactorings.disabled.label.extractLocalFunctionChecked": "Extract Local Function (checked)",
+  "config.shinobi.refactorings.disabled.label.pullUp": "Pull Members Up",
+  "config.shinobi.refactorings.disabled.label.pushDown": "Push Members Down",
+  "config.shinobi.refactorings.disabled.label.useBaseType": "Use Base Type Where Possible",
+  "config.shinobi.refactorings.disabled.label.convertType": "Convert Abstract Class / Interface",
+  "config.shinobi.refactorings.disabled.label.moveTypeNamespace": "Move Type to Namespace"
 }

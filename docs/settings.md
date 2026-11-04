@@ -14,6 +14,12 @@ Settings > Extensions > Shinobi .NET Studio, grouped as below.
 | `shinobi.solution.offerSlnxConversion` | `true` | Offer to convert a `.sln` to `.slnx` when it opens ("Don't Ask Again" turns it off for one solution) |
 | `shinobi.solution.offerNugetConfigMove` | `true` | When a solution has a Visual Studio-era `.nuget/NuGet.Config` and no `nuget.config` next to it, offer to move it there (`dotnet restore` does not read the `.nuget` folder; "Don't Ask Again" turns it off for one solution) |
 
+### Refactorings
+
+| Setting | Default | |
+|---|---|---|
+| `shinobi.refactorings.disabled` | `[]` | Refactorings of this extension that are not offered in the lightbulb and the Refactor menu (Ctrl+.), picked from a list: `extractInterface`, `extractPartial`, `extractSuperclass`, `extractClass`, `extractMethodChecked`, `extractLocalFunctionChecked`, `pullUp`, `pushDown`, `useBaseType`, `convertType`, `moveTypeNamespace`. The commands stay registered, so a key binding to one still works; the change applies at once |
+
 ### Error List
 
 | Setting | Default | |

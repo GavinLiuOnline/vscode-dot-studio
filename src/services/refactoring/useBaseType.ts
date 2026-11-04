@@ -14,6 +14,7 @@ export const USE_BASE_TYPE: TypeRefactoringSpec<UseBaseTypeForm> = {
     handler: 'Shinobi.Refactorings.UseBaseType',
     detailsHandler: 'Shinobi.Refactorings.UseBaseTypeCountsHandler',
     detailsProgress: t('Looking for uses of the type...'),
+    actionKind: 'rewrite',
     kind: 'useBaseType',
     notOnTypeMessage: t('Put the cursor on the name of a class, struct, record or interface to use its base type where possible.'),
     hideWhenRefused: true,

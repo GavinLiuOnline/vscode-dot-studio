@@ -1,12 +1,16 @@
 const edits: { replace: unknown[]; created: unknown[] } = { replace: [], created: [] };
 const saved: string[] = [];
 const picked = jest.fn();
+const disabled: string[] = [];
 const document = jest.fn();
 const existsSync = jest.fn(() => false);
 
 jest.mock('fs', () => ({ ...jest.requireActual('fs'), existsSync: (...args: unknown[]) => (existsSync as (...a: unknown[]) => boolean)(...args) }));
 jest.mock('vscode', () => ({
-    CodeActionKind: { RefactorExtract: 'refactor.extract' },
+    CodeActionKind: {
+        RefactorExtract: 'refactor.extract', RefactorRewrite: 'refactor.rewrite',
+        RefactorMove: { value: 'refactor.move', append: (part: string) => ({ value: `refactor.move.${part}` }) },
+    },
     CodeAction: class { command: unknown; constructor(public title: string, public kind: unknown) {} },
     Range: class { constructor(public a: number, public b: number, public c: number, public d: number) {} },
     Position: class { constructor(public line: number, public character: number) {} },
@@ -24,6 +28,7 @@ jest.mock('vscode', () => ({
     workspace: {
         openTextDocument: async (uri: { fsPath: string }) => ({ uri, isDirty: false, save: async () => { saved.push(uri.fsPath); } }),
         applyEdit: async () => true,
+        getConfiguration: () => ({ get: (_key: string, fallback: unknown) => (disabled.length > 0 ? disabled : fallback) }),
     },
 }), { virtual: true });
 jest.mock('../../../../webview/providers/RefactoringPanel', () => ({ RefactoringPanel: { pick: (...args: unknown[]) => picked(...args) } }));
@@ -53,7 +58,7 @@ function setup(spec = EXTRACT_PARTIAL) {
 }
 
 describe('TypeRefactoring', () => {
-    beforeEach(() => { edits.replace = []; edits.created = []; saved.length = 0; picked.mockReset(); existsSync.mockReturnValue(false); });
+    beforeEach(() => { disabled.length = 0; edits.replace = []; edits.created = []; saved.length = 0; picked.mockReset(); existsSync.mockReturnValue(false); });
 
     it('offers its entry on the name of a type only, as the server says', async () => {
         const refactoring = setup();
@@ -233,5 +238,29 @@ describe('TypeRefactoring', () => {
         expect(document.mock.calls[0][1]).toBe('Shinobi.Refactorings.MoveTypeNamespaceInfoHandler');
         document.mockResolvedValueOnce({ typeName: 'Color', namespace: 'Shop', namespaces: [], refusal: null });
         expect(await refactoring.provideCodeActions(lineOf('public enum Color'), at(4, 14))).toHaveLength(1);
+    });
+
+    it('offers nothing, and does not ask the server, for a refactoring the user hides', async () => {
+        const refactoring = setup(EXTRACT_CLASS as never);
+        disabled.push('extractClass');
+        expect(await refactoring.provideCodeActions(lineOf('public class Order'), at(4, 14))).toEqual([]);
+        expect(document).not.toHaveBeenCalled();
+        disabled.length = 0;
+        disabled.push('pullUp');
+        document.mockResolvedValueOnce({ typeName: 'Order', className: 'OrderHelper', members: [], refusal: null });
+        expect(await refactoring.provideCodeActions(lineOf('public class Order'), at(4, 14))).toHaveLength(1);
+    });
+
+    it('puts each entry in the Refactor menu group that fits it', async () => {
+        const kindOf = async (spec: unknown, info: object, line = 'public class Order') => {
+            const refactoring = setup(spec as never);
+            document.mockResolvedValueOnce(info);
+            const kind = (await refactoring.provideCodeActions(lineOf(line), at(4, 14)))[0].kind as unknown as string | { value: string };
+            return typeof kind === 'string' ? kind : kind.value;
+        };
+        expect(await kindOf(EXTRACT_CLASS, { typeName: 'Order', className: 'C', members: [] })).toBe('refactor.extract');
+        expect(await kindOf(CONVERT_TYPE, { typeName: 'Order', direction: 'toInterface', implementers: [], bodies: [] })).toBe('refactor.rewrite');
+        expect(await kindOf(PULL_UP, { typeName: 'Order', targets: [{ id: 'B' }], members: [], selected: [] })).toBe('refactor.move');
+        expect(await kindOf(MOVE_TYPE_NAMESPACE, { typeName: 'Order', namespace: 'A', namespaces: [] })).toBe('refactor.move.namespace');
     });
 });

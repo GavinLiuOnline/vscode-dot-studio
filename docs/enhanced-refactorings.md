@@ -1,8 +1,14 @@
 # Enhanced refactorings
 
-The C# extension's language server offers most refactorings in the lightbulb menu (Ctrl+.): rename, extract method, generate constructor and many more. This extension adds the ones Visual Studio has and the server lacks. They appear in the same menu, next to the server's own.
+The C# extension's language server offers most refactorings in the lightbulb menu (Ctrl+.): rename, extract method, generate constructor and many more. This extension adds the ones Visual Studio and Rider have and the server lacks. They appear in the same menu, next to the server's own.
 
 Refactorings that need choices ask them in a form in the editor area, like a dialog: it opens as a tab in front of your file. **Extract** (or Enter) applies, **Cancel**, **Esc** or closing the tab drops the refactoring and changes nothing.
+
+## Hiding refactorings you never use
+
+The entries are in the lightbulb and the Refactor menu (Ctrl+.). The setting `shinobi.refactorings.disabled` (Settings > Extensions > Shinobi .NET Studio > Refactorings) lists the ones to hide; it is a list with a drop-down per row, and a change applies at once, without a reload. A hidden refactoring is not offered and the C# server is not asked about it; its command stays registered, so a key binding to it still works.
+
+The entries sit in the group of the Refactor menu that fits them, so `editor.action.codeAction` key bindings can ask for a group (`{ "kind": "refactor.move" }`): **Extract** (`refactor.extract`) for Extract Interface, Extract Members to Partial Class, Extract Superclass, Extract Class and the checked Extract Method and Local Function; **Rewrite** (`refactor.rewrite`) for Use Base Type and Convert Abstract Class ↔ Interface; **Move** (`refactor.move`) for Pull Members Up and Push Members Down, and `refactor.move.namespace` for Move Type to Namespace.
 
 ## What is added, what is planned
 

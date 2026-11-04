@@ -1,8 +1,13 @@
 const applied: unknown[] = [];
+const disabled: string[] = [];
 jest.mock('vscode', () => ({
-    CodeActionKind: { RefactorExtract: 'refactor.extract' },
+    CodeActionKind: {
+        RefactorExtract: 'refactor.extract', RefactorRewrite: 'refactor.rewrite',
+        RefactorMove: { value: 'refactor.move', append: (part: string) => `refactor.move.${part}` },
+    },
     CodeAction: class { command: unknown; constructor(public title: string, public kind: unknown) {} },
     window: { showInformationMessage: jest.fn(), showErrorMessage: jest.fn() },
+    workspace: { getConfiguration: () => ({ get: (_key: string, fallback: unknown) => (disabled.length > 0 ? disabled : fallback) }) },
 }), { virtual: true });
 jest.mock('../../../../services/refactoring/applyResult', () => ({ applyServerResult: async (...args: unknown[]) => { applied.push(args); return true; } }));
 
@@ -31,7 +36,13 @@ describe('ExtractMethodChecked', () => {
     const request = jest.fn();
     const document = jest.fn();
     const make = (extraction = EXTRACT_METHOD_CHECKED) => new ExtractMethodChecked({ request, document } as never, extraction);
-    beforeEach(() => { request.mockReset(); document.mockReset(); applied.length = 0; });
+    beforeEach(() => { disabled.length = 0; request.mockReset(); document.mockReset(); applied.length = 0; });
+
+    it('is not offered, and the server is not asked, when the user hides it', async () => {
+        disabled.push('extractMethodChecked');
+        expect(await make().provideCodeActions(doc(), range())).toEqual([]);
+        expect(request).not.toHaveBeenCalled();
+    });
 
     it('is offered next to the server\'s entry, for a selection only', async () => {
         request.mockResolvedValue([{ title: 'Extract method' }, { title: 'Extract local function' }]);

@@ -12,6 +12,7 @@ export const PUSH_DOWN: TypeRefactoringSpec<PushDownForm> = {
     command: PUSH_DOWN_COMMAND,
     actionTitle: t('Push members down...'),
     handler: 'Shinobi.Refactorings.PushDown',
+    actionKind: 'move',
     kind: 'pushDown',
     notOnTypeMessage: t('Put the cursor on the name of a class or one of its members to push members down.'),
     onMembers: true,

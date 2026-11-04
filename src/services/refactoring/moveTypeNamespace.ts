@@ -16,6 +16,7 @@ export const MOVE_TYPE_NAMESPACE: TypeRefactoringSpec<MoveTypeNamespaceForm> = {
     detailsHandler: 'Shinobi.Refactorings.MoveTypeNamespaceNamesHandler',
     detailsProgress: t('Looking for the namespaces of the solution...'),
     declarationPattern: /\b(class|struct|record|interface|enum)\s+[A-Za-z_]\w*/,
+    actionKind: 'move.namespace',
     kind: 'moveTypeNamespace',
     notOnTypeMessage: t('Put the cursor on the name of a type to move it to another namespace.'),
     formOf: info => ({ title: t('Move {0} to Namespace', info.typeName), form: { kind: 'moveTypeNamespace', ...info } }),

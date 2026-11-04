@@ -20,6 +20,7 @@ What this extension does compared with Visual Studio 2022, feature by feature: w
 | Configuration Manager | Configurations, platforms and each project's mapping, written to `.sln` and `.slnx` | ✅ |
 | Sync with Active Document, Collapse All | Both, in the toolbar and on keys | ✅ |
 | Search in Solution Explorer (Ctrl+;) | Ctrl+P and Sync with Active Document cover it | ➖ |
+| Types and members under a `.cs` file | VS Code's Outline view and breadcrumbs show them for the open file | ➖ |
 | Project Properties pages | Edit Project File; the project file's own schema help | ❌ |
 | Launch Profiles editor | Open Launch Settings creates `launchSettings.json` (JSON schema for the profiles) | ❌ |
 | Properties window with Build Action and Copy to Output Directory per file | Not offered: Edit Project File, or Exclude / Include From Project for the common case | ❌ |
@@ -78,8 +79,11 @@ What this extension does compared with Visual Studio 2022, feature by feature: w
 | IntelliSense, live errors, Go to Definition, Find References, refactorings | The C# extension's Roslyn server | ➖ |
 | Code Cleanup | `dotnet format` with `.editorconfig`; no Visual Studio cleanup profiles, no sorting of usings | ≈ |
 | Sync Namespaces | Changes namespaces to match the folders and updates references | ✅ |
-| Extract Interface dialog (members, name, new file) | [Refactorings](enhanced-refactorings.md): our own action next to the server's | ✅ |
-| Change Signature, Move to namespace, Pull members up | Not offered by the Roslyn server; planned as [refactorings](enhanced-refactorings.md) | ❌ |
+| Extract Interface dialog (members, name, new file, generic constraints) | [Refactorings](enhanced-refactorings.md): our own action next to the server's | ✅ |
+| Move to namespace | [Move Type to Namespace](enhanced-refactorings.md#move-type-to-namespace): any namespace, with the usings of every place that uses the type | ✅ |
+| Extract members to a partial class, Extract Superclass, Extract Class, Pull Members Up, Push Members Down, Use Base Type Where Possible, Convert Abstract Class ↔ Interface (Rider's) | [Refactorings](enhanced-refactorings.md), each compiled before it is applied | ✅ |
+| Extract Method / Local Function | The server's own, plus a variant [checked by the compiler](enhanced-refactorings.md) that repairs unassigned `out` parameters | ✅ |
+| Change Signature | Not offered by the Roslyn server; planned as a [refactoring](enhanced-refactorings.md) with a form for the parameter list | ❌ |
 | Task List (`// TODO`) | VS Code's extensions for TODO comments | ❌ |
 | `.resx` editor | Not offered | ❌ |
 | Git | VS Code's Source Control view | ➖ |

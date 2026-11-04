@@ -3,6 +3,7 @@ import { logger } from '../../core/logger';
 import { applyServerResult, ServerEdit, ServerResult } from './applyResult';
 import { CSharpServer } from './csharpServer';
 import { t } from '../../core/i18n';
+import { isRefactoringDisabled } from './disabled';
 
 const log = logger('ExtractMethodChecked');
 
@@ -86,7 +87,7 @@ export class ExtractMethodChecked implements vscode.CodeActionProvider {
     }
 
     async provideCodeActions(document: vscode.TextDocument, range: vscode.Range): Promise<vscode.CodeAction[]> {
-        if (range.isEmpty || document.getText(range).trim().length === 0) {
+        if (isRefactoringDisabled(this.extraction.command) || range.isEmpty || document.getText(range).trim().length === 0) {
             return [];
         }
         try {

@@ -16,7 +16,7 @@ A Visual Studio-style workflow in VS Code and VSCodium: a Visual Studio-style So
 | [Templates](templates.md) | Add New Project and Add New Item |
 | [Configuration Manager](configuration-manager.md) | Solution configurations and platforms, and what each project builds in |
 | [Code Cleanup](code-cleanup.md) | Format, remove unused usings and apply `.editorconfig` fixes on a file, folder, project or solution |
-| [Enhanced refactorings](enhanced-refactorings.md) | Extract Interface with a dialog (pick members, name, file), added to the C# language server's refactorings |
+| [Enhanced refactorings](enhanced-refactorings.md) | Extract Interface, Extract Members to Partial Class, Extract Superclass, Extract Class, Pull Members Up, Push Members Down, Use Base Type, Convert Abstract Class ↔ Interface, Move Type to Namespace and checked Extract Method, added to the C# language server's refactorings; hide the ones you never use |
 | [Sync Namespaces](sync-namespaces.md) | Change the namespaces of a project's or folder's C# files to match their folders |
 | [Publish](publish.md) | The Publish tab and Folder profiles |
 | [Entity Framework](entity-framework.md) | Add Migration, Update Database and Remove Last Migration from a project's context menu |

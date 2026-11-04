@@ -118,6 +118,41 @@
             "default": true,
             "markdownDescription": "%config.shinobi.solution.offerSlnxConversion.markdownDescription%"
           },
+          "shinobi.refactorings.disabled": {
+            "type": "array",
+            "uniqueItems": true,
+            "default": [],
+            "markdownDescription": "%config.shinobi.refactorings.disabled.markdownDescription%",
+            "items": {
+              "type": "string",
+              "enum": [
+                "extractInterface",
+                "extractPartial",
+                "extractSuperclass",
+                "extractClass",
+                "extractMethodChecked",
+                "extractLocalFunctionChecked",
+                "pullUp",
+                "pushDown",
+                "useBaseType",
+                "convertType",
+                "moveTypeNamespace"
+              ],
+              "enumItemLabels": [
+                "%config.shinobi.refactorings.disabled.label.extractInterface%",
+                "%config.shinobi.refactorings.disabled.label.extractPartial%",
+                "%config.shinobi.refactorings.disabled.label.extractSuperclass%",
+                "%config.shinobi.refactorings.disabled.label.extractClass%",
+                "%config.shinobi.refactorings.disabled.label.extractMethodChecked%",
+                "%config.shinobi.refactorings.disabled.label.extractLocalFunctionChecked%",
+                "%config.shinobi.refactorings.disabled.label.pullUp%",
+                "%config.shinobi.refactorings.disabled.label.pushDown%",
+                "%config.shinobi.refactorings.disabled.label.useBaseType%",
+                "%config.shinobi.refactorings.disabled.label.convertType%",
+                "%config.shinobi.refactorings.disabled.label.moveTypeNamespace%"
+              ]
+            }
+          },
           "shinobi.nuget.offerV3Migration": {
             "type": "boolean",
             "default": true,
