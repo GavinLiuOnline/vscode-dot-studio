@@ -387,14 +387,14 @@ public class ChangeSignatureTests
             [Keep(1, "limit", "int"), Keep(0, "path", "string")]), default);
         Assert.Null(result!.Errors);
         var other = Assert.Single(result.Others!);
-        var edited = Harness.Lf(Harness.Apply(workspace.CurrentSolution.GetProject(tests.Id)!.Documents.Single().GetTextAsync().Result.ToString(), new ExtractInterfaceResult(other.Edits, null, null)));
+        var edited = Harness.Lf(Harness.Apply((await workspace.CurrentSolution.GetProject(tests.Id)!.Documents.Single().GetTextAsync()).ToString(), new ExtractInterfaceResult(other.Edits, null, null)));
         Assert.Contains("public int Get(int limit, string path)", edited);
         Assert.Contains("api.Get(1, \"a\") + proxy.Get(2, \"b\")", edited);
 
         var generic = await ChangeSignatureEngine.RunAsync(document, new ChangeSignatureRequest(Harness.At(source, "GetAsync<T>(Dictionary", "GetAsync"),
             [Keep(1, "path", "string"), Keep(0, "queryParams", "Dictionary<string, string>")]), default);
         Assert.Null(generic!.Errors);
-        var genericEdited = Harness.Lf(Harness.Apply(workspace.CurrentSolution.GetProject(tests.Id)!.Documents.Single().GetTextAsync().Result.ToString(), new ExtractInterfaceResult(Assert.Single(generic.Others!).Edits, null, null)));
+        var genericEdited = Harness.Lf(Harness.Apply((await workspace.CurrentSolution.GetProject(tests.Id)!.Documents.Single().GetTextAsync()).ToString(), new ExtractInterfaceResult(Assert.Single(generic.Others!).Edits, null, null)));
         Assert.Contains("GetAsync<T>(string path, Dictionary<string, string> queryParams)", genericEdited);
         Assert.Contains("api.GetAsync<string>(\"x\", new())", genericEdited);
     }
@@ -470,7 +470,7 @@ public class ChangeSignatureTests
             [Keep(1, "queryParams", "Dictionary<string, string>"), Keep(0, "path", "string")]), default);
         Assert.Null(result!.Errors);
         Assert.Equal(2, result.Others!.Count);
-        var edited = Harness.Lf(Harness.Apply(workspace.CurrentSolution.GetProject(tests.Id)!.Documents.Single().GetTextAsync().Result.ToString(),
+        var edited = Harness.Lf(Harness.Apply((await workspace.CurrentSolution.GetProject(tests.Id)!.Documents.Single().GetTextAsync()).ToString(),
             new ExtractInterfaceResult(result.Others!.Single(o => o.Path.EndsWith("Tests.cs")).Edits, null, null)));
         Assert.Contains("sut.GetAsync<Dictionary<string, string>>(new Dictionary<string, string> { [\"siteId\"] = \"7\" }, \"api/items\")", edited);
         Assert.Contains("sut.GetAsync<object>([], \"api/x\")", edited);
