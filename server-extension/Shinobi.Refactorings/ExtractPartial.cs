@@ -224,11 +224,14 @@ internal static class PartialSupport
             }
         }
         if (newFilePath is not null
-            && (File.Exists(newFilePath) || document.Project.Solution.Projects.SelectMany(p => p.Documents).Any(d => string.Equals(d.FilePath, newFilePath, StringComparison.OrdinalIgnoreCase))))
+            && (File.Exists(newFilePath) || document.Project.Solution.Projects.SelectMany(p => p.Documents).Any(d => d.FilePath is not null && SamePath(d.FilePath, newFilePath))))
         {
             throw new InvalidOperationException($"{Path.GetFileName(newFilePath)} exists already: pick another name, or write the code into the file of the type.");
         }
     }
+
+    /// <summary>The same file whichever separators the paths use (the server hands out the paths of the system, a document may carry another).</summary>
+    private static bool SamePath(string a, string b) => string.Equals(Path.GetFullPath(a), Path.GetFullPath(b), StringComparison.OrdinalIgnoreCase);
 
     public static TextEdit Insert(SourceText text, int position, string newText)
     {
