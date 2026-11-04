@@ -10,6 +10,8 @@ const env = {
     dirty: new Set<string>(),
 };
 
+jest.mock('../../../../services/refactoring/newFileRefresh', () => ({ refreshProjectForNewFile: jest.fn(() => true) }));
+
 jest.mock('vscode', () => {
     class Position { constructor(public line: number, public character: number) { } }
     class Range { constructor(public start: Position, public end: Position) { } }
@@ -55,6 +57,7 @@ jest.mock('vscode', () => {
 }, { virtual: true });
 
 import * as vscode from 'vscode';
+import { refreshProjectForNewFile } from '../../../../services/refactoring/newFileRefresh';
 import { renameFileAndType } from '../../../../services/code/typeRename';
 
 const symbol = (name: string, kind: number, line: number, children: any[] = []) => ({
@@ -92,6 +95,18 @@ describe('renameFileAndType', () => {
         expect(env.appliedEdits[0].operations).toEqual(['edit /p/Foo.cs', 'edit /p/Program.cs', 'rename /p/Foo.cs -> /p/Bar.cs']);
         expect(env.fsRenames).toEqual([]);
         expect(env.saved.sort()).toEqual(['/p/Bar.cs', '/p/Program.cs']);
+    });
+
+    it('has the project read again after the rename (a multi-targeted project does not show a renamed file to the language server otherwise)', async () => {
+        env.symbols = [symbol('Foo', vscode.SymbolKind.Class, 0)];
+        env.renameEdit = renameEdit();
+        env.choice = 'Yes';
+        await renameFileAndType('/p/Foo.cs', '/p/Bar.cs');
+        expect(refreshProjectForNewFile).toHaveBeenLastCalledWith('/p/Bar.cs');
+
+        env.symbols = undefined;
+        await renameFileAndType('/p/Baz.cs', '/p/Qux.cs');
+        expect(refreshProjectForNewFile).toHaveBeenLastCalledWith('/p/Qux.cs');
     });
 
     it('does not save documents that already had unsaved changes', async () => {

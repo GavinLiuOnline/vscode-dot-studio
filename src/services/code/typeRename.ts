@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { logger } from '../../core/logger';
 import { t } from '../../core/i18n';
+import { refreshProjectForNewFile } from '../refactoring/newFileRefresh';
 
 const log = logger('TypeRename');
 
@@ -43,6 +44,7 @@ async function renameFileAndTypeNow(oldPath: string, newPath: string): Promise<v
     const edit = await typeRenameEdit(oldPath, newPath);
     if (!edit) {
         await vscode.workspace.fs.rename(oldUri, newUri);
+        refreshForRenamedFile(newPath);
         return;
     }
 
@@ -55,6 +57,14 @@ async function renameFileAndTypeNow(oldPath: string, newPath: string): Promise<v
     }
 
     await saveChanged(edit, dirtyBefore, uri => uri.fsPath === oldPath ? newUri : uri);
+    refreshForRenamedFile(newPath);
+}
+
+/** A renamed file is a new file to the C# server in a project with several target frameworks: the files that use it keep their errors until the project is read again */
+export function refreshForRenamedFile(newPath: string): void {
+    if (refreshProjectForNewFile(newPath)) {
+        log.debug(`Touched the project file: the language server does not see the renamed file ${path.basename(newPath)} in a multi-targeted project otherwise`);
+    }
 }
 
 /** The documents that were open with unsaved changes before a rename */

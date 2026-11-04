@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { logger } from '../../core/logger';
 import { t } from '../../core/i18n';
-import { dirtyDocuments, findType, isOwnRename, ownRename, renameTypeOfFile, saveChanged, typeNamesOfRename, typeStartingAt } from './typeRename';
+import { dirtyDocuments, findType, refreshForRenamedFile, isOwnRename, ownRename, renameTypeOfFile, saveChanged, typeNamesOfRename, typeStartingAt } from './typeRename';
 
 const log = logger('RenameSync');
 
@@ -17,6 +17,10 @@ const symbolsOf = async (uri: vscode.Uri) =>
  */
 export async function typeFollowsRenamedFiles(files: readonly { oldUri: vscode.Uri; newUri: vscode.Uri }[]): Promise<void> {
     for (const { oldUri, newUri } of files) {
+        // whatever the file's type: the server has to see the new name
+        if (path.extname(newUri.fsPath).toLowerCase() === '.cs' && !isOwnRename(newUri.fsPath)) {
+            refreshForRenamedFile(newUri.fsPath);
+        }
         const names = typeNamesOfRename(oldUri.fsPath, newUri.fsPath);
         if (!names || isOwnRename(newUri.fsPath)) {
             continue;
@@ -129,7 +133,9 @@ async function offerFileRename(uri: vscode.Uri, newTypeName: string): Promise<vo
     edit.renameFile(uri, vscode.Uri.file(newPath));
     if (!await ownRename(newPath, () => Promise.resolve(vscode.workspace.applyEdit(edit)))) {
         void vscode.window.showWarningMessage(t('Could not rename {0}', oldFile));
+        return;
     }
+    refreshForRenamedFile(newPath);
 }
 
 async function exists(uri: vscode.Uri): Promise<boolean> {
