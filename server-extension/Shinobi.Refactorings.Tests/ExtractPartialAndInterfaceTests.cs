@@ -49,6 +49,35 @@ public class ExtractPartialAndInterfaceTests
     }
 
     [Fact]
+    public async Task The_new_file_gets_the_using_of_an_attribute_the_moved_members_carry()
+    {
+        const string source = """
+            using System;
+
+            namespace App;
+
+            public class Item
+            {
+                public int Id { get; set; }
+
+                [Obsolete("2021-06-21", true)]
+                public string Comment { get; set; }
+            }
+            """;
+        var h = new Harness(("Item.cs", source));
+        var document = h.Document("Item.cs");
+        var position = Harness.At(source, "class Item", "Item");
+        var info = (await new ExtractPartialInfoHandler().ExecuteAsync(new TypeAt(position), null!, document, default))!;
+        var ids = info.Members.Where(m => m.Signature.Contains("Comment")).Select(m => m.Id).ToList();
+
+        var result = (await new ExtractPartialHandler().ExecuteAsync(new ExtractPartialRequest(position, "Part", ids), null!, document, default))!;
+
+        Assert.Null(result.Errors);
+        Assert.Contains("using System;", result.NewFileContent);
+        Assert.Empty(await h.ErrorsAfter(document, result));
+    }
+
+    [Fact]
     public async Task Extract_partial_moves_members_to_a_file_of_the_type_and_the_result_compiles()
     {
         var h = new Harness(("Order.cs", Source));

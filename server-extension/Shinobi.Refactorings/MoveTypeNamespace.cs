@@ -292,7 +292,7 @@ public static class MoveTypeNamespaceEngine
             var info = model.GetSymbolInfo(name, ct);
             foreach (var symbol in info.Symbol is null ? info.CandidateSymbols : [info.Symbol])
             {
-                var type = symbol as INamedTypeSymbol ?? (symbol is IMethodSymbol { IsExtensionMethod: true } ? symbol.ContainingType : null);
+                var type = symbol as INamedTypeSymbol ?? (symbol is IMethodSymbol { IsExtensionMethod: true } or IMethodSymbol { MethodKind: MethodKind.Constructor } ? symbol.ContainingType : null);
                 while (type?.ContainingType is not null) { type = type.ContainingType; }
                 if (type?.ContainingNamespace is { IsGlobalNamespace: false } containing) { result.Add(containing.ToDisplayString()); }
             }

@@ -224,8 +224,8 @@ internal static class PartialSupport
             var info = model.GetSymbolInfo(node, ct);
             foreach (var symbol in info.Symbol is null ? info.CandidateSymbols : [info.Symbol])
             {
-                // a name that is a type, or an extension method (`x.Sum()` needs System.Linq); other members are reached through their type
-                var type = symbol as INamedTypeSymbol ?? (symbol is IMethodSymbol { IsExtensionMethod: true } ? symbol.ContainingType : null);
+                // a name that is a type, an extension method (`x.Sum()` needs System.Linq) or a constructor (the name in `[Obsolete]` is the attribute's); other members are reached through their type
+                var type = symbol as INamedTypeSymbol ?? (symbol is IMethodSymbol { IsExtensionMethod: true } or IMethodSymbol { MethodKind: MethodKind.Constructor } ? symbol.ContainingType : null);
                 while (type?.ContainingType is not null) { type = type.ContainingType; }
                 if (type?.ContainingNamespace is { IsGlobalNamespace: false } ns) { namespaces.Add(ns.ToDisplayString()); }
             }
