@@ -9,7 +9,10 @@ const STYLE = `
 .rf .sig-row input[type=text] { font-size: 1em; padding: 3px 6px; min-width: 0; }
 .rf .sig-head { font-size: 0.75em; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.05em; }
 .rf .sig-move { display: flex; flex-direction: column; }
-.rf .sig-move button { padding: 0 6px; line-height: 1.1; }
+.rf .sig-move button { padding: 0 6px; line-height: 1.1; border: none; border-radius: 2px; cursor: pointer;
+    background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); }
+.rf .sig-move button:hover:not(:disabled) { background: var(--vscode-button-secondaryHoverBackground); }
+.rf .sig-move button:disabled { opacity: 0.35; cursor: default; }
 .rf .sig-fixed { opacity: 0.7; font-family: var(--vscode-editor-font-family); }
 `;
 

@@ -162,6 +162,8 @@ It refuses nested types, namespaces declared inside another namespace, partial t
 
 Visual Studio's *Change Signature*. Put the cursor on the name of a method, a constructor or a local function, in its declaration or in a call, and press Ctrl+. > **Change signature...** (in the **Rewrite** group). The entry is not offered for methods declared in a library.
 
+![Change Signature of a method: two parameters swapped, the call in another project follows](images/change-signature.gif)
+
 The form lists the parameters in a table: move one up or down, rename it, give it another type, **Remove** it (a removed row stays visible and can be restored) or **Add parameter**. A new parameter needs a name, a type and either what every call passes for it, or a default value (it is then optional and the calls leave it out). A preview shows the new declaration; **Change Signature** is off while the list has a problem (a name that is no identifier or used twice, a required parameter behind an optional one, a `params` parameter that is not last) or nothing changed.
 
 What it does:

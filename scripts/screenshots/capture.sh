@@ -18,7 +18,7 @@ REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="$REPO/docs/images"
 CODE="${CODE:-code-oss}"
 CSHARP_EXT="${CSHARP_EXT:-$(ls -d "$HOME"/.vscode-oss/extensions/muhammad-sammy.csharp-* "$HOME"/.vscode/extensions/ms-dotnettools.csharp-* 2>/dev/null | tail -1 || true)}"
-SCENES="${SCENES:-solution-explorer dependencies context-menu error-list tests nuget new-project publish gif-navigate gif-nuget gif-new-project gif-configuration-manager gif-startup-projects gif-attach-to-process gif-dev-cert gif-hot-reload gif-code-cleanup gif-sync-namespaces gif-show-all-files gif-drag-and-drop gif-central-packages gif-grpc}"
+SCENES="${SCENES:-solution-explorer dependencies context-menu error-list tests nuget new-project publish gif-navigate gif-nuget gif-new-project gif-configuration-manager gif-startup-projects gif-attach-to-process gif-dev-cert gif-hot-reload gif-code-cleanup gif-sync-namespaces gif-show-all-files gif-drag-and-drop gif-central-packages gif-grpc gif-change-signature}"
 GIF_FPS=8
 GIF_WIDTH=960
 DISPLAY_NUMBER=97
@@ -722,6 +722,34 @@ if wants gif-grpc; then
     (cd "$SOLUTION" && dotnet restore Contoso.slnx -v q -nologo >/dev/null)
     sleep 5
     command "View: Close All Editors" 1
+fi
+
+if wants gif-change-signature; then
+    echo "Scene: gif-change-signature"
+    reset
+    key ctrl+p; type_text "PriceCalculator.cs"; pause 1.5; key Return; pause 2
+    # The language server loads the solution first
+    pause 25
+    key ctrl+g; type_text "5:20"; key Return; pause 1
+    record_start
+    pause 1
+    # Ctrl+. on the method name: our entry is in the Rewrite group, below the server's Extract base class
+    key ctrl+period; pause 2.5
+    key Down; pause 1.2; key Return; pause 4
+    # The form: the first name is focused (clicks do not reach this webview under Xvfb, keys do). shift+Tab reaches the down button of
+    # the first row, Space presses it (quantity first), two Tabs end in a field, Enter applies
+    key shift+Tab; pause 1.2
+    key space; pause 2.5
+    key Tab; pause 0.6; key Tab; pause 1.5
+    key Return; pause 6
+    # The call in the worker follows
+    key ctrl+p; type_text "Worker.cs"; pause 1.5; key Return; pause 3
+    key ctrl+g; type_text "14:30"; key Return; pause 3
+    record_stop change-signature
+    command "View: Close All Editors" 1
+    # The sample is the same for the next scenes
+    cp "$REPO/scripts/screenshots/sample/src/Shop.Core/Pricing/PriceCalculator.cs" "$SOLUTION/src/Shop.Core/Pricing/PriceCalculator.cs"
+    cp "$REPO/scripts/screenshots/sample/src/Shop.Worker/Worker.cs" "$SOLUTION/src/Shop.Worker/Worker.cs"
 fi
 
 echo "Done: $OUT"

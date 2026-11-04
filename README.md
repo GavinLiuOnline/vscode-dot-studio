@@ -141,6 +141,8 @@ Add, update and remove WCF/SOAP service references, compatible with the ones Vis
 
 The Visual Studio and Rider refactorings the C# language server lacks, in the same Ctrl+. menu: Extract Interface (choose members), Extract Members to Partial Class, Extract Superclass, Extract Class, Pull Members Up, Push Members Down, Use Base Type Where Possible, Convert Abstract Class ↔ Interface, Move Type to Namespace, Change Signature, and Extract Method / Local Function checked by the compiler. Choices are asked in a form in the editor area; Esc or Cancel changes nothing, and every result is compiled before it is applied. A refactoring you never use can be hidden with the setting `shinobi.refactorings.disabled`.
 
+![Change Signature: swapping two parameters, the call follows](docs/images/change-signature.gif)
+
 [Enhanced refactorings](docs/enhanced-refactorings.md)
 
 ## Requirements
