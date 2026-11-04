@@ -85,4 +85,35 @@ public class ExtractPartialAndInterfaceTests
         Assert.NotNull(clash.Errors);
         Assert.Contains(clash.Errors!, e => e.Contains("CS0101"));
     }
+
+    [Fact]
+    public async Task Extract_interface_of_a_generic_type_keeps_the_constraints_and_the_usings_they_need()
+    {
+        const string source = """
+            using System;
+            using System.Collections.Generic;
+
+            namespace App;
+
+            public class Box<T, TKey> where T : class, IComparable<T>, new() where TKey : struct
+            {
+                public T? Value { get; set; }
+
+                public TKey? Key { get; set; }
+
+                public List<T> All() => new();
+            }
+            """;
+        var h = new Harness(("Box.cs", source));
+        var document = h.Document("Box.cs");
+        var position = Harness.At(source, "class Box", "Box");
+        var info = (await new ExtractInterfaceInfoHandler().ExecuteAsync(new TypeAt(position), null!, document, default))!;
+        var result = (await new ExtractInterfaceHandler().ExecuteAsync(
+            new ExtractInterfaceRequest(position, "IBox", info.Members.Select(m => m.Id).ToList(), true), null!, document, default))!;
+        Assert.Null(result.Errors);
+        var file = Harness.Lf(result.NewFileContent!);
+        Assert.Contains("public interface IBox<T, TKey> where T : class, IComparable<T>, new() where TKey : struct", file);
+        Assert.Contains("using System;", file);
+        Assert.Empty(await h.ErrorsAfter(document, result));
+    }
 }

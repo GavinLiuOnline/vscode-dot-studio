@@ -20,7 +20,7 @@ Refactorings that need choices ask them in a form in the editor area, like a dia
 | Extract Class (members go to a new class the type delegates to) | No (Rider) | ✅ [Added](#extract-class) |
 | Move Type to Namespace (pick the namespace) | Yes | ✅ [Added](#move-type-to-namespace) |
 | Change Signature (add, remove, reorder parameters and update the callers) | Yes | 🔜 Planned: a form with the parameter list |
-| Extract Interface: generic constraints of the type | Yes | 🔜 Planned, a gap of the first version |
+| Extract Interface: generic constraints of the type | Yes | ✅ Added: the interface gets the type's `where` clauses |
 
 The order is by cost, cheapest first (Phase 45 in the [roadmap](roadmap.md)). Every refactoring here follows the same pattern: the lightbulb entry opens the form, the confirm button applies, Cancel or Esc changes nothing. A refactoring the C# server gets itself later is dropped from here. Ideas go to the [roadmap](roadmap.md) (Phase 45).
 
@@ -35,7 +35,9 @@ The form has:
 
 On Extract the interface is created and the type gets it as a base type (`public class Order : IOrder`). Both files are saved (the edited one only when it had no other unsaved changes), so a build sees the new file at once; Ctrl+Z in the type's editor undoes the base type. The new file only holds the usings the interface needs. If the new file already exists you are told and nothing changes. In a project with several target frameworks (`<TargetFrameworks>`) the C# server does not notice new files by itself (the types that use them keep "could not be found" until a reload); the extension touches the project file so the server reads the project again.
 
-Not covered yet: the interface does not get the type's generic constraints, and members with explicit interface implementations or `internal` visibility are not listed.
+The interface of a generic type has the type's type parameters and their `where` constraints (`IBox<T> where T : class, IComparable<T>`), and the new file the usings the constraints need.
+
+Not covered yet: members with explicit interface implementations or `internal` visibility are not listed.
 
 ## Extract Members to Partial Class
 

@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -85,7 +86,9 @@ public sealed class ExtractInterfaceHandler : IExtensionDocumentMessageHandler<E
         var typeParameters = declaration.TypeParameterList?.ToString() ?? "";
         var interfaceName = message.InterfaceName;
         var body = new StringBuilder();
-        body.Append(indent).Append("public interface ").Append(interfaceName).Append(typeParameters).Append(eol);
+        // the interface has the type parameters of the type and their constraints: a member can need them (a nullable T?, a type that wants T : class)
+        var constraints = string.Concat(declaration.ConstraintClauses.Select(c => " " + Regex.Replace(c.ToString(), @"\s+", " ")));
+        body.Append(indent).Append("public interface ").Append(interfaceName).Append(typeParameters).Append(constraints).Append(eol);
         body.Append(indent).Append('{').Append(eol);
         foreach (var member in members)
         {
@@ -111,7 +114,7 @@ public sealed class ExtractInterfaceHandler : IExtensionDocumentMessageHandler<E
         if (message.NewFile && document.FilePath is { } path)
         {
             newFilePath = Path.Combine(Path.GetDirectoryName(path)!, interfaceName + ".cs");
-            newFileContent = ExtractInterfaceSupport.NewFileText(await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false), declaration, members, body.ToString(), eol);
+            newFileContent = ExtractInterfaceSupport.NewFileText(await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false), declaration, members, body.ToString(), eol, symbol.TypeParameters.SelectMany(p => p.ConstraintTypes));
         }
         else
         {
@@ -206,12 +209,12 @@ internal static class ExtractInterfaceSupport
     }
 
     /// <summary>The new file: the usings of the class's file that the chosen members need, its namespace (as written there: file-scoped or block), the interface.</summary>
-    public static string NewFileText(SyntaxNode? root, TypeDeclarationSyntax declaration, IReadOnlyList<ISymbol> members, string interfaceText, string eol)
+    public static string NewFileText(SyntaxNode? root, TypeDeclarationSyntax declaration, IReadOnlyList<ISymbol> members, string interfaceText, string eol, IEnumerable<ITypeSymbol>? constraintTypes = null)
     {
         var sb = new StringBuilder();
         if (root is CompilationUnitSyntax unit)
         {
-            var needed = NeededUsings(unit, members);
+            var needed = NeededUsings(unit, members, constraintTypes ?? []);
             foreach (var u in needed) { sb.Append(u.ToString()).Append(eol); }
             if (needed.Count > 0) { sb.Append(eol); }
         }
@@ -233,9 +236,10 @@ internal static class ExtractInterfaceSupport
     }
 
     /// <summary>The usings of the class's file the interface needs: those naming a namespace that a type in a chosen signature lives in.</summary>
-    private static List<UsingDirectiveSyntax> NeededUsings(CompilationUnitSyntax unit, IReadOnlyList<ISymbol> members)
+    private static List<UsingDirectiveSyntax> NeededUsings(CompilationUnitSyntax unit, IReadOnlyList<ISymbol> members, IEnumerable<ITypeSymbol> constraintTypes)
     {
         var namespaces = new HashSet<string>();
+        foreach (var constraint in constraintTypes) { Collect(constraint, namespaces); }
         foreach (var member in members)
         {
             switch (member)
